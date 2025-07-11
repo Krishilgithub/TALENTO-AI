@@ -1,0 +1,103 @@
+import Image from "next/image";
+import { useState } from "react";
+
+const navLinks = [
+	{ label: "All Copilots", href: "#copilots", highlight: true },
+	{ label: "Auto Job Apply", href: "#auto-job" },
+	{ label: "Desktop App", href: "#desktop-app" },
+	{ label: "Interview Review", href: "#interview-review" },
+	{ label: "Career Launchpad", href: "#career-launchpad" },
+	{ label: "Pricing", href: "#pricing" },
+	{ label: "Resources", href: "#resources" },
+	{ label: "Strategy & Hack", href: "#strategy" },
+];
+
+export default function Navbar() {
+	const [open, setOpen] = useState(false);
+	return (
+		<nav className="w-full sticky top-0 z-50 bg-[#101113] border-b border-gray-800 shadow-sm">
+			<div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3">
+				<div className="flex items-center gap-2">
+					<Image src="/file.svg" alt="Logo" width={36} height={36} />
+					<span className="text-xl font-bold tracking-tight text-white">
+						LockedIn AI
+					</span>
+				</div>
+				<div className="hidden lg:flex gap-2 items-center text-base font-medium">
+					{navLinks.map((link) => (
+						<a
+							key={link.label}
+							href={link.href}
+							className={`px-4 py-2 rounded-full transition font-semibold ${
+								link.highlight
+									? "bg-[#1a1a1a] text-cyan-400 border border-cyan-400"
+									: "text-white hover:bg-[#232323]"
+							}`}
+						>
+							{link.label}
+						</a>
+					))}
+					<a
+						href="#login"
+						className="text-white px-4 py-2 rounded-full hover:bg-[#232323]"
+					>
+						Login
+					</a>
+					<a
+						href="#signup"
+						className="ml-2 px-4 py-2 rounded-full bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition"
+					>
+						Sign Up
+					</a>
+				</div>
+				<button
+					className="lg:hidden flex items-center text-white focus:outline-none"
+					onClick={() => setOpen((o) => !o)}
+					aria-label="Open menu"
+				>
+					<svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+						<path
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							d="M4 6h16M4 12h16M4 18h16"
+						/>
+					</svg>
+				</button>
+			</div>
+			{/* Mobile menu */}
+			{open && (
+				<div className="lg:hidden bg-[#101113] border-t border-gray-800 px-4 pb-4 flex flex-col gap-2">
+					{navLinks.map((link) => (
+						<a
+							key={link.label}
+							href={link.href}
+							className={`block px-4 py-2 rounded-full transition font-semibold ${
+								link.highlight
+									? "bg-[#1a1a1a] text-cyan-400 border border-cyan-400"
+									: "text-white hover:bg-[#232323]"
+							}`}
+							onClick={() => setOpen(false)}
+						>
+							{link.label}
+						</a>
+					))}
+					<a
+						href="#login"
+						className="text-white px-4 py-2 rounded-full hover:bg-[#232323]"
+						onClick={() => setOpen(false)}
+					>
+						Login
+					</a>
+					<a
+						href="#signup"
+						className="px-4 py-2 rounded-full bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition"
+						onClick={() => setOpen(false)}
+					>
+						Sign Up
+					</a>
+				</div>
+			)}
+		</nav>
+	);
+}
