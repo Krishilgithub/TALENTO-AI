@@ -513,6 +513,12 @@ function PracticeSessionsTab() {
 
 // Career Tools Tab Component
 function CareerToolsTab() {
+	const [resumeFile, setResumeFile] = useState(null);
+	const [atsScore, setAtsScore] = useState(null);
+	const [atsFeedback, setAtsFeedback] = useState("");
+	const [suggestions, setSuggestions] = useState([]);
+	const [isAnalyzing, setIsAnalyzing] = useState(false);
+
 	const tools = [
 		{
 			name: "Resume Builder",
@@ -552,6 +558,123 @@ function CareerToolsTab() {
 		},
 	];
 
+	function handleResumeUpload(e) {
+		const file = e.target.files[0];
+		if (!file) return;
+		setResumeFile(file);
+		setAtsScore(null);
+		setAtsFeedback("");
+		setSuggestions([]);
+		setIsAnalyzing(true);
+
+		// Enhanced demo: More realistic parsing and scoring logic
+		setTimeout(() => {
+			const fileName = file.name.toLowerCase();
+			let score = 0;
+			let feedback = [];
+			let suggestions = [];
+
+			if (fileName.endsWith(".pdf") || fileName.endsWith(".docx")) {
+				// Simulate file size and content analysis
+				const fileSize = file.size;
+				const hasGoodSize = fileSize > 50000 && fileSize < 500000; // 50KB to 500KB
+
+				// Simulate keyword analysis (common tech keywords)
+				const techKeywords = [
+					"javascript",
+					"python",
+					"react",
+					"node.js",
+					"sql",
+					"aws",
+					"docker",
+					"kubernetes",
+					"agile",
+					"scrum",
+				];
+				const foundKeywords = techKeywords.filter(
+					(keyword) => fileName.includes(keyword) || Math.random() > 0.7
+				);
+
+				// Calculate score based on multiple factors
+				let baseScore = 60;
+				if (hasGoodSize) baseScore += 10;
+				if (foundKeywords.length > 3) baseScore += 15;
+				if (fileName.includes("resume") || fileName.includes("cv"))
+					baseScore += 5;
+
+				// Add some randomness but keep it realistic
+				score = Math.min(100, baseScore + Math.floor(Math.random() * 20));
+
+				// Generate detailed feedback
+				if (score >= 90) {
+					feedback.push(
+						"Excellent! Your resume is highly optimized for ATS systems."
+					);
+					suggestions.push(
+						"Consider tailoring keywords for specific job postings"
+					);
+					suggestions.push("Keep your formatting consistent and clean");
+				} else if (score >= 80) {
+					feedback.push("Very good! Your resume should pass most ATS filters.");
+					suggestions.push("Add more industry-specific keywords");
+					suggestions.push(
+						"Ensure all section headings are standard (Experience, Education, Skills)"
+					);
+				} else if (score >= 70) {
+					feedback.push(
+						"Good resume, but some improvements needed for better ATS compatibility."
+					);
+					suggestions.push(
+						"Use standard section headings (avoid creative titles)"
+					);
+					suggestions.push("Add more relevant skills and keywords");
+					suggestions.push("Avoid graphics, tables, or complex formatting");
+				} else if (score >= 60) {
+					feedback.push(
+						"Your resume needs optimization to pass ATS filters effectively."
+					);
+					suggestions.push(
+						"Use simple, clean fonts (Arial, Calibri, Times New Roman)"
+					);
+					suggestions.push("Include relevant keywords from job descriptions");
+					suggestions.push("Remove any graphics, charts, or tables");
+					suggestions.push("Use bullet points for better readability");
+				} else {
+					feedback.push("Your resume may struggle with ATS systems.");
+					suggestions.push("Start with a clean, simple template");
+					suggestions.push("Use standard section headings");
+					suggestions.push("Focus on relevant keywords and skills");
+					suggestions.push("Keep formatting simple and consistent");
+				}
+
+				// Add specific suggestions based on analysis
+				if (!hasGoodSize) {
+					suggestions.push("Ensure your resume is between 1-2 pages");
+				}
+				if (foundKeywords.length < 3) {
+					suggestions.push(
+						"Include more relevant technical skills and keywords"
+					);
+				}
+			} else {
+				score = 0;
+				feedback.push(
+					"Unsupported file type. Please upload a PDF or DOCX resume."
+				);
+				suggestions.push("Convert your resume to PDF or DOCX format");
+				suggestions.push(
+					"Ensure the file is not corrupted or password-protected"
+				);
+			}
+
+			setAtsScore(score);
+			setAtsFeedback(feedback.join(" "));
+			setSuggestions(suggestions);
+			setIsAnalyzing(false);
+		}, 2000);
+	}
+
 	return (
 		<div className="space-y-6">
 			<div>
@@ -561,6 +684,75 @@ function CareerToolsTab() {
 				<p className="text-gray-600">
 					Access powerful tools to accelerate your career growth.
 				</p>
+			</div>
+
+			{/* Resume Upload & ATS Score */}
+			<div className="bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-xl p-6 mb-6 shadow-sm">
+				<h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+					<span role="img" aria-label="Resume">
+						📄
+					</span>{" "}
+					Resume Optimizer & ATS Score
+				</h3>
+				<p className="text-gray-700 mb-4">
+					Upload your resume (PDF or DOCX) to see how it performs with Applicant
+					Tracking Systems and get optimization tips.
+				</p>
+				<input
+					type="file"
+					accept=".pdf,.docx"
+					onChange={handleResumeUpload}
+					className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-100 file:text-cyan-700 hover:file:bg-cyan-200 mb-4"
+				/>
+				{isAnalyzing && (
+					<div className="flex items-center gap-2 text-cyan-700 font-medium">
+						<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-cyan-600"></div>
+						Analyzing your resume...
+					</div>
+				)}
+				{atsScore !== null && (
+					<div className="mt-4 p-4 rounded-lg bg-white border border-cyan-200 shadow">
+						<div className="text-center mb-4">
+							<div className="text-3xl font-bold text-cyan-600 mb-2">
+								ATS Score: {atsScore}/100
+							</div>
+							<div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center text-white font-bold text-lg ${
+								atsScore >= 90 ? 'bg-green-500' : 
+								atsScore >= 80 ? 'bg-blue-500' : 
+								atsScore >= 70 ? 'bg-yellow-500' : 
+								atsScore >= 60 ? 'bg-orange-500' : 'bg-red-500'
+							}`}>
+								{atsScore >= 90 ? 'A+' : 
+								 atsScore >= 80 ? 'A' : 
+								 atsScore >= 70 ? 'B' : 
+								 atsScore >= 60 ? 'C' : 'D'}
+							</div>
+						</div>
+						<p className="text-gray-800 text-center mb-4 font-medium">{atsFeedback}</p>
+						
+						{suggestions.length > 0 && (
+							<div className="mt-4">
+								<h4 className="font-semibold text-gray-900 mb-2">Optimization Suggestions:</h4>
+								<ul className="space-y-1">
+									{suggestions.map((suggestion, index) => (
+										<li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+											<span className="text-cyan-600 mt-1">•</span>
+											{suggestion}
+										</li>
+									))}
+								</ul>
+							</div>
+						)}
+						
+						{atsScore < 80 && (
+							<div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+								<p className="text-sm text-yellow-800 font-medium">
+									💡 Pro Tip: Use standard headings, avoid graphics, and add keywords from your target job description for better ATS compatibility.
+								</p>
+							</div>
+						)}
+					</div>
+				)}
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
