@@ -1,5 +1,39 @@
 @import "tailwindcss";
 
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  background: #18191b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #232425;
+  border-radius: 8px;
+  border: 2px solid #101113;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2dd4bf;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.floating-navbar {
+  background: #101113cc;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 32px 0 #00000033;
+  margin: 1rem auto;
+  max-width: 1200px;
+  left: 0;
+  right: 0;
+  top: 1rem;
+  position: fixed;
+  z-index: 50;
+  border: 1px solid #232425;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

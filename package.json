@@ -11,6 +11,8 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "gsap": "^3.13.0",
+    "locomotive-scroll": "^4.1.4",
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
