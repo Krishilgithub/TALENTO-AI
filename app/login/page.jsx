@@ -95,24 +95,22 @@ export default function LoginPage() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4">
+		<div className="min-h-screen bg-[#101113] flex items-center justify-center px-4">
 			<div className="max-w-md w-full space-y-8">
 				{/* Header */}
 				<div className="text-center">
 					<Link href="/" className="inline-block">
-						<h1 className="text-3xl font-bold text-gray-900 mb-2">
-							Talento AI
-						</h1>
+						<h1 className="text-3xl font-bold text-white mb-2">Talento AI</h1>
 					</Link>
-					<h2 className="text-2xl font-semibold text-gray-900">Welcome back</h2>
-					<p className="mt-2 text-gray-600">Sign in to your account</p>
+					<h2 className="text-2xl font-semibold text-white">Welcome back</h2>
+					<p className="mt-2 text-gray-300">Sign in to your account</p>
 				</div>
 
 				{/* Login Form */}
-				<div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+				<div className="bg-[#18191b] rounded-2xl shadow-xl p-8 border border-gray-700">
 					<form onSubmit={handleSubmit} className="space-y-6">
 						{errors.general && (
-							<div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+							<div className="bg-red-900/20 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
 								{errors.general}
 							</div>
 						)}
@@ -120,7 +118,7 @@ export default function LoginPage() {
 						<div>
 							<label
 								htmlFor="email"
-								className="block text-sm font-medium text-gray-700 mb-2"
+								className="block text-sm font-medium text-gray-300 mb-2"
 							>
 								Email address
 							</label>
@@ -132,20 +130,20 @@ export default function LoginPage() {
 								required
 								value={formData.email}
 								onChange={handleChange}
-								className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-									errors.email ? "border-red-300" : "border-gray-300"
+								className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200 bg-[#101113] text-white placeholder-gray-400 ${
+									errors.email ? "border-red-500" : "border-gray-600"
 								}`}
 								placeholder="Enter your email"
 							/>
 							{errors.email && (
-								<p className="mt-1 text-sm text-red-600">{errors.email}</p>
+								<p className="mt-1 text-sm text-red-400">{errors.email}</p>
 							)}
 						</div>
 
 						<div>
 							<label
 								htmlFor="password"
-								className="block text-sm font-medium text-gray-700 mb-2"
+								className="block text-sm font-medium text-gray-300 mb-2"
 							>
 								Password
 							</label>
@@ -157,13 +155,13 @@ export default function LoginPage() {
 								required
 								value={formData.password}
 								onChange={handleChange}
-								className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-									errors.password ? "border-red-300" : "border-gray-300"
+								className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200 bg-[#101113] text-white placeholder-gray-400 ${
+									errors.password ? "border-red-500" : "border-gray-600"
 								}`}
 								placeholder="Enter your password"
 							/>
 							{errors.password && (
-								<p className="mt-1 text-sm text-red-600">{errors.password}</p>
+								<p className="mt-1 text-sm text-red-400">{errors.password}</p>
 							)}
 						</div>
 
@@ -173,18 +171,18 @@ export default function LoginPage() {
 									id="remember-me"
 									name="remember-me"
 									type="checkbox"
-									className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+									className="h-4 w-4 text-cyan-400 focus:ring-cyan-400 border-gray-600 rounded bg-[#101113]"
 								/>
 								<label
 									htmlFor="remember-me"
-									className="ml-2 block text-sm text-gray-700"
+									className="ml-2 block text-sm text-gray-300"
 								>
 									Remember me
 								</label>
 							</div>
 							<Link
 								href="/forgot-password"
-								className="text-sm text-blue-600 hover:text-blue-500"
+								className="text-sm text-cyan-400 hover:text-cyan-300"
 							>
 								Forgot password?
 							</Link>
@@ -193,11 +191,11 @@ export default function LoginPage() {
 						<button
 							type="submit"
 							disabled={isLoading}
-							className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+							className="w-full bg-cyan-400 text-black py-3 px-4 rounded-lg font-medium hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							{isLoading ? (
 								<div className="flex items-center justify-center">
-									<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+									<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
 									Signing in...
 								</div>
 							) : (
@@ -209,17 +207,17 @@ export default function LoginPage() {
 					<div className="mt-6">
 						<div className="relative">
 							<div className="absolute inset-0 flex items-center">
-								<div className="w-full border-t border-gray-300" />
+								<div className="w-full border-t border-gray-600" />
 							</div>
 							<div className="relative flex justify-center text-sm">
-								<span className="px-2 bg-white text-gray-500">
+								<span className="px-2 bg-[#18191b] text-gray-400">
 									Or continue with
 								</span>
 							</div>
 						</div>
 
 						<div className="mt-6 grid grid-cols-2 gap-3">
-							<button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-200">
+							<button className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-[#101113] text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors duration-200">
 								<svg className="w-5 h-5" viewBox="0 0 24 24">
 									<path
 										fill="currentColor"
@@ -240,7 +238,7 @@ export default function LoginPage() {
 								</svg>
 								<span className="ml-2">Google</span>
 							</button>
-							<button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-200">
+							<button className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-[#101113] text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors duration-200">
 								<svg
 									className="w-5 h-5"
 									fill="currentColor"
@@ -253,11 +251,11 @@ export default function LoginPage() {
 						</div>
 					</div>
 
-					<p className="mt-6 text-center text-sm text-gray-600">
+					<p className="mt-6 text-center text-sm text-gray-400">
 						Don't have an account?{" "}
 						<Link
 							href="/signup"
-							className="font-medium text-blue-600 hover:text-blue-500"
+							className="font-medium text-cyan-400 hover:text-cyan-300"
 						>
 							Sign up
 						</Link>

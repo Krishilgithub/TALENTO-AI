@@ -43,19 +43,20 @@ export default function DashboardPage() {
 	if (!user) return null;
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+		<div className="min-h-screen bg-[#101113]">
 			{/* Header */}
-			<header className="bg-white shadow-sm border-b border-gray-200">
+			<header className="bg-[#18191b] shadow-sm border-b border-gray-700">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="flex justify-between items-center py-4">
 						<div className="flex items-center">
-							<Link href="/" className="text-2xl font-bold text-gray-900">
+							<Link href="/" className="text-2xl font-bold text-white">
 								Talento AI
 							</Link>
 						</div>
 						<div className="flex items-center space-x-4">
-							<div className="text-sm text-gray-700">
-								Welcome, <span className="font-semibold">{user.name}</span>
+							<div className="text-sm text-gray-300">
+								Welcome,{" "}
+								<span className="font-semibold text-white">{user.name}</span>
 							</div>
 							<button
 								onClick={handleLogout}
@@ -71,17 +72,17 @@ export default function DashboardPage() {
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				{/* Dashboard Header */}
 				<div className="mb-8">
-					<h1 className="text-3xl font-bold text-gray-900 mb-2">
+					<h1 className="text-3xl font-bold text-white mb-2">
 						Your Career Dashboard
 					</h1>
-					<p className="text-gray-600">
+					<p className="text-gray-300">
 						Master your interviews and accelerate your career with AI-powered
 						tools
 					</p>
 				</div>
 
 				{/* Navigation Tabs */}
-				<div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+				<div className="bg-[#18191b] rounded-xl shadow-sm border border-gray-700 mb-8">
 					<nav className="flex space-x-8 px-6">
 						{[
 							{ id: "overview", name: "Overview", icon: "📊" },
@@ -96,8 +97,8 @@ export default function DashboardPage() {
 								onClick={() => setActiveTab(tab.id)}
 								className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
 									activeTab === tab.id
-										? "border-blue-500 text-blue-600"
-										: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+										? "border-cyan-400 text-cyan-400"
+										: "border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600"
 								}`}
 							>
 								<span className="mr-2">{tab.icon}</span>
@@ -108,7 +109,7 @@ export default function DashboardPage() {
 				</div>
 
 				{/* Tab Content */}
-				<div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+				<div className="bg-[#18191b] rounded-xl shadow-sm border border-gray-700 p-6">
 					{activeTab === "overview" && <OverviewTab user={user} />}
 					{activeTab === "interviews" && <InterviewPrepTab />}
 					{activeTab === "practice" && <PracticeSessionsTab />}
@@ -176,10 +177,10 @@ function OverviewTab({ user }) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-xl font-semibold text-gray-900 mb-4">
+				<h2 className="text-xl font-semibold text-white mb-4">
 					Welcome back, {user.name}!
 				</h2>
-				<p className="text-gray-600">
+				<p className="text-gray-300">
 					Here's your progress summary and recent activities.
 				</p>
 			</div>
@@ -189,18 +190,18 @@ function OverviewTab({ user }) {
 				{stats.map((stat) => (
 					<div
 						key={stat.name}
-						className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-100"
+						className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg p-6 border border-gray-600"
 					>
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm font-medium text-gray-600">{stat.name}</p>
-								<p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+								<p className="text-sm font-medium text-gray-300">{stat.name}</p>
+								<p className="text-2xl font-bold text-white">{stat.value}</p>
 							</div>
 							<div
 								className={`text-sm font-medium ${
 									stat.changeType === "positive"
-										? "text-green-600"
-										: "text-red-600"
+										? "text-green-400"
+										: "text-red-400"
 								}`}
 							>
 								{stat.change}
@@ -212,7 +213,7 @@ function OverviewTab({ user }) {
 
 			{/* Quick Actions */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200">
+				<button className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white p-4 rounded-lg hover:from-cyan-700 hover:to-blue-700 transition-all duration-200">
 					<div className="text-2xl mb-2">🎯</div>
 					<h3 className="font-semibold">Start Practice Session</h3>
 					<p className="text-sm opacity-90">Begin a new interview practice</p>
@@ -231,14 +232,14 @@ function OverviewTab({ user }) {
 
 			{/* Recent Activities */}
 			<div>
-				<h3 className="text-lg font-semibold text-gray-900 mb-4">
+				<h3 className="text-lg font-semibold text-white mb-4">
 					Recent Activities
 				</h3>
 				<div className="space-y-3">
 					{recentActivities.map((activity, index) => (
 						<div
 							key={index}
-							className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+							className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700"
 						>
 							<div className="flex items-center space-x-3">
 								<div className="text-lg">
@@ -248,8 +249,8 @@ function OverviewTab({ user }) {
 									{activity.type === "assessment" && "📝"}
 								</div>
 								<div>
-									<p className="font-medium text-gray-900">{activity.title}</p>
-									<p className="text-sm text-gray-500">{activity.time}</p>
+									<p className="font-medium text-white">{activity.title}</p>
+									<p className="text-sm text-gray-400">{activity.time}</p>
 								</div>
 							</div>
 						</div>
@@ -687,14 +688,14 @@ function CareerToolsTab() {
 			</div>
 
 			{/* Resume Upload & ATS Score */}
-			<div className="bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-xl p-6 mb-6 shadow-sm">
-				<h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+			<div className="bg-gradient-to-r from-gray-800 to-gray-700 border border-cyan-500/30 rounded-xl p-6 mb-6 shadow-sm">
+				<h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
 					<span role="img" aria-label="Resume">
 						📄
 					</span>{" "}
 					Resume Optimizer & ATS Score
 				</h3>
-				<p className="text-gray-700 mb-4">
+				<p className="text-gray-300 mb-4">
 					Upload your resume (PDF or DOCX) to see how it performs with Applicant
 					Tracking Systems and get optimization tips.
 				</p>
@@ -711,43 +712,64 @@ function CareerToolsTab() {
 					</div>
 				)}
 				{atsScore !== null && (
-					<div className="mt-4 p-4 rounded-lg bg-white border border-cyan-200 shadow">
+					<div className="mt-4 p-4 rounded-lg bg-gray-800 border border-cyan-500/30 shadow">
 						<div className="text-center mb-4">
-							<div className="text-3xl font-bold text-cyan-600 mb-2">
+							<div className="text-3xl font-bold text-cyan-400 mb-2">
 								ATS Score: {atsScore}/100
 							</div>
-							<div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center text-white font-bold text-lg ${
-								atsScore >= 90 ? 'bg-green-500' : 
-								atsScore >= 80 ? 'bg-blue-500' : 
-								atsScore >= 70 ? 'bg-yellow-500' : 
-								atsScore >= 60 ? 'bg-orange-500' : 'bg-red-500'
-							}`}>
-								{atsScore >= 90 ? 'A+' : 
-								 atsScore >= 80 ? 'A' : 
-								 atsScore >= 70 ? 'B' : 
-								 atsScore >= 60 ? 'C' : 'D'}
+							<div
+								className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center text-white font-bold text-lg ${
+									atsScore >= 90
+										? "bg-green-500"
+										: atsScore >= 80
+										? "bg-blue-500"
+										: atsScore >= 70
+										? "bg-yellow-500"
+										: atsScore >= 60
+										? "bg-orange-500"
+										: "bg-red-500"
+								}`}
+							>
+								{atsScore >= 90
+									? "A+"
+									: atsScore >= 80
+									? "A"
+									: atsScore >= 70
+									? "B"
+									: atsScore >= 60
+									? "C"
+									: "D"}
 							</div>
 						</div>
-						<p className="text-gray-800 text-center mb-4 font-medium">{atsFeedback}</p>
-						
+						<p className="text-gray-200 text-center mb-4 font-medium">
+							{atsFeedback}
+						</p>
+
 						{suggestions.length > 0 && (
 							<div className="mt-4">
-								<h4 className="font-semibold text-gray-900 mb-2">Optimization Suggestions:</h4>
+								<h4 className="font-semibold text-white mb-2">
+									Optimization Suggestions:
+								</h4>
 								<ul className="space-y-1">
 									{suggestions.map((suggestion, index) => (
-										<li key={index} className="text-sm text-gray-700 flex items-start gap-2">
-											<span className="text-cyan-600 mt-1">•</span>
+										<li
+											key={index}
+											className="text-sm text-gray-300 flex items-start gap-2"
+										>
+											<span className="text-cyan-400 mt-1">•</span>
 											{suggestion}
 										</li>
 									))}
 								</ul>
 							</div>
 						)}
-						
+
 						{atsScore < 80 && (
-							<div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-								<p className="text-sm text-yellow-800 font-medium">
-									💡 Pro Tip: Use standard headings, avoid graphics, and add keywords from your target job description for better ATS compatibility.
+							<div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
+								<p className="text-sm text-yellow-400 font-medium">
+									💡 Pro Tip: Use standard headings, avoid graphics, and add
+									keywords from your target job description for better ATS
+									compatibility.
 								</p>
 							</div>
 						)}
@@ -759,19 +781,19 @@ function CareerToolsTab() {
 				{tools.map((tool) => (
 					<div
 						key={tool.name}
-						className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200"
+						className="border border-gray-600 rounded-lg p-6 hover:shadow-md transition-shadow duration-200 bg-gray-800"
 					>
 						<div className="text-3xl mb-4">{tool.icon}</div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-2">
+						<h3 className="text-lg font-semibold text-white mb-2">
 							{tool.name}
 						</h3>
-						<p className="text-gray-600 mb-4">{tool.description}</p>
+						<p className="text-gray-300 mb-4">{tool.description}</p>
 						<div className="flex items-center justify-between">
 							<span
 								className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
 									tool.status === "Available"
-										? "bg-green-100 text-green-800"
-										: "bg-gray-100 text-gray-800"
+										? "bg-green-900/30 text-green-400 border border-green-500/30"
+										: "bg-gray-700 text-gray-400 border border-gray-600"
 								}`}
 							>
 								{tool.status}
@@ -780,8 +802,8 @@ function CareerToolsTab() {
 								disabled={tool.status !== "Available"}
 								className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
 									tool.status === "Available"
-										? "bg-blue-600 text-white hover:bg-blue-700"
-										: "bg-gray-300 text-gray-500 cursor-not-allowed"
+										? "bg-cyan-400 text-black hover:bg-cyan-300"
+										: "bg-gray-600 text-gray-400 cursor-not-allowed"
 								}`}
 							>
 								{tool.status === "Available" ? "Use Tool" : "Coming Soon"}
