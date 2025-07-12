@@ -8,38 +8,38 @@ import WhySection from "./components/WhySection.jsx";
 import TestimonialsSection from "./components/TestimonialsSection.jsx";
 import PricingSection from "./components/PricingSection.jsx";
 import FAQSection from "./components/FAQSection.jsx";
-import { useEffect } from "react";
-import gsap from "gsap";
-import LocomotiveScroll from "locomotive-scroll";
+// import { useEffect } from "react";
+// import gsap from "gsap";
+// import LocomotiveScroll from "locomotive-scroll";
 
 export default function Home() {
-	useEffect(() => {
-		const scroll = new LocomotiveScroll({
-			el: document.querySelector("[data-scroll-container]"),
-			smooth: true,
-			lerp: 0.08,
-		});
-		gsap.utils.toArray(".reveal").forEach((el) => {
-			gsap.fromTo(
-				el,
-				{ opacity: 0, y: 40 },
-				{
-					opacity: 1,
-					y: 0,
-					scrollTrigger: {
-						trigger: el,
-						start: "top 80%",
-						toggleActions: "play none none none",
-					},
-					duration: 1,
-					ease: "power2.out",
-				}
-			);
-		});
-		return () => {
-			scroll.destroy();
-		};
-	}, []);
+	// useEffect(() => {
+	// 	const scroll = new LocomotiveScroll({
+	// 		el: document.querySelector("[data-scroll-container]"),
+	// 		smooth: true,
+	// 		lerp: 0.08,
+	// 	});
+	// 	gsap.utils.toArray(".reveal").forEach((el) => {
+	// 		gsap.fromTo(
+	// 			el,
+	// 			{ opacity: 0, y: 40 },
+	// 			{
+	// 				opacity: 1,
+	// 				y: 0,
+	// 				scrollTrigger: {
+	// 					trigger: el,
+	// 					start: "top -100%",
+	// 					toggleActions: "play none none none",
+	// 				},
+	// 				duration: 1,
+	// 				ease: "power2.out",
+	// 			}
+	// 		);
+	// 	});
+	// 	return () => {
+	// 		scroll.destroy();
+	// 	};
+	// }, []);
 
 	return (
 		<div

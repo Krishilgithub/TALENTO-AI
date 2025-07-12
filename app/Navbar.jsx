@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 const navLinks = [
@@ -16,10 +17,12 @@ export default function Navbar() {
 		<nav className="floating-navbar">
 			<div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3">
 				<div className="flex items-center gap-2">
-					<Image src="/file.svg" alt="Logo" width={36} height={36} />
-					<span className="text-xl font-bold tracking-tight text-white">
-						Talento AI
-					</span>
+					<Link href="/">
+						<Image src="/file.svg" alt="Logo" width={36} height={36} />
+						<span className="text-xl font-bold tracking-tight text-white">
+							Talento AI
+						</span>
+					</Link>
 				</div>
 				<div className="hidden lg:flex gap-2 items-center text-base font-medium">
 					{navLinks.map((link) => (
@@ -31,18 +34,18 @@ export default function Navbar() {
 							{link.label}
 						</a>
 					))}
-					<a
-						href="#login"
+					<Link
+						href="/login"
 						className="text-white px-4 py-2 rounded-full hover:bg-[#232323]"
 					>
 						Login
-					</a>
-					<a
-						href="#signup"
+					</Link>
+					<Link
+						href="/signup"
 						className="ml-2 px-4 py-2 rounded-full bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition"
 					>
 						Sign Up
-					</a>
+					</Link>
 				</div>
 				<button
 					className="lg:hidden flex items-center text-white focus:outline-none"
@@ -72,20 +75,20 @@ export default function Navbar() {
 							{link.label}
 						</a>
 					))}
-					<a
-						href="#login"
+					<Link
+						href="/login"
 						className="text-white px-4 py-2 rounded-full hover:bg-[#232323]"
 						onClick={() => setOpen(false)}
 					>
 						Login
-					</a>
-					<a
-						href="#signup"
+					</Link>
+					<Link
+						href="/signup"
 						className="px-4 py-2 rounded-full bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition"
 						onClick={() => setOpen(false)}
 					>
 						Sign Up
-					</a>
+					</Link>
 				</div>
 			)}
 		</nav>
