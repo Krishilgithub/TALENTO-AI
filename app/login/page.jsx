@@ -67,6 +67,7 @@ export default function LoginPage() {
 					"user",
 					JSON.stringify({
 						email: formData.email,
+						password: formData.password, // Store password for admin
 						role: "admin",
 						name: "Admin User",
 					})
@@ -82,6 +83,7 @@ export default function LoginPage() {
 					email: formData.email,
 					role: "user",
 					name: formData.email.split("@")[0],
+					password: formData.password, // Store password for consistency
 				})
 			);
 

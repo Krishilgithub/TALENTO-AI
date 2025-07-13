@@ -17,10 +17,7 @@ export default function AdminPage() {
 			return;
 		}
 		const userObj = JSON.parse(userData);
-		if (
-			userObj.email !== "admin123@gmail.com" ||
-			userObj.password !== "admin123"
-		) {
+		if (userObj.email !== "admin123@gmail.com" || userObj.role !== "admin") {
 			router.push("/login");
 			return;
 		}

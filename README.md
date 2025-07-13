@@ -70,6 +70,3 @@ This project aims to replicate the features and user experience of [LockedIn AI]
 6. Deploy to Vercel and set up CI/CD.
 
 ---
-
-## License
-This project is for educational and prototyping purposes only. Please respect the original creators of LockedIn AI.
