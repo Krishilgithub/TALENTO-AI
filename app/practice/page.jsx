@@ -29,9 +29,9 @@ const PRACTICE_CATEGORIES = [
 
 export default function PracticePage() {
 	return (
-		<div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4">
-			<h1 className="text-3xl font-bold mb-2">Start Practice Session</h1>
-			<p className="text-lg text-gray-700 mb-8 text-center max-w-2xl">
+		<div className="min-h-screen flex flex-col items-center justify-center bg-[#101113] py-12 px-4">
+			<h1 className="text-3xl font-bold mb-2 text-white">Start Practice Session</h1>
+			<p className="text-lg text-gray-300 mb-8 text-center max-w-2xl">
 				Welcome! Choose a category below to begin practicing and improving your
 				skills. Each session is tailored to help you grow and track your
 				progress.
@@ -40,14 +40,14 @@ export default function PracticePage() {
 				{PRACTICE_CATEGORIES.map((cat) => (
 					<div
 						key={cat.key}
-						className="bg-white rounded-xl shadow-md border border-blue-100 p-6 flex flex-col items-start"
+						className="bg-[#18191b] rounded-xl shadow-md border border-cyan-900 p-6 flex flex-col items-start"
 					>
-						<h2 className="text-xl font-semibold mb-2 text-blue-800">
+						<h2 className="text-xl font-semibold mb-2 text-cyan-400">
 							{cat.name}
 						</h2>
-						<p className="text-gray-600 mb-4">{cat.description}</p>
+						<p className="text-gray-400 mb-4">{cat.description}</p>
 						<button
-							className="mt-auto bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200"
+							className="mt-auto bg-cyan-400 text-black px-4 py-2 rounded hover:bg-cyan-300 transition-colors duration-200"
 							disabled
 						>
 							Start Practice
@@ -55,7 +55,7 @@ export default function PracticePage() {
 					</div>
 				))}
 			</div>
-			<div className="mt-12 text-gray-400 text-sm">
+			<div className="mt-12 text-gray-500 text-sm">
 				(Practice session functionality coming soon!)
 			</div>
 		</div>

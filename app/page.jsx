@@ -55,7 +55,7 @@ export default function Home() {
 						Career Tools
 					</h1>
 					<p className="text-lg sm:text-xl max-w-2xl mb-8 text-gray-300">
-						Real-time coaching, resume optimization, coding help, and more.
+						Resume building and Optimization, Job Search, Interview Preparation,
 						Everything you need to land your dream job, powered by the latest AI
 						technology.
 					</p>

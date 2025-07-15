@@ -1,0 +1,7 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="16" cy="16" r="7" fill="#22d3ee" stroke="#0891b2" stroke-width="2"/>
+  <circle cx="16" cy="16" r="3.5" fill="#0891b2" fill-opacity="0.2"/>
+  <filter id="shadow" x="0" y="0" width="32" height="32">
+    <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#0891b2" flood-opacity="0.3"/>
+  </filter>
+</svg> 

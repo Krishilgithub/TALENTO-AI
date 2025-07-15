@@ -71,11 +71,11 @@ export default function DashboardPage() {
 
 			{/* Navigation for new features */}
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				<div className="flex space-x-4 mb-8">
+				{/* <div className="flex space-x-4 mb-8">
 					<Link href="/practice" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Start Practice Session</Link>
 					<Link href="/assessment" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Take Assessment</Link>
 					<Link href="/career" className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">Career Planning</Link>
-				</div>
+				</div> */}
 				{/* Dashboard Header */}
 				<div className="mb-8">
 					<h1 className="text-3xl font-bold text-white mb-2">
@@ -219,22 +219,31 @@ function OverviewTab({ user }) {
 
 			{/* Quick Actions */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<button className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white p-4 rounded-lg hover:from-cyan-700 hover:to-blue-700 transition-all duration-200">
-					<div className="text-2xl mb-2">🎯</div>
-					<h3 className="font-semibold">Start Practice Session</h3>
-					<p className="text-sm opacity-90">Begin a new interview practice</p>
-				</button>
-				<button className="bg-gradient-to-r from-green-600 to-teal-600 text-white p-4 rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200">
-					<div className="text-2xl mb-2">📝</div>
-					<h3 className="font-semibold">Take Assessment</h3>
-					<p className="text-sm opacity-90">Evaluate your skills</p>
-				</button>
-				<button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200">
-					<div className="text-2xl mb-2">🚀</div>
-					<h3 className="font-semibold">Career Planning</h3>
-					<p className="text-sm opacity-90">Plan your next steps</p>
-				</button>
+				<Link href="/practice" className="block h-full">
+					<div className="w-full h-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white p-4 rounded-lg hover:from-cyan-700 hover:to-blue-700 transition-all duration-200 flex flex-col justify-start items-start">
+						<div className="text-2xl mb-2">🎯</div>
+						<h3 className="font-semibold">Start Practice Session</h3>
+						<p className="text-sm opacity-90">Begin a new interview practice</p>
+					</div>
+				</Link>
+
+				<Link href="/assessment" className="block h-full">
+					<div className="w-full h-full bg-gradient-to-r from-green-600 to-teal-600 text-white p-4 rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200 flex flex-col justify-start items-start">
+						<div className="text-2xl mb-2">📝</div>
+						<h3 className="font-semibold">Take Assessment</h3>
+						<p className="text-sm opacity-90">Evaluate your skills</p>
+					</div>
+				</Link>
+
+				<Link href="/career" className="block h-full">
+					<div className="w-full h-full bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex flex-col justify-start items-start">
+						<div className="text-2xl mb-2">🚀</div>
+						<h3 className="font-semibold">Career Planning</h3>
+						<p className="text-sm opacity-90">Plan your next steps</p>
+					</div>
+				</Link>
 			</div>
+
 
 			{/* Recent Activities */}
 			<div>
@@ -303,10 +312,10 @@ function InterviewPrepTab() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-xl font-semibold text-gray-900 mb-2">
+				<h2 className="text-xl font-semibold text-white mb-2">
 					Interview Preparation
 				</h2>
-				<p className="text-gray-600">
+				<p className="text-gray-300">
 					Choose your interview type and start practicing with AI-powered
 					feedback.
 				</p>
@@ -316,7 +325,7 @@ function InterviewPrepTab() {
 				{interviewTypes.map((type) => (
 					<div
 						key={type.name}
-						className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200"
+						className="border border-cyan-900 rounded-lg p-6 bg-[#18191b] hover:shadow-md transition-shadow duration-200"
 					>
 						<div className="flex items-start justify-between mb-4">
 							<div className="text-3xl">{type.icon}</div>
@@ -324,25 +333,25 @@ function InterviewPrepTab() {
 								<span
 									className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
 										type.difficulty === "Beginner"
-											? "bg-green-100 text-green-800"
+											? "bg-green-900 text-green-300"
 											: type.difficulty === "Intermediate"
-											? "bg-yellow-100 text-yellow-800"
-											: "bg-red-100 text-red-800"
+											? "bg-yellow-900 text-yellow-200"
+											: "bg-red-900 text-red-300"
 									}`}
 								>
 									{type.difficulty}
 								</span>
 							</div>
 						</div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-2">
+						<h3 className="text-lg font-semibold text-white mb-2">
 							{type.name}
 						</h3>
-						<p className="text-gray-600 mb-4">{type.description}</p>
+						<p className="text-gray-400 mb-4">{type.description}</p>
 						<div className="flex items-center justify-between">
 							<span className="text-sm text-gray-500">
 								Duration: {type.duration}
 							</span>
-							<button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+							<button className="bg-cyan-400 text-black px-4 py-2 rounded-lg hover:bg-cyan-300 transition-colors duration-200">
 								Start Practice
 							</button>
 						</div>
@@ -351,11 +360,11 @@ function InterviewPrepTab() {
 			</div>
 
 			{/* Quick Tips */}
-			<div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-gray-900 mb-3">
+			<div className="bg-[#232323] border border-cyan-900 rounded-lg p-6">
+				<h3 className="text-lg font-semibold text-cyan-400 mb-3">
 					💡 Quick Tips
 				</h3>
-				<ul className="space-y-2 text-gray-700">
+				<ul className="space-y-2 text-gray-300">
 					<li>• Practice regularly to build confidence</li>
 					<li>• Review your recordings to identify improvement areas</li>
 					<li>• Use the STAR method for behavioral questions</li>
@@ -382,29 +391,21 @@ function PracticeSessionsTab() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-xl font-semibold text-gray-900 mb-2">
-					Practice Sessions
-				</h2>
-				<p className="text-gray-600">
-					Start a new practice session with AI-powered feedback and analysis.
-				</p>
+				<h2 className="text-xl font-semibold text-white mb-2 font-sans">Practice Sessions</h2>
+				<p className="text-gray-300 font-sans">Start a new practice session with AI-powered feedback and analysis.</p>
 			</div>
 
 			{/* Session Setup */}
-			<div className="bg-gray-50 rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-gray-900 mb-4">
-					Start New Session
-				</h3>
+			<div className="bg-[#18191b] rounded-lg p-6">
+				<h3 className="text-lg font-semibold text-cyan-400 mb-4 font-sans">Start New Session</h3>
 
 				<div className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Session Type
-						</label>
+						<label className="block text-sm font-medium text-black mb-2 font-sans">Session Type</label>
 						<select
 							value={sessionType}
 							onChange={(e) => setSessionType(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans"
 						>
 							<option value="behavioral">Behavioral Interview</option>
 							<option value="technical">Technical Interview</option>
@@ -415,10 +416,8 @@ function PracticeSessionsTab() {
 
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-2">
-								Duration
-							</label>
-							<select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+							<label className="block text-sm font-medium text-black mb-2 font-sans">Duration</label>
+							<select className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans">
 								<option>15 minutes</option>
 								<option>30 minutes</option>
 								<option>45 minutes</option>
@@ -426,20 +425,16 @@ function PracticeSessionsTab() {
 							</select>
 						</div>
 						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-2">
-								Difficulty
-							</label>
-							<select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+							<label className="block text-sm font-medium text-black mb-2 font-sans">Difficulty</label>
+							<select className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans">
 								<option>Beginner</option>
 								<option>Intermediate</option>
 								<option>Advanced</option>
 							</select>
 						</div>
 						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-2">
-								Questions Count
-							</label>
-							<select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+							<label className="block text-sm font-medium text-black mb-2 font-sans">Questions Count</label>
+							<select className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans">
 								<option>5 questions</option>
 								<option>10 questions</option>
 								<option>15 questions</option>
@@ -451,11 +446,11 @@ function PracticeSessionsTab() {
 					<button
 						onClick={startSession}
 						disabled={isRecording}
-						className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+						className="w-full bg-cyan-400 text-black py-3 px-4 rounded-lg font-medium hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
 					>
 						{isRecording ? (
 							<div className="flex items-center justify-center">
-								<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+								<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
 								Starting Session...
 							</div>
 						) : (
@@ -467,9 +462,7 @@ function PracticeSessionsTab() {
 
 			{/* Recent Sessions */}
 			<div>
-				<h3 className="text-lg font-semibold text-gray-900 mb-4">
-					Recent Sessions
-				</h3>
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">Recent Sessions</h3>
 				<div className="space-y-3">
 					{[
 						{
@@ -493,22 +486,22 @@ function PracticeSessionsTab() {
 					].map((session, index) => (
 						<div
 							key={index}
-							className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+							className="flex items-center justify-between p-4 bg-[#232323] rounded-lg"
 						>
 							<div className="flex items-center space-x-4">
 								<div className="text-2xl">💬</div>
 								<div>
-									<p className="font-medium text-gray-900">
+									<p className="font-medium text-white font-sans">
 										{session.type} Interview
 									</p>
-									<p className="text-sm text-gray-500">
+									<p className="text-sm text-gray-400 font-sans">
 										{session.date} • {session.duration}
 									</p>
 								</div>
 							</div>
 							<div className="text-right">
-								<p className="font-semibold text-gray-900">{session.score}</p>
-								<p className="text-sm text-gray-500">Score</p>
+								<p className="font-semibold text-cyan-400 font-sans">{session.score}</p>
+								<p className="text-sm text-gray-400 font-sans">Score</p>
 							</div>
 						</div>
 					))}
@@ -685,99 +678,31 @@ function CareerToolsTab() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-xl font-semibold text-gray-900 mb-2">
-					Career Tools
-				</h2>
-				<p className="text-gray-600">
-					Access powerful tools to accelerate your career growth.
-				</p>
+				<h2 className="text-xl font-semibold text-white mb-2 font-sans">Career Tools</h2>
+				<p className="text-gray-300 font-sans">Access powerful tools to accelerate your career growth.</p>
 			</div>
 
 			{/* Resume Upload & ATS Score */}
-			<div className="bg-gradient-to-r from-gray-800 to-gray-700 border border-cyan-500/30 rounded-xl p-6 mb-6 shadow-sm">
-				<h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-					<span role="img" aria-label="Resume">
-						📄
-					</span>{" "}
-					Resume Optimizer & ATS Score
-				</h3>
-				<p className="text-gray-300 mb-4">
-					Upload your resume (PDF or DOCX) to see how it performs with Applicant
-					Tracking Systems and get optimization tips.
-				</p>
+			<div className="bg-[#18191b] border border-cyan-900 rounded-xl p-6 mb-6 shadow-sm">
+				<h3 className="text-lg font-bold text-cyan-400 mb-2 flex items-center gap-2 font-sans">Resume Optimizer & ATS Score</h3>
+				<p className="text-gray-400 mb-4 font-sans">Upload your resume (PDF or DOCX) to see how it performs with Applicant Tracking Systems and get optimization tips.</p>
 				<input
 					type="file"
 					accept=".pdf,.docx"
 					onChange={handleResumeUpload}
-					className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-100 file:text-cyan-700 hover:file:bg-cyan-200 mb-4"
+					className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-900 file:text-cyan-300 hover:file:bg-cyan-800 mb-4 font-sans"
 				/>
 				{isAnalyzing && (
-					<div className="flex items-center gap-2 text-cyan-700 font-medium">
-						<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-cyan-600"></div>
-						Analyzing your resume...
-					</div>
+					<div className="flex items-center gap-2 text-cyan-400 font-medium font-sans">Analyzing your resume...</div>
 				)}
 				{atsScore !== null && (
-					<div className="mt-4 p-4 rounded-lg bg-gray-800 border border-cyan-500/30 shadow">
-						<div className="text-center mb-4">
-							<div className="text-3xl font-bold text-cyan-400 mb-2">
-								ATS Score: {atsScore}/100
-							</div>
-							<div
-								className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center text-white font-bold text-lg ${
-									atsScore >= 90
-										? "bg-green-500"
-										: atsScore >= 80
-										? "bg-blue-500"
-										: atsScore >= 70
-										? "bg-yellow-500"
-										: atsScore >= 60
-										? "bg-orange-500"
-										: "bg-red-500"
-								}`}
-							>
-								{atsScore >= 90
-									? "A+"
-									: atsScore >= 80
-									? "A"
-									: atsScore >= 70
-									? "B"
-									: atsScore >= 60
-									? "C"
-									: "D"}
-							</div>
-						</div>
-						<p className="text-gray-200 text-center mb-4 font-medium">
-							{atsFeedback}
-						</p>
-
+					<div className="mt-4 p-4 rounded-lg bg-[#232323] border border-cyan-900 shadow">
+						<div className="text-lg font-bold text-cyan-400 mb-2 font-sans">ATS Score: {atsScore}</div>
+						<div className="text-gray-300 font-sans">{atsFeedback}</div>
 						{suggestions.length > 0 && (
-							<div className="mt-4">
-								<h4 className="font-semibold text-white mb-2">
-									Optimization Suggestions:
-								</h4>
-								<ul className="space-y-1">
-									{suggestions.map((suggestion, index) => (
-										<li
-											key={index}
-											className="text-sm text-gray-300 flex items-start gap-2"
-										>
-											<span className="text-cyan-400 mt-1">•</span>
-											{suggestion}
-										</li>
-									))}
-								</ul>
-							</div>
-						)}
-
-						{atsScore < 80 && (
-							<div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-								<p className="text-sm text-yellow-400 font-medium">
-									💡 Pro Tip: Use standard headings, avoid graphics, and add
-									keywords from your target job description for better ATS
-									compatibility.
-								</p>
-							</div>
+							<ul className="mt-2 text-gray-400 text-sm font-sans list-disc list-inside">
+								{suggestions.map((s, i) => <li key={i}>{s}</li>)}
+							</ul>
 						)}
 					</div>
 				)}
@@ -785,36 +710,15 @@ function CareerToolsTab() {
 
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{tools.map((tool) => (
-					<div
-						key={tool.name}
-						className="border border-gray-600 rounded-lg p-6 hover:shadow-md transition-shadow duration-200 bg-gray-800"
-					>
-						<div className="text-3xl mb-4">{tool.icon}</div>
-						<h3 className="text-lg font-semibold text-white mb-2">
-							{tool.name}
-						</h3>
-						<p className="text-gray-300 mb-4">{tool.description}</p>
-						<div className="flex items-center justify-between">
-							<span
-								className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-									tool.status === "Available"
-										? "bg-green-900/30 text-green-400 border border-green-500/30"
-										: "bg-gray-700 text-gray-400 border border-gray-600"
-								}`}
-							>
-								{tool.status}
-							</span>
-							<button
-								disabled={tool.status !== "Available"}
-								className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-									tool.status === "Available"
-										? "bg-cyan-400 text-black hover:bg-cyan-300"
-										: "bg-gray-600 text-gray-400 cursor-not-allowed"
-								}`}
-							>
-								{tool.status === "Available" ? "Use Tool" : "Coming Soon"}
-							</button>
+					<div key={tool.name} className="bg-[#18191b] border border-cyan-900 rounded-lg p-6 flex items-center gap-4">
+						<div className="text-3xl">{tool.icon}</div>
+						<div className="flex-1">
+							<h4 className="text-lg font-semibold text-white mb-1 font-sans">{tool.name}</h4>
+							<p className="text-gray-400 text-sm font-sans">{tool.description}</p>
 						</div>
+						{tool.status === "Coming Soon" && (
+							<span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full font-sans bg-cyan-400 text-black">Coming Soon</span>
+						)}
 					</div>
 				))}
 			</div>
@@ -842,33 +746,23 @@ function ProgressTab() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-xl font-semibold text-gray-900 mb-2">
-					Your Progress
-				</h2>
-				<p className="text-gray-600">
-					Track your improvement across different skills and goals.
-				</p>
+				<h2 className="text-xl font-semibold text-white mb-2 font-sans">Your Progress</h2>
+				<p className="text-gray-300 font-sans">Track your improvement across different skills and goals.</p>
 			</div>
 
 			{/* Skills Progress */}
 			<div>
-				<h3 className="text-lg font-semibold text-gray-900 mb-4">
-					Skills Development
-				</h3>
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">Skills Development</h3>
 				<div className="space-y-4">
 					{progressData.skills.map((skill) => (
 						<div key={skill.name}>
 							<div className="flex justify-between items-center mb-2">
-								<span className="text-sm font-medium text-gray-700">
-									{skill.name}
-								</span>
-								<span className="text-sm font-semibold text-gray-900">
-									{skill.progress}%
-								</span>
+								<span className="text-sm font-medium text-gray-300 font-sans">{skill.name}</span>
+								<span className="text-sm font-semibold text-white font-sans">{skill.progress}%</span>
 							</div>
-							<div className="w-full bg-gray-200 rounded-full h-2">
+							<div className="w-full bg-[#232323] rounded-full h-2">
 								<div
-									className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-300"
+									className="bg-cyan-400 h-2 rounded-full transition-all duration-300"
 									style={{ width: `${skill.progress}%` }}
 								></div>
 							</div>
@@ -879,23 +773,16 @@ function ProgressTab() {
 
 			{/* Goals Progress */}
 			<div>
-				<h3 className="text-lg font-semibold text-gray-900 mb-4">
-					Goals Progress
-				</h3>
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">Goals Progress</h3>
 				<div className="space-y-4">
 					{progressData.goals.map((goal) => (
-						<div key={goal.name} className="bg-gray-50 rounded-lg p-4">
+						<div key={goal.name} className="bg-[#232323] rounded-lg p-4">
 							<div className="flex justify-between items-center mb-2">
-								<span className="font-medium text-gray-900">{goal.name}</span>
-								<span className="text-sm font-semibold text-gray-700">
-									{goal.completed}/{goal.total}
-								</span>
+								<span className="font-medium text-white font-sans">{goal.name}</span>
+								<span className="text-sm font-semibold text-gray-300 font-sans">{goal.completed}/{goal.total}</span>
 							</div>
-							<div className="w-full bg-gray-200 rounded-full h-2">
-								<div
-									className="bg-gradient-to-r from-green-600 to-teal-600 h-2 rounded-full transition-all duration-300"
-									style={{ width: `${(goal.completed / goal.total) * 100}%` }}
-								></div>
+							<div className="w-full bg-[#18191b] rounded-full h-2">
+								<div className="bg-green-400 h-2 rounded-full transition-all duration-300" style={{ width: `${(goal.completed / goal.total) * 100}%` }}></div>
 							</div>
 						</div>
 					))}
@@ -904,9 +791,7 @@ function ProgressTab() {
 
 			{/* Achievements */}
 			<div>
-				<h3 className="text-lg font-semibold text-gray-900 mb-4">
-					Recent Achievements
-				</h3>
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">Recent Achievements</h3>
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 					{[
 						{
@@ -917,7 +802,7 @@ function ProgressTab() {
 						{
 							title: "Skill Master",
 							description: "Improved a skill by 20%",
-							icon: "📈",
+							icon: "🚀",
 						},
 						{
 							title: "Consistent Learner",
@@ -927,13 +812,11 @@ function ProgressTab() {
 					].map((achievement, index) => (
 						<div
 							key={index}
-							className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4 text-center"
+							className="bg-[#232323] border border-yellow-900 rounded-lg p-4 text-center"
 						>
 							<div className="text-3xl mb-2">{achievement.icon}</div>
-							<h4 className="font-semibold text-gray-900 mb-1">
-								{achievement.title}
-							</h4>
-							<p className="text-sm text-gray-600">{achievement.description}</p>
+							<h4 className="font-semibold text-yellow-300 mb-1 font-sans">{achievement.title}</h4>
+							<p className="text-sm text-gray-400 font-sans">{achievement.description}</p>
 						</div>
 					))}
 				</div>
@@ -953,86 +836,60 @@ function SettingsTab({ user }) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-xl font-semibold text-gray-900 mb-2">
-					Account Settings
-				</h2>
-				<p className="text-gray-600">
-					Manage your account preferences and settings.
-				</p>
+				<h2 className="text-xl font-semibold text-white mb-2 font-sans">Account Settings</h2>
+				<p className="text-gray-300 font-sans">Manage your account preferences and settings.</p>
 			</div>
 
 			{/* Profile Information */}
-			<div className="bg-gray-50 rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-gray-900 mb-4">
-					Profile Information
-				</h3>
+			<div className="bg-[#18191b] rounded-lg p-6">
+				<h3 className="text-lg font-semibold text-cyan-400 mb-4 font-sans">Profile Information</h3>
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							First Name
-						</label>
+						<label className="block text-sm font-medium text-gray-300 mb-2 font-sans">First Name</label>
 						<input
 							type="text"
 							defaultValue={user.firstName || user.name.split(" ")[0]}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-[#101113] text-white font-sans"
 						/>
 					</div>
 					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Last Name
-						</label>
+						<label className="block text-sm font-medium text-gray-300 mb-2 font-sans">Last Name</label>
 						<input
 							type="text"
 							defaultValue={user.lastName || user.name.split(" ")[1] || ""}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-[#101113] text-white font-sans"
 						/>
 					</div>
 					<div className="md:col-span-2">
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Email
-						</label>
+						<label className="block text-sm font-medium text-gray-300 mb-2 font-sans">Email</label>
 						<input
 							type="email"
 							defaultValue={user.email}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-[#101113] text-white font-sans"
 						/>
 					</div>
 				</div>
-				<button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
-					Save Changes
-				</button>
+				<button className="mt-4 bg-cyan-400 text-black px-4 py-2 rounded-lg hover:bg-cyan-300 transition-colors duration-200 font-sans">Save Changes</button>
 			</div>
 
 			{/* Notification Settings */}
-			<div className="bg-gray-50 rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-gray-900 mb-4">
-					Notification Settings
-				</h3>
+			<div className="bg-[#18191b] rounded-lg p-6">
+				<h3 className="text-lg font-semibold text-cyan-400 mb-4 font-sans">Notification Settings</h3>
 				<div className="space-y-4">
 					{Object.entries(notifications).map(([key, value]) => (
 						<div key={key} className="flex items-center justify-between">
 							<div>
-								<p className="font-medium text-gray-900 capitalize">
-									{key} Notifications
-								</p>
-								<p className="text-sm text-gray-500">
-									{key === "email" && "Receive updates via email"}
-									{key === "push" && "Get push notifications"}
-									{key === "weekly" && "Weekly progress reports"}
-								</p>
+								<p className="font-medium text-white capitalize font-sans">{key} Notifications</p>
+								<p className="text-sm text-gray-400 font-sans">{key === "email" && "Receive updates via email"}{key === "push" && "Get push notifications"}{key === "weekly" && "Weekly progress reports"}</p>
 							</div>
 							<button
 								onClick={() =>
 									setNotifications((prev) => ({ ...prev, [key]: !value }))
 								}
-								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
-									value ? "bg-blue-600" : "bg-gray-200"
-								}`}
+								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${value ? "bg-cyan-400" : "bg-[#232323]"}`}
 							>
 								<span
-									className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-										value ? "translate-x-6" : "translate-x-1"
-									}`}
+									className={`inline-block h-4 w-4 transform rounded-full bg-[#101113] transition-transform duration-200 ${value ? "translate-x-6" : "translate-x-1"}`}
 								/>
 							</button>
 						</div>
@@ -1041,38 +898,32 @@ function SettingsTab({ user }) {
 			</div>
 
 			{/* Privacy Settings */}
-			<div className="bg-gray-50 rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-gray-900 mb-4">
-					Privacy & Security
-				</h3>
+			<div className="bg-[#18191b] rounded-lg p-6">
+				<h3 className="text-lg font-semibold text-cyan-400 mb-4 font-sans">Privacy & Security</h3>
 				<div className="space-y-4">
-					<button className="w-full text-left p-4 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors duration-200">
+					<button className="w-full text-left p-4 bg-[#232323] rounded-lg border border-gray-700 hover:bg-[#232323] transition-colors duration-200 font-sans">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="font-medium text-gray-900">Change Password</p>
-								<p className="text-sm text-gray-500">
-									Update your account password
-								</p>
+								<p className="font-medium text-white font-sans">Change Password</p>
+								<p className="text-sm text-gray-400 font-sans">Update your account password</p>
 							</div>
-							<span className="text-gray-400">→</span>
+							<span className="text-cyan-400">→</span>
 						</div>
 					</button>
-					<button className="w-full text-left p-4 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors duration-200">
+					<button className="w-full text-left p-4 bg-[#232323] rounded-lg border border-gray-700 hover:bg-[#232323] transition-colors duration-200 font-sans">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="font-medium text-gray-900">Data Export</p>
-								<p className="text-sm text-gray-500">Download your data</p>
+								<p className="font-medium text-white font-sans">Data Export</p>
+								<p className="text-sm text-gray-400 font-sans">Download your data</p>
 							</div>
-							<span className="text-gray-400">→</span>
+							<span className="text-cyan-400">→</span>
 						</div>
 					</button>
-					<button className="w-full text-left p-4 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors duration-200">
+					<button className="w-full text-left p-4 bg-[#232323] rounded-lg border border-gray-700 hover:bg-[#232323] transition-colors duration-200 font-sans">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="font-medium text-gray-900">Delete Account</p>
-								<p className="text-sm text-gray-500">
-									Permanently delete your account
-								</p>
+								<p className="font-medium text-white font-sans">Delete Account</p>
+								<p className="text-sm text-gray-400 font-sans">Permanently delete your account</p>
 							</div>
 							<span className="text-red-400">→</span>
 						</div>

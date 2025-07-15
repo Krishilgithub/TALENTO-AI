@@ -7,7 +7,7 @@ export default function PricingSection() {
 			<h2 className="text-3xl sm:text-4xl font-bold mb-8">Pricing</h2>
 			<div className="flex flex-col sm:flex-row gap-8 justify-center">
 				{/* Free Trial Plan */}
-				<div className="bg-[#18191b] rounded-2xl shadow-lg p-8 flex-1 hover:bg-[#232425] transition cursor-pointer border-2 border-gray-700">
+				<div className="bg-[#18191b] rounded-2xl shadow-lg p-8 flex-1 hover:bg-[#232425] transition cursor-pointer border-2 border-gray-700 min-w-[320px]">
 					<h3 className="text-xl font-bold mb-2 text-cyan-400">Free Trial</h3>
 					<p className="text-gray-400 mb-4">
 						Try all features for 7 days. No credit card required. Experience the
@@ -30,7 +30,7 @@ export default function PricingSection() {
 					</a>
 				</div>
 				{/* Pro Plan */}
-				<div className="bg-gradient-to-b from-cyan-900 to-[#18191b] rounded-2xl shadow-xl p-8 flex-1 hover:from-cyan-800 hover:to-[#232425] transition cursor-pointer border-4 border-cyan-400 scale-105">
+				<div className="bg-gradient-to-b from-cyan-900 to-[#18191b] rounded-2xl shadow-xl p-8 flex-1 hover:from-cyan-800 hover:to-[#232425] transition cursor-pointer border-4 border-cyan-400 scale-105 min-w-[320px]">
 					<h3 className="text-xl font-bold mb-2 text-cyan-300">Pro</h3>
 					<p className="text-gray-200 mb-4">
 						Unlock unlimited access to all features, priority support, and more.
@@ -55,7 +55,7 @@ export default function PricingSection() {
 					</a>
 				</div>
 				{/* Enterprise Plan */}
-				<div className="bg-[#232425] rounded-2xl shadow-lg p-8 flex-1 hover:bg-[#18191b] transition cursor-pointer border-2 border-cyan-900">
+				<div className="bg-[#232425] rounded-2xl shadow-lg p-8 flex-1 hover:bg-[#18191b] transition cursor-pointer border-2 border-cyan-900 min-w-[340px]">
 					<h3 className="text-xl font-bold mb-2 text-cyan-500">Enterprise</h3>
 					<p className="text-gray-300 mb-4">
 						For teams, universities, and organizations. Get custom solutions,

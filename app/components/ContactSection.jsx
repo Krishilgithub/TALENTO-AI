@@ -6,8 +6,7 @@ export default function ContactSection() {
 		>
 			<h2 className="text-3xl sm:text-4xl font-bold mb-4">Contact & Support</h2>
 			<p className="text-gray-400 mb-8 text-lg max-w-xl mx-auto">
-				Have a question, feedback, or need help? Fill out the form below and our
-				team will get back to you as soon as possible.
+				Have any Questions? Contact us below.
 			</p>
 			<form className="max-w-xl mx-auto flex flex-col gap-4 bg-[#18191b] p-8 rounded-xl shadow-lg">
 				<input

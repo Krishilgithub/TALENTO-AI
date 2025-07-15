@@ -28,9 +28,9 @@ const ASSESSMENTS = [
 
 export default function AssessmentPage() {
 	return (
-		<div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-50 via-white to-blue-50 py-12 px-4">
-			<h1 className="text-3xl font-bold mb-2">Take Assessment</h1>
-			<p className="text-lg text-gray-700 mb-8 text-center max-w-2xl">
+		<div className="min-h-screen flex flex-col items-center justify-center bg-[#101113] py-12 px-4">
+			<h1 className="text-3xl font-bold mb-2 text-white">Take Assessment</h1>
+			<p className="text-lg text-gray-300 mb-8 text-center max-w-2xl">
 				Ready to evaluate your skills? Choose an assessment below to get
 				started. Your results will help guide your learning and career planning.
 			</p>
@@ -38,14 +38,14 @@ export default function AssessmentPage() {
 				{ASSESSMENTS.map((assess) => (
 					<div
 						key={assess.key}
-						className="bg-white rounded-xl shadow-md border border-green-100 p-6 flex flex-col items-start"
+						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-6 flex flex-col items-start"
 					>
-						<h2 className="text-xl font-semibold mb-2 text-green-800">
+						<h2 className="text-xl font-semibold mb-2 text-green-400">
 							{assess.name}
 						</h2>
-						<p className="text-gray-600 mb-4">{assess.description}</p>
+						<p className="text-gray-400 mb-4">{assess.description}</p>
 						<button
-							className="mt-auto bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors duration-200"
+							className="mt-auto bg-green-400 text-black px-4 py-2 rounded hover:bg-green-300 transition-colors duration-200"
 							disabled
 						>
 							Start Assessment
@@ -53,7 +53,7 @@ export default function AssessmentPage() {
 					</div>
 				))}
 			</div>
-			<div className="mt-12 text-gray-400 text-sm">
+			<div className="mt-12 text-gray-500 text-sm">
 				(Assessment functionality coming soon!)
 			</div>
 		</div>
