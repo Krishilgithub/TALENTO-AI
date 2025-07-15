@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link"; // ✅ Importing Link
 
 export default function Footer() {
 	return (
@@ -6,12 +7,9 @@ export default function Footer() {
 			<div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 text-gray-400 text-sm">
 				<div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
 					<div className="flex items-center gap-2 mb-2 md:mb-0">
-						<Image
-							src="/file.svg"
-							alt="Talento AI Logo"
-							width={28}
-							height={28}
-						/>
+						<Link href="/">
+							<Image src="/file.png" alt="Logo" width={30} height={30} />
+						</Link>
 						<span>
 							© {new Date().getFullYear()} Talento AI. All rights reserved.
 						</span>
@@ -75,12 +73,6 @@ export default function Footer() {
 						GitHub
 					</a>
 				</div>
-			</div>
-			<div className="text-center text-xs text-gray-600 mt-4">
-				Built with <span className="text-cyan-400">Next.js</span>,{" "}
-				<span className="text-cyan-400">Tailwind CSS</span>,{" "}
-				<span className="text-cyan-400">GSAP</span>, and{" "}
-				<span className="text-cyan-400">Locomotive Scroll</span>.
 			</div>
 		</footer>
 	);

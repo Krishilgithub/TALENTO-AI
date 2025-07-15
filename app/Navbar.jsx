@@ -18,12 +18,10 @@ export default function Navbar() {
 			<div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3">
 				<div className="flex items-center gap-2">
 					<Link href="/">
-						<Image src="/file.svg" alt="Logo" width={36} height={36} />
-						<span className="text-xl font-bold tracking-tight text-white">
-							Talento AI
-						</span>
+						<Image src="/file.png" alt="Logo" width={30} height={30} />
 					</Link>
 				</div>
+
 				<div className="hidden lg:flex gap-2 items-center text-base font-medium">
 					{navLinks.map((link) => (
 						<a

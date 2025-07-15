@@ -1,5 +1,5 @@
 ## Project Overview
-This project aims to replicate the features and user experience of [LockedIn AI](https://www.lockedinai.com), a modern AI-powered platform for job interview preparation, resume building, and professional coaching. The site will be built using Next.js and will focus on delivering a clean, responsive, and interactive user interface with robust AI-driven features.
+This project aims to amek a modern AI-powered platform for job interview preparation, resume building, and professional coaching. The site will be built using Next.js and will focus on delivering a clean, responsive, and interactive user interface with robust AI-driven features.
 
 ---
 
