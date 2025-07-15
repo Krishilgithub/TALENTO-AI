@@ -1,5 +1,7 @@
 "use client";
 
+import React, { useState } from "react";
+
 const ASSESSMENTS = [
 	{
 		key: "aptitude",
@@ -27,6 +29,46 @@ const ASSESSMENTS = [
 ];
 
 export default function AssessmentPage() {
+	const [selectedFile, setSelectedFile] = useState(null);
+	const [loading, setLoading] = useState(false);
+	const [questions, setQuestions] = useState([]);
+	const [options, setOptions] = useState([]);
+	const [answers, setAnswers] = useState([]);
+	const [error, setError] = useState("");
+
+	const handleFileChange = (e) => {
+		setSelectedFile(e.target.files[0]);
+	};
+
+	const handleStartAssessment = async () => {
+		if (!selectedFile) return;
+		setLoading(true);
+		setError("");
+		setQuestions([]);
+		setOptions([]);
+		setAnswers([]);
+		try {
+			const formData = new FormData();
+			formData.append("file", selectedFile);
+			const res = await fetch(
+				"http://localhost:8000/api/assessment/upload_resume/",
+				{
+					method: "POST",
+					body: formData,
+				}
+			);
+			if (!res.ok) throw new Error("Failed to generate assessment");
+			const data = await res.json();
+			setQuestions(data.questions || []);
+			setOptions(data.options || []);
+			setAnswers(data.answers || []);
+		} catch (err) {
+			setError(err.message || "Something went wrong");
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	return (
 		<div className="min-h-screen flex flex-col items-center justify-center bg-[#101113] py-12 px-4">
 			<h1 className="text-3xl font-bold mb-2 text-white">Take Assessment</h1>
@@ -44,15 +86,64 @@ export default function AssessmentPage() {
 							{assess.name}
 						</h2>
 						<p className="text-gray-400 mb-4">{assess.description}</p>
-						<button
-							className="mt-auto bg-green-400 text-black px-4 py-2 rounded hover:bg-green-300 transition-colors duration-200"
-							disabled
-						>
-							Start Assessment
-						</button>
+						{assess.key === "technical" ? (
+							<>
+								<input
+									type="file"
+									accept="application/pdf"
+									onChange={handleFileChange}
+									className="mb-2 text-sm text-gray-200"
+								/>
+								<button
+									disabled={!selectedFile || loading}
+									onClick={handleStartAssessment}
+									className={`mt-auto bg-green-400 text-black px-4 py-2 rounded hover:bg-green-300 transition-colors duration-200 ${
+										!selectedFile || loading
+											? "opacity-50 cursor-not-allowed"
+											: ""
+									}`}
+								>
+									{loading ? "Generating..." : "Start Assessment"}
+								</button>
+							</>
+						) : (
+							<button
+								className="mt-auto bg-green-400 text-black px-4 py-2 rounded hover:bg-green-300 transition-colors duration-200"
+								disabled
+							>
+								Start Assessment
+							</button>
+						)}
 					</div>
 				))}
 			</div>
+			{error && <div className="mt-8 text-red-400">{error}</div>}
+			{questions.length > 0 && (
+				<div className="mt-12 w-full max-w-3xl bg-[#18191b] rounded-xl p-6 text-white">
+					<h3 className="text-xl font-bold mb-4 text-green-300">
+						Technical Assessment Questions
+					</h3>
+					<ol className="list-decimal list-inside space-y-6">
+						{questions.map((q, idx) => (
+							<li key={idx}>
+								<div className="mb-2 font-semibold">{q}</div>
+								<div className="ml-4">
+									{options[idx] &&
+										Array.isArray(options[idx]) &&
+										options[idx].map((opt, oidx) => (
+											<div key={oidx} className="mb-1">
+												{String.fromCharCode(65 + oidx)}. {opt}
+											</div>
+										))}
+								</div>
+								<div className="mt-1 text-green-400 text-sm">
+									Answer: {answers[idx]}
+								</div>
+							</li>
+						))}
+					</ol>
+				</div>
+			)}
 			<div className="mt-12 text-gray-500 text-sm">
 				(Assessment functionality coming soon!)
 			</div>

@@ -7,6 +7,7 @@ from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 import json
 import os
+import tempfile
 load_dotenv()
 
 hf_api_key = os.getenv('HUGGINGFACEHUB_ACCESS_TOKEN')
@@ -35,22 +36,71 @@ template1 = PromptTemplate(
 )
 
 template2 = PromptTemplate(
-  template="You have given a list of technical skills now generate 20 intermediate level mcqs from the {skills} with the right answer written after the option. Give output as a dictionary containing the question, options and answers: \n {format_instruction}",
+  template=(
+    "You are given a list of technical skills. "
+    "Generate 20 intermediate level MCQs from the {skills} with the right answer written after the option. "
+    "Return ONLY a valid JSON array of objects, each with 'Question', 'Options', and 'Answer' fields. "
+    "Do not include any extra text or explanation. "
+    "Format: {format_instruction}"
+  ),
   input_variables=['level', 'technical_skills'],
-  partial_variables={'format_instruction': parser2.get_format_instructions() }
+  partial_variables={'format_instruction': parser2.get_format_instructions()}
 )
 
 chain = template1 | model | parser1 | template2 | model | parser2
 
 result = chain.invoke({'resume1': resume1 })
 
-questions = []
-answers = []
-options = []
-for mcq_key in result:
-    question = result[mcq_key]['Question']
-    answer = result[mcq_key]["Answer"]
-    option = result[mcq_key]["Options"]
-    questions.append(question)
-    answers.append(answer)
-    options.append(option)
+def generate_assessment_from_pdf(pdf_file_path):
+    resume_loader = PyPDFLoader(pdf_file_path)
+    resume = resume_loader.load()
+    
+    template1 = PromptTemplate(
+      template="Analyze the whole resume and extract all the technical skills mentioned in the {resume1}",
+      input_variables=['resume1']
+    )
+    
+    # Use the updated template2 above
+    chain = template1 | model | parser1 | template2 | model | parser2
+    try:
+        result = chain.invoke({'resume1': resume })
+    except Exception as e:
+        print("Output parsing failed. Raw output:")
+        print(e)
+        return {'questions': [], 'answers': [], 'options': [], 'error': 'Output parsing failed. Please try again.'}
+    questions = []
+    answers = []
+    options = []
+    if isinstance(result, list):
+        for mcq in result:
+            if isinstance(mcq, dict):
+                question = mcq.get('Question')
+                answer = mcq.get('Answer')
+                option = mcq.get('Options')
+                questions.append(question)
+                answers.append(answer)
+                options.append(option)
+    elif isinstance(result, dict):
+        for mcq in result.values():
+            if isinstance(mcq, dict):
+                question = mcq.get('Question')
+                answer = mcq.get('Answer')
+                option = mcq.get('Options')
+                questions.append(question)
+                answers.append(answer)
+                options.append(option)
+    return {
+        'questions': questions,
+        'answers': answers,
+        'options': options
+    }
+
+# If run as a script, test with a sample file
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        pdf_path = sys.argv[1]
+        result = generate_assessment_from_pdf(pdf_path)
+        print(json.dumps(result, indent=2))
+    else:
+        print("Usage: python technical_assessment.py <resume.pdf>")
