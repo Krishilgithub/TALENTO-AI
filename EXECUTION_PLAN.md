@@ -109,6 +109,21 @@ This document outlines the recommended phases and steps to build a LockedIn AI-l
 
 ---
 
+## Phase 4.1: Technical Assessment Model Integration
+
+- Integrated a FastAPI backend to serve the technical assessment model, which generates MCQs from uploaded resumes.
+- Connected the Next.js frontend to the backend, allowing users to upload resumes and view generated questions.
+- Faced and resolved several issues:
+  - Uvicorn not found: Installed and activated in the correct environment.
+  - HuggingFace API key missing: Added `.env` and loaded it properly.
+  - TypeErrors from model output: Refactored code to handle both list and dict outputs.
+  - Output parsing failures: Improved prompt and error handling for robust JSON parsing.
+  - Connection refused: Ensured backend was running and fixed all backend errors.
+- Used `/docs` endpoint to test API and confirm backend was running.
+- Restarted backend after every code change to ensure stability.
+
+---
+
 ## Phase 5: Testing & Quality Assurance
 
 1. **Unit & Integration Testing**
