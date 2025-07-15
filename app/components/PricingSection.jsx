@@ -20,7 +20,7 @@ export default function PricingSection() {
 						<li>✔️ Community support</li>
 					</ul>
 					<span className="block text-3xl font-bold text-cyan-400 mb-2">
-						$0
+						₹0
 					</span>
 					<a
 						href="#signup"
@@ -45,7 +45,7 @@ export default function PricingSection() {
 						<li>✔️ Access to premium content</li>
 					</ul>
 					<span className="block text-3xl font-bold text-cyan-300 mb-2">
-						$29/mo
+						₹1400/month
 					</span>
 					<a
 						href="#signup"
