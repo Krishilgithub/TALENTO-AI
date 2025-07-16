@@ -11,6 +11,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "framer-motion": "^12.23.6",
     "gsap": "^3.13.0",
     "locomotive-scroll": "^4.1.4",
     "next": "^15.4.1",
