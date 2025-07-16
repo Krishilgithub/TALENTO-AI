@@ -11,12 +11,11 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "framer-motion": "^12.23.6",
     "gsap": "^3.13.0",
     "locomotive-scroll": "^4.1.4",
-    "next": "15.3.5",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "next": "^15.4.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.0.1",
