@@ -1,4 +1,6 @@
+import React from "react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 export default function FAQSection() {
 	const faqs = [
@@ -38,9 +40,13 @@ export default function FAQSection() {
 			<h2 className="text-3xl sm:text-4xl font-bold mb-8">FAQ</h2>
 			<div className="space-y-6 text-left">
 				{faqs.map((faq, idx) => (
-					<div
+					<motion.div
 						key={idx}
 						className="bg-[#18191b] rounded-xl shadow p-6 hover:bg-[#232425] transition cursor-pointer"
+						initial={{ opacity: 0, y: 40 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true, amount: 0.3 }}
+						transition={{ duration: 1, delay: idx * 0.15, type: "spring", bounce: 0.2 }}
 						onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
 					>
 						<div className="flex items-center justify-between">
@@ -58,7 +64,7 @@ export default function FAQSection() {
 						{openIndex === idx && (
 							<p className="text-gray-400 text-sm mt-2">{faq.answer}</p>
 						)}
-					</div>
+					</motion.div>
 				))}
 			</div>
 		</section>

@@ -1,4 +1,6 @@
+import React from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 const scenarios = [
 	{
@@ -44,9 +46,13 @@ export default function ScenariosSection() {
 			</h2>
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 				{scenarios.map((s, i) => (
-					<div
+					<motion.div
 						key={i}
 						className="bg-[#18191b] rounded-xl overflow-hidden shadow hover:shadow-lg transition group cursor-pointer"
+						initial={{ opacity: 0, y: 40 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true, amount: 0.3 }}
+						transition={{ duration: 1, delay: i * 0.15, type: "spring", bounce: 0.2 }}
 					>
 						<div className="h-48 w-full relative">
 							<Image src={s.img} alt={s.title} fill className="object-cover" />
@@ -55,7 +61,7 @@ export default function ScenariosSection() {
 							<h3 className="text-lg font-bold mb-2">{s.title}</h3>
 							<p className="text-gray-400 text-sm">{s.desc}</p>
 						</div>
-					</div>
+					</motion.div>
 				))}
 			</div>
 		</section>

@@ -1,4 +1,6 @@
+import React from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 const features = [
 	{
@@ -44,9 +46,13 @@ export default function FeaturesSection() {
 			</h2>
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
 				{features.map((f, i) => (
-					<div
+					<motion.div
 						key={i}
 						className="bg-[#18191b] rounded-xl shadow p-6 flex flex-col items-center text-center transition transform hover:-translate-y-2 hover:scale-105 hover:shadow-lg hover:bg-[#232425] cursor-pointer group min-h-[260px]"
+						initial={{ opacity: 0, y: 40 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true, amount: 0.3 }}
+						transition={{ duration: 1, delay: i * 0.18, type: "spring", bounce: 0.2 }}
 					>
 						<Image
 							src={f.icon}
@@ -57,7 +63,7 @@ export default function FeaturesSection() {
 						/>
 						<h3 className="text-xl font-semibold mb-2">{f.title}</h3>
 						<p className="text-gray-400">{f.desc}</p>
-					</div>
+					</motion.div>
 				))}
 			</div>
 		</section>

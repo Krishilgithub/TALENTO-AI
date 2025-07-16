@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const ASSESSMENTS = [
 	{
@@ -29,6 +30,7 @@ const ASSESSMENTS = [
 ];
 
 export default function AssessmentPage() {
+	const router = useRouter();
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [questions, setQuestions] = useState([]);
@@ -86,34 +88,12 @@ export default function AssessmentPage() {
 							{assess.name}
 						</h2>
 						<p className="text-gray-400 mb-4">{assess.description}</p>
-						{assess.key === "technical" ? (
-							<>
-								<input
-									type="file"
-									accept="application/pdf"
-									onChange={handleFileChange}
-									className="mb-2 text-sm text-gray-200"
-								/>
-								<button
-									disabled={!selectedFile || loading}
-									onClick={handleStartAssessment}
-									className={`mt-auto bg-green-400 text-black px-4 py-2 rounded hover:bg-green-300 transition-colors duration-200 ${
-										!selectedFile || loading
-											? "opacity-50 cursor-not-allowed"
-											: ""
-									}`}
-								>
-									{loading ? "Generating..." : "Start Assessment"}
-								</button>
-							</>
-						) : (
-							<button
-								className="mt-auto bg-green-400 text-black px-4 py-2 rounded hover:bg-green-300 transition-colors duration-200"
-								disabled
-							>
-								Start Assessment
-							</button>
-						)}
+						<button
+							className="mt-auto bg-green-400 text-black px-4 py-2 rounded hover:bg-green-300 transition-colors duration-200"
+							onClick={() => router.push(`/assessment/${assess.key}`)}
+						>
+							Start Assessment
+						</button>
 					</div>
 				))}
 			</div>
