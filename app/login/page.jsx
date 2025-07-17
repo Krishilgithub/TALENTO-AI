@@ -15,7 +15,7 @@ export default function LoginPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [rememberMe, setRememberMe] = useState(false);
 
-	// Check for stored credentials on mount
+	// Check for stored credentials on 
 	useState(() => {
 		const storedCredentials = localStorage.getItem('rememberedCredentials');
 		if (storedCredentials) {
