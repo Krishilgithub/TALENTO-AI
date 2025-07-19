@@ -666,36 +666,50 @@ function CareerToolsTab() {
 						<div className="text-lg font-bold text-cyan-400 mb-2 font-sans">
 							ATS Score: {atsScore}
 						</div>
-						{atsFeedback.strengths && atsFeedback.strengths.length > 0 && (
-							<div className="mb-2">
-								<span className="font-semibold text-cyan-300">Strengths:</span>
-								<ul className="list-disc list-inside ml-4 text-gray-200">
-									{atsFeedback.strengths.map((s, i) => (
-										<li key={i}>{s}</li>
-									))}
-								</ul>
-							</div>
-						)}
-						{atsFeedback.weaknesses && atsFeedback.weaknesses.length > 0 && (
-							<div className="mb-2">
-								<span className="font-semibold text-cyan-300">Weaknesses:</span>
-								<ul className="list-disc list-inside ml-4 text-gray-200">
-									{atsFeedback.weaknesses.map((w, i) => (
-										<li key={i}>{w}</li>
-									))}
-								</ul>
-							</div>
-						)}
-						{atsFeedback.tips && atsFeedback.tips.length > 0 && (
-							<div className="mb-2">
-								<span className="font-semibold text-cyan-300">Tips:</span>
-								<ul className="list-disc list-inside ml-4 text-gray-200">
-									{atsFeedback.tips.map((t, i) => (
-										<li key={i}>{t}</li>
-									))}
-								</ul>
-							</div>
-						)}
+						{/* Strengths */}
+						<div className="mb-2">
+							<span className="font-semibold text-cyan-300">Strengths:</span>
+							<ul className="list-disc list-inside ml-4 text-gray-200">
+								{atsFeedback.strengths && atsFeedback.strengths.length > 0 ? (
+									atsFeedback.strengths.map((s, i) => <li key={i}>{s}</li>)
+								) : (
+									<li className="text-gray-400">None</li>
+								)}
+							</ul>
+						</div>
+						{/* Weaknesses */}
+						<div className="mb-2">
+							<span className="font-semibold text-cyan-300">Weaknesses:</span>
+							<ul className="list-disc list-inside ml-4 text-gray-200">
+								{atsFeedback.weaknesses && atsFeedback.weaknesses.length > 0 ? (
+									atsFeedback.weaknesses.map((w, i) => <li key={i}>{w}</li>)
+								) : (
+									<li className="text-gray-400">None</li>
+								)}
+							</ul>
+						</div>
+						{/* Tips */}
+						<div className="mb-2">
+							<span className="font-semibold text-cyan-300">Tips:</span>
+							<ul className="list-disc list-inside ml-4 text-gray-200">
+								{atsFeedback.tips && atsFeedback.tips.length > 0 ? (
+									atsFeedback.tips.map((t, i) => <li key={i}>{t}</li>)
+								) : (
+									<li className="text-gray-400">None</li>
+								)}
+							</ul>
+						</div>
+						{/* Improvement Plan */}
+						<div className="mb-2">
+							<span className="font-semibold text-cyan-300">Improvement Plan:</span>
+							<ul className="list-disc list-inside ml-4 text-gray-200">
+								{atsFeedback.improvement_plan && atsFeedback.improvement_plan.length > 0 ? (
+									atsFeedback.improvement_plan.map((imp, i) => <li key={i}>{imp}</li>)
+								) : (
+									<li className="text-gray-400">None</li>
+								)}
+							</ul>
+						</div>
 					</div>
 				)}
 				{atsFeedback && atsFeedback.error && (

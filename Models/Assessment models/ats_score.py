@@ -45,9 +45,11 @@ Otherwise, provide a JSON output with:
 - `score`: Integer from 0 to 100 (be strict; only perfect resumes get 90+)
 - `feedback`: Object with:
     - `strengths`: List of strong points in the resume
-    - `weaknesses`: List of weak points or missing elements
-    - `tips`: List of actionable tips to improve the resume
-    - `improvement_plan`: List of step-by-step actions to make the resume better
+    - `weaknesses`: List of weak points or missing elements (always include at least one, even for strong resumes)
+    - `tips`: List of actionable tips to improve the resume (always include at least one, even for strong resumes)
+    - `improvement_plan`: List of step-by-step actions to make the resume better (always include at least one, even for strong resumes)
+
+ALWAYS include all fields (`strengths`, `weaknesses`, `tips`, `improvement_plan`) in the JSON output, even if empty. If there are no weaknesses, tips, or improvement steps, return an empty list for that field. Even for excellent resumes, suggest at least one area for further improvement or optimization.
 
 Analyze deeply:
 - Penalize missing sections (Contact, Education, Experience, Skills, Projects, etc.)
@@ -90,6 +92,14 @@ def calculate_ats_score(resume_text: str, job_role: str = "Software Engineer") -
         # If the model returns an error field, propagate it
         if isinstance(result, dict) and "error" in result:
             return result
+        # --- Post-process to ensure all feedback fields are present and are lists ---
+        if "feedback" in result and isinstance(result["feedback"], dict):
+            fb = result["feedback"]
+            for key in ["strengths", "weaknesses", "tips", "improvement_plan"]:
+                if key not in fb or not isinstance(fb[key], list):
+                    fb[key] = []
+        else:
+            result["feedback"] = {"strengths": [], "weaknesses": [], "tips": [], "improvement_plan": []}
         return result
     except Exception as e:
         return {"error": f"Error calculating ATS score: {str(e)}"}
