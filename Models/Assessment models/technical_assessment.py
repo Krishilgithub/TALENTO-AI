@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import json
 import os
 import tempfile
+import re
 load_dotenv()
 
 hf_api_key = os.getenv('HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP')
@@ -51,19 +52,41 @@ chain = template1 | model | parser1 | template2 | model | parser2
 
 result = chain.invoke({'resume1': resume1 })
 
-def generate_assessment_from_pdf(pdf_file_path):
+def try_parse_json(raw_output):
+    # Remove trailing commas and fix common issues
+    cleaned = re.sub(r",\s*([}\]])", r"\\1", raw_output)
+    try:
+        return json.loads(cleaned)
+    except Exception as e:
+        return None
+
+def generate_assessment_from_pdf(pdf_file_path, num_questions=20):
     resume_loader = PyPDFLoader(pdf_file_path)
     resume = resume_loader.load()
-    
-    template1 = PromptTemplate(
-      template="Analyze the whole resume and extract all the technical skills mentioned in the {resume1}",
-      input_variables=['resume1']
+    # Instead of extracting project-specific skills, generate general MCQs for the field
+    general_prompt = PromptTemplate(
+        template=(
+            "You are an expert technical interviewer. "
+            "Generate {num_questions} general multiple-choice questions (MCQs) for a technical assessment in software engineering. "
+            "Each question should have 4 options and 1 correct answer. "
+            "Return ONLY a valid JSON array of objects, each with 'Question', 'Options', and 'Answer' fields. "
+            "Do not include any extra text or explanation. "
+            "Format: {format_instruction}"
+        ),
+        input_variables=['num_questions'],
+        partial_variables={'format_instruction': parser2.get_format_instructions()}
     )
-    
-    # Use the updated template2 above
-    chain = template1 | model | parser1 | template2 | model | parser2
+    chain = general_prompt | model | parser2
     try:
-        result = chain.invoke({'resume1': resume })
+        result = chain.invoke({'num_questions': num_questions})
+        if isinstance(result, str):
+            parsed = try_parse_json(result)
+            if parsed is not None:
+                result = parsed
+            else:
+                print("Output parsing failed. Raw output:")
+                print(result)
+                return {'questions': [], 'answers': [], 'options': [], 'error': 'Output parsing failed. Raw output: ' + result}
     except Exception as e:
         print("Output parsing failed. Raw output:")
         print(e)

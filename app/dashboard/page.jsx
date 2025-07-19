@@ -244,7 +244,6 @@ function OverviewTab({ user }) {
 				</Link>
 			</div>
 
-
 			{/* Recent Activities */}
 			<div>
 				<h3 className="text-lg font-semibold text-white mb-4">
@@ -390,17 +389,25 @@ function PracticeSessionsTab() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-xl font-semibold text-white mb-2 font-sans">Practice Sessions</h2>
-				<p className="text-gray-300 font-sans">Start a new practice session with AI-powered feedback and analysis.</p>
+				<h2 className="text-xl font-semibold text-white mb-2 font-sans">
+					Practice Sessions
+				</h2>
+				<p className="text-gray-300 font-sans">
+					Start a new practice session with AI-powered feedback and analysis.
+				</p>
 			</div>
 
 			{/* Session Setup */}
 			<div className="bg-[#18191b] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-cyan-400 mb-4 font-sans">Start New Session</h3>
+				<h3 className="text-lg font-semibold text-cyan-400 mb-4 font-sans">
+					Start New Session
+				</h3>
 
 				<div className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-black mb-2 font-sans">Session Type</label>
+						<label className="block text-sm font-medium text-black mb-2 font-sans">
+							Session Type
+						</label>
 						<select
 							value={sessionType}
 							onChange={(e) => setSessionType(e.target.value)}
@@ -415,7 +422,9 @@ function PracticeSessionsTab() {
 
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 						<div>
-							<label className="block text-sm font-medium text-black mb-2 font-sans">Duration</label>
+							<label className="block text-sm font-medium text-black mb-2 font-sans">
+								Duration
+							</label>
 							<select className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans">
 								<option>15 minutes</option>
 								<option>30 minutes</option>
@@ -424,7 +433,9 @@ function PracticeSessionsTab() {
 							</select>
 						</div>
 						<div>
-							<label className="block text-sm font-medium text-black mb-2 font-sans">Difficulty</label>
+							<label className="block text-sm font-medium text-black mb-2 font-sans">
+								Difficulty
+							</label>
 							<select className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans">
 								<option>Beginner</option>
 								<option>Intermediate</option>
@@ -432,7 +443,9 @@ function PracticeSessionsTab() {
 							</select>
 						</div>
 						<div>
-							<label className="block text-sm font-medium text-black mb-2 font-sans">Questions Count</label>
+							<label className="block text-sm font-medium text-black mb-2 font-sans">
+								Questions Count
+							</label>
 							<select className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans">
 								<option>5 questions</option>
 								<option>10 questions</option>
@@ -461,7 +474,9 @@ function PracticeSessionsTab() {
 
 			{/* Recent Sessions */}
 			<div>
-				<h3 className="text-lg font-semibold text-white mb-4 font-sans">Recent Sessions</h3>
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+					Recent Sessions
+				</h3>
 				<div className="space-y-3">
 					{[
 						{
@@ -499,7 +514,9 @@ function PracticeSessionsTab() {
 								</div>
 							</div>
 							<div className="text-right">
-								<p className="font-semibold text-cyan-400 font-sans">{session.score}</p>
+								<p className="font-semibold text-cyan-400 font-sans">
+									{session.score}
+								</p>
 								<p className="text-sm text-gray-400 font-sans">Score</p>
 							</div>
 						</div>
@@ -514,8 +531,7 @@ function PracticeSessionsTab() {
 function CareerToolsTab() {
 	const [resumeFile, setResumeFile] = useState(null);
 	const [atsScore, setAtsScore] = useState(null);
-	const [atsFeedback, setAtsFeedback] = useState("");
-	const [suggestions, setSuggestions] = useState([]);
+	const [atsFeedback, setAtsFeedback] = useState(null); // will be object
 	const [isAnalyzing, setIsAnalyzing] = useState(false);
 
 	const tools = [
@@ -557,134 +573,62 @@ function CareerToolsTab() {
 		},
 	];
 
-	function handleResumeUpload(e) {
+	async function handleResumeUpload(e) {
 		const file = e.target.files[0];
 		if (!file) return;
 		setResumeFile(file);
 		setAtsScore(null);
-		setAtsFeedback("");
-		setSuggestions([]);
+		setAtsFeedback(null);
 		setIsAnalyzing(true);
 
-		// Enhanced demo: More realistic parsing and scoring logic
-		setTimeout(() => {
-			const fileName = file.name.toLowerCase();
-			let score = 0;
-			let feedback = [];
-			let suggestions = [];
+		const formData = new FormData();
+		formData.append("file", file);
+		formData.append("job_role", "Software Engineer"); // or allow user to select
 
-			if (fileName.endsWith(".pdf") || fileName.endsWith(".docx")) {
-				// Simulate file size and content analysis
-				const fileSize = file.size;
-				const hasGoodSize = fileSize > 50000 && fileSize < 500000; // 50KB to 500KB
-
-				// Simulate keyword analysis (common tech keywords)
-				const techKeywords = [
-					"javascript",
-					"python",
-					"react",
-					"node.js",
-					"sql",
-					"aws",
-					"docker",
-					"kubernetes",
-					"agile",
-					"scrum",
-				];
-				const foundKeywords = techKeywords.filter(
-					(keyword) => fileName.includes(keyword) || Math.random() > 0.7
-				);
-
-				// Calculate score based on multiple factors
-				let baseScore = 60;
-				if (hasGoodSize) baseScore += 10;
-				if (foundKeywords.length > 3) baseScore += 15;
-				if (fileName.includes("resume") || fileName.includes("cv"))
-					baseScore += 5;
-
-				// Add some randomness but keep it realistic
-				score = Math.min(100, baseScore + Math.floor(Math.random() * 20));
-
-				// Generate detailed feedback
-				if (score >= 90) {
-					feedback.push(
-						"Excellent! Your resume is highly optimized for ATS systems."
-					);
-					suggestions.push(
-						"Consider tailoring keywords for specific job postings"
-					);
-					suggestions.push("Keep your formatting consistent and clean");
-				} else if (score >= 80) {
-					feedback.push("Very good! Your resume should pass most ATS filters.");
-					suggestions.push("Add more industry-specific keywords");
-					suggestions.push(
-						"Ensure all section headings are standard (Experience, Education, Skills)"
-					);
-				} else if (score >= 70) {
-					feedback.push(
-						"Good resume, but some improvements needed for better ATS compatibility."
-					);
-					suggestions.push(
-						"Use standard section headings (avoid creative titles)"
-					);
-					suggestions.push("Add more relevant skills and keywords");
-					suggestions.push("Avoid graphics, tables, or complex formatting");
-				} else if (score >= 60) {
-					feedback.push(
-						"Your resume needs optimization to pass ATS filters effectively."
-					);
-					suggestions.push(
-						"Use simple, clean fonts (Arial, Calibri, Times New Roman)"
-					);
-					suggestions.push("Include relevant keywords from job descriptions");
-					suggestions.push("Remove any graphics, charts, or tables");
-					suggestions.push("Use bullet points for better readability");
-				} else {
-					feedback.push("Your resume may struggle with ATS systems.");
-					suggestions.push("Start with a clean, simple template");
-					suggestions.push("Use standard section headings");
-					suggestions.push("Focus on relevant keywords and skills");
-					suggestions.push("Keep formatting simple and consistent");
+		try {
+			const res = await fetch(
+				"http://localhost:8000/api/assessment/ats_score/",
+				{
+					method: "POST",
+					body: formData,
 				}
-
-				// Add specific suggestions based on analysis
-				if (!hasGoodSize) {
-					suggestions.push("Ensure your resume is between 1-2 pages");
-				}
-				if (foundKeywords.length < 3) {
-					suggestions.push(
-						"Include more relevant technical skills and keywords"
-					);
-				}
+			);
+			const data = await res.json();
+			if (!res.ok || data.error) {
+				setAtsScore(null);
+				setAtsFeedback({ error: data.error || "Failed to analyze resume." });
 			} else {
-				score = 0;
-				feedback.push(
-					"Unsupported file type. Please upload a PDF or DOCX resume."
-				);
-				suggestions.push("Convert your resume to PDF or DOCX format");
-				suggestions.push(
-					"Ensure the file is not corrupted or password-protected"
-				);
+				setAtsScore(data.score);
+				setAtsFeedback(data.feedback);
 			}
-
-			setAtsScore(score);
-			setAtsFeedback(feedback.join(" "));
-			setSuggestions(suggestions);
+		} catch (err) {
+			setAtsScore(null);
+			setAtsFeedback({ error: "Failed to connect to server." });
+		} finally {
 			setIsAnalyzing(false);
-		}, 2000);
+		}
 	}
 
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-xl font-semibold text-white mb-2 font-sans">Career Tools</h2>
-				<p className="text-gray-300 font-sans">Access powerful tools to accelerate your career growth.</p>
+				<h2 className="text-xl font-semibold text-white mb-2 font-sans">
+					Career Tools
+				</h2>
+				<p className="text-gray-300 font-sans">
+					Access powerful tools to accelerate your career growth.
+				</p>
 			</div>
 
 			{/* Resume Upload & ATS Score */}
 			<div className="bg-[#18191b] border border-cyan-900 rounded-xl p-6 mb-6 shadow-sm">
-				<h3 className="text-lg font-bold text-cyan-400 mb-2 flex items-center gap-2 font-sans">Resume Optimizer & ATS Score</h3>
-				<p className="text-gray-400 mb-4 font-sans">Upload your resume (PDF or DOCX) to see how it performs with Applicant Tracking Systems and get optimization tips.</p>
+				<h3 className="text-lg font-bold text-cyan-400 mb-2 flex items-center gap-2 font-sans">
+					Resume Optimizer & ATS Score
+				</h3>
+				<p className="text-gray-400 mb-4 font-sans">
+					Upload your resume (PDF or DOCX) to see how it performs with Applicant
+					Tracking Systems and get optimization tips.
+				</p>
 				<input
 					type="file"
 					accept=".pdf,.docx"
@@ -692,31 +636,93 @@ function CareerToolsTab() {
 					className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-900 file:text-cyan-300 hover:file:bg-cyan-800 mb-4 font-sans"
 				/>
 				{isAnalyzing && (
-					<div className="flex items-center gap-2 text-cyan-400 font-medium font-sans">Analyzing your resume...</div>
+					<div className="flex items-center gap-2 text-cyan-400 font-medium font-sans">
+						<svg
+							className="animate-spin h-6 w-6 text-cyan-400"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+						>
+							<circle
+								className="opacity-25"
+								cx="12"
+								cy="12"
+								r="10"
+								stroke="currentColor"
+								strokeWidth="4"
+							></circle>
+							<path
+								className="opacity-75"
+								fill="currentColor"
+								d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+							></path>
+						</svg>
+						Analyzing your resume...
+					</div>
 				)}
-				{atsScore !== null && (
+				{atsScore !== null && atsFeedback && !atsFeedback.error && (
 					<div className="mt-4 p-4 rounded-lg bg-[#232323] border border-cyan-900 shadow">
-						<div className="text-lg font-bold text-cyan-400 mb-2 font-sans">ATS Score: {atsScore}</div>
-						<div className="text-gray-300 font-sans">{atsFeedback}</div>
-						{suggestions.length > 0 && (
-							<ul className="mt-2 text-gray-400 text-sm font-sans list-disc list-inside">
-								{suggestions.map((s, i) => <li key={i}>{s}</li>)}
-							</ul>
+						<div className="text-lg font-bold text-cyan-400 mb-2 font-sans">
+							ATS Score: {atsScore}
+						</div>
+						{atsFeedback.strengths && atsFeedback.strengths.length > 0 && (
+							<div className="mb-2">
+								<span className="font-semibold text-cyan-300">Strengths:</span>
+								<ul className="list-disc list-inside ml-4 text-gray-200">
+									{atsFeedback.strengths.map((s, i) => (
+										<li key={i}>{s}</li>
+									))}
+								</ul>
+							</div>
 						)}
+						{atsFeedback.weaknesses && atsFeedback.weaknesses.length > 0 && (
+							<div className="mb-2">
+								<span className="font-semibold text-cyan-300">Weaknesses:</span>
+								<ul className="list-disc list-inside ml-4 text-gray-200">
+									{atsFeedback.weaknesses.map((w, i) => (
+										<li key={i}>{w}</li>
+									))}
+								</ul>
+							</div>
+						)}
+						{atsFeedback.tips && atsFeedback.tips.length > 0 && (
+							<div className="mb-2">
+								<span className="font-semibold text-cyan-300">Tips:</span>
+								<ul className="list-disc list-inside ml-4 text-gray-200">
+									{atsFeedback.tips.map((t, i) => (
+										<li key={i}>{t}</li>
+									))}
+								</ul>
+							</div>
+						)}
+					</div>
+				)}
+				{atsFeedback && atsFeedback.error && (
+					<div className="mt-4 p-4 rounded-lg bg-red-900/30 border border-red-700 text-red-300 font-sans">
+						{atsFeedback.error}
 					</div>
 				)}
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{tools.map((tool) => (
-					<div key={tool.name} className="bg-[#18191b] border border-cyan-900 rounded-lg p-6 flex items-center gap-4">
+					<div
+						key={tool.name}
+						className="bg-[#18191b] border border-cyan-900 rounded-lg p-6 flex items-center gap-4"
+					>
 						<div className="text-3xl">{tool.icon}</div>
 						<div className="flex-1">
-							<h4 className="text-lg font-semibold text-white mb-1 font-sans">{tool.name}</h4>
-							<p className="text-gray-400 text-sm font-sans">{tool.description}</p>
+							<h4 className="text-lg font-semibold text-white mb-1 font-sans">
+								{tool.name}
+							</h4>
+							<p className="text-gray-400 text-sm font-sans">
+								{tool.description}
+							</p>
 						</div>
 						{tool.status === "Coming Soon" && (
-							<span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full font-sans bg-cyan-400 text-black">Coming Soon</span>
+							<span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full font-sans bg-cyan-400 text-black">
+								Coming Soon
+							</span>
 						)}
 					</div>
 				))}
@@ -745,19 +751,29 @@ function ProgressTab() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-xl font-semibold text-white mb-2 font-sans">Your Progress</h2>
-				<p className="text-gray-300 font-sans">Track your improvement across different skills and goals.</p>
+				<h2 className="text-xl font-semibold text-white mb-2 font-sans">
+					Your Progress
+				</h2>
+				<p className="text-gray-300 font-sans">
+					Track your improvement across different skills and goals.
+				</p>
 			</div>
 
 			{/* Skills Progress */}
 			<div>
-				<h3 className="text-lg font-semibold text-white mb-4 font-sans">Skills Development</h3>
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+					Skills Development
+				</h3>
 				<div className="space-y-4">
 					{progressData.skills.map((skill) => (
 						<div key={skill.name}>
 							<div className="flex justify-between items-center mb-2">
-								<span className="text-sm font-medium text-gray-300 font-sans">{skill.name}</span>
-								<span className="text-sm font-semibold text-white font-sans">{skill.progress}%</span>
+								<span className="text-sm font-medium text-gray-300 font-sans">
+									{skill.name}
+								</span>
+								<span className="text-sm font-semibold text-white font-sans">
+									{skill.progress}%
+								</span>
 							</div>
 							<div className="w-full bg-[#232323] rounded-full h-2">
 								<div
@@ -772,16 +788,25 @@ function ProgressTab() {
 
 			{/* Goals Progress */}
 			<div>
-				<h3 className="text-lg font-semibold text-white mb-4 font-sans">Goals Progress</h3>
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+					Goals Progress
+				</h3>
 				<div className="space-y-4">
 					{progressData.goals.map((goal) => (
 						<div key={goal.name} className="bg-[#232323] rounded-lg p-4">
 							<div className="flex justify-between items-center mb-2">
-								<span className="font-medium text-white font-sans">{goal.name}</span>
-								<span className="text-sm font-semibold text-gray-300 font-sans">{goal.completed}/{goal.total}</span>
+								<span className="font-medium text-white font-sans">
+									{goal.name}
+								</span>
+								<span className="text-sm font-semibold text-gray-300 font-sans">
+									{goal.completed}/{goal.total}
+								</span>
 							</div>
 							<div className="w-full bg-[#18191b] rounded-full h-2">
-								<div className="bg-green-400 h-2 rounded-full transition-all duration-300" style={{ width: `${(goal.completed / goal.total) * 100}%` }}></div>
+								<div
+									className="bg-green-400 h-2 rounded-full transition-all duration-300"
+									style={{ width: `${(goal.completed / goal.total) * 100}%` }}
+								></div>
 							</div>
 						</div>
 					))}
@@ -790,7 +815,9 @@ function ProgressTab() {
 
 			{/* Achievements */}
 			<div>
-				<h3 className="text-lg font-semibold text-white mb-4 font-sans">Recent Achievements</h3>
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+					Recent Achievements
+				</h3>
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 					{[
 						{
@@ -814,8 +841,12 @@ function ProgressTab() {
 							className="bg-[#232323] border border-yellow-900 rounded-lg p-4 text-center"
 						>
 							<div className="text-3xl mb-2">{achievement.icon}</div>
-							<h4 className="font-semibold text-yellow-300 mb-1 font-sans">{achievement.title}</h4>
-							<p className="text-sm text-gray-400 font-sans">{achievement.description}</p>
+							<h4 className="font-semibold text-yellow-300 mb-1 font-sans">
+								{achievement.title}
+							</h4>
+							<p className="text-sm text-gray-400 font-sans">
+								{achievement.description}
+							</p>
 						</div>
 					))}
 				</div>
