@@ -38,7 +38,7 @@ template1 = PromptTemplate(
 template2 = PromptTemplate(
   template=(
     "You are given a list of technical skills. "
-    "Generate 20 intermediate level MCQs from the {skills} with the right answer written after the option. "
+    "Generate 20 intermediate level MCQs from the {skills} with theright answer written after the option. "
     "Return ONLY a valid JSON array of objects, each with 'Question', 'Options', and 'Answer' fields. "
     "Do not include any extra text or explanation. "
     "Format: {format_instruction}"

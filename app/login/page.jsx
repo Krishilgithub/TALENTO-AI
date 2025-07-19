@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -15,14 +15,16 @@ export default function LoginPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [rememberMe, setRememberMe] = useState(false);
 
-	// Check for stored credentials on 
-	useState(() => {
-		const storedCredentials = localStorage.getItem('rememberedCredentials');
-		if (storedCredentials) {
-			const { email, password, remember } = JSON.parse(storedCredentials);
-			if (remember) {
-				setFormData(prev => ({ ...prev, email, password }));
-				setRememberMe(true);
+	// Check for stored credentials on component mount
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			const storedCredentials = localStorage.getItem("rememberedCredentials");
+			if (storedCredentials) {
+				const { email, password, remember } = JSON.parse(storedCredentials);
+				if (remember) {
+					setFormData((prev) => ({ ...prev, email, password }));
+					setRememberMe(true);
+				}
 			}
 		}
 	}, []);
@@ -30,7 +32,7 @@ export default function LoginPage() {
 	const handleRememberMeChange = (e) => {
 		setRememberMe(e.target.checked);
 		if (!e.target.checked) {
-			localStorage.removeItem('rememberedCredentials');
+			localStorage.removeItem("rememberedCredentials");
 		}
 	};
 
@@ -73,34 +75,37 @@ export default function LoginPage() {
 		try {
 			// This is where you would integrate with the actual authentication providers
 			switch (provider) {
-				case 'google':
+				case "google":
 					// Implement Google Sign-In
-					console.log('Signing in with Google...');
+					console.log("Signing in with Google...");
 					break;
-				case 'github':
+				case "github":
 					// Implement GitHub Sign-In
-					console.log('Signing in with GitHub...');
+					console.log("Signing in with GitHub...");
 					break;
-				case 'linkedin':
+				case "linkedin":
 					// Implement LinkedIn Sign-In
-					console.log('Signing in with LinkedIn...');
+					console.log("Signing in with LinkedIn...");
 					break;
-				case 'phone':
+				case "phone":
 					// Implement Phone Number Sign-In
-					console.log('Signing in with Phone...');
+					console.log("Signing in with Phone...");
 					break;
 			}
-			
+
 			// For demo purposes, simulate a successful login
-			await new Promise(resolve => setTimeout(resolve, 1000));
-			localStorage.setItem('user', JSON.stringify({
-				provider: provider,
-				role: 'user',
-				name: 'Demo User'
-			}));
-			router.push('/dashboard');
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+			localStorage.setItem(
+				"user",
+				JSON.stringify({
+					provider: provider,
+					role: "user",
+					name: "Demo User",
+				})
+			);
+			router.push("/dashboard");
 		} catch (error) {
-			console.error('Social sign-in error:', error);
+			console.error("Social sign-in error:", error);
 			setErrors({ general: `${provider} sign-in failed. Please try again.` });
 		} finally {
 			setIsLoading(false);
@@ -139,15 +144,15 @@ export default function LoginPage() {
 			// Handle remember me functionality
 			if (rememberMe) {
 				localStorage.setItem(
-					'rememberedCredentials',
+					"rememberedCredentials",
 					JSON.stringify({
 						email: formData.email,
 						password: formData.password,
-						remember: true
+						remember: true,
 					})
 				);
 			} else {
-				localStorage.removeItem('rememberedCredentials');
+				localStorage.removeItem("rememberedCredentials");
 			}
 
 			// For demo purposes, accept any valid email/password combination
@@ -157,7 +162,7 @@ export default function LoginPage() {
 					email: formData.email,
 					role: "user",
 					name: formData.email.split("@")[0],
-					password: formData.password // Store password for consistency
+					password: formData.password, // Store password for consistency
 				})
 			);
 
@@ -245,9 +250,41 @@ export default function LoginPage() {
 									aria-label={showPassword ? "Hide password" : "Show password"}
 								>
 									{showPassword ? (
-										<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-.19.631-.453 1.23-.78 1.786M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.542 1.786A9.956 9.956 0 0122 12c0 5.523-4.477 10-10 10S2 17.523 2 12c0-.69.07-1.362.2-2.014" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 15.232A3.001 3.001 0 0112 15c-.828 0-1.58-.336-2.121-.879M4.271 4.271l15.458 15.458" /></svg>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											className="h-5 w-5"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-.19.631-.453 1.23-.78 1.786M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.542 1.786A9.956 9.956 0 0122 12c0 5.523-4.477 10-10 10S2 17.523 2 12c0-.69.07-1.362.2-2.014"
+											/>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M15.232 15.232A3.001 3.001 0 0112 15c-.828 0-1.58-.336-2.121-.879M4.271 4.271l15.458 15.458"
+											/>
+										</svg>
 									) : (
-										<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-.19.631-.453 1.23-.78 1.786M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											className="h-5 w-5"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-.19.631-.453 1.23-.78 1.786M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+											/>
+										</svg>
 									)}
 								</button>
 							</div>
@@ -310,7 +347,11 @@ export default function LoginPage() {
 						</div>
 
 						<div className="mt-6 grid grid-cols-2 gap-3">
-							<button type="button" onClick={() => handleSocialSignIn('google')} className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-[#101113] text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors duration-200">
+							<button
+								type="button"
+								onClick={() => handleSocialSignIn("google")}
+								className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-[#101113] text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors duration-200"
+							>
 								<svg className="w-5 h-5" viewBox="0 0 24 24">
 									<path
 										fill="currentColor"
@@ -331,21 +372,51 @@ export default function LoginPage() {
 								</svg>
 								<span className="ml-2">Google</span>
 							</button>
-							<button type="button" onClick={() => handleSocialSignIn('github')} className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-[#101113] text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors duration-200">
-								<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+							<button
+								type="button"
+								onClick={() => handleSocialSignIn("github")}
+								className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-[#101113] text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors duration-200"
+							>
+								<svg
+									className="w-5 h-5"
+									fill="currentColor"
+									viewBox="0 0 24 24"
+								>
 									<path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.157-1.11-1.465-1.11-1.465-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.091-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.378.202 2.397.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.847-2.339 4.695-4.566 4.944.359.309.678.919.678 1.852 0 1.336-.012 2.417-.012 2.747 0 .268.18.579.688.481C19.138 20.2 22 16.448 22 12.021 22 6.484 17.523 2 12 2z" />
 								</svg>
 								<span className="ml-2">GitHub</span>
 							</button>
-							<button type="button" onClick={() => handleSocialSignIn('linkedin')} className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-[#101113] text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors duration-200">
-								<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+							<button
+								type="button"
+								onClick={() => handleSocialSignIn("linkedin")}
+								className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-[#101113] text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors duration-200"
+							>
+								<svg
+									className="w-5 h-5"
+									fill="currentColor"
+									viewBox="0 0 24 24"
+								>
 									<path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
 								</svg>
 								<span className="ml-2">LinkedIn</span>
 							</button>
-							<button type="button" onClick={() => handleSocialSignIn('phone')} className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-[#101113] text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors duration-200">
-								<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+							<button
+								type="button"
+								onClick={() => handleSocialSignIn("phone")}
+								className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-[#101113] text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors duration-200"
+							>
+								<svg
+									className="w-5 h-5"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+									/>
 								</svg>
 								<span className="ml-2">Phone</span>
 							</button>
