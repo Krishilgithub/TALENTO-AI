@@ -20,8 +20,7 @@ try:
         model="mistralai/Mistral-7B-Instruct-v0.2",
         huggingfacehub_api_token=hf_api_key,
         temperature=0.5,
-        max_new_tokens=2000,
-        endpoint_url="https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+        max_new_tokens=2000
     )
     model = ChatHuggingFace(llm=llm)
 except Exception as e:

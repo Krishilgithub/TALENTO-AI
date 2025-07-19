@@ -7,6 +7,12 @@ import uvicorn
 import os
 import tempfile
 from technical_assessment import generate_assessment_from_pdf
+from resume_optimizer import analyze_resume
+from ats_score import calculate_ats_score
+from ats_score import process_resume_file, extract_resume_text
+from communication_test import generate_communication_test
+from domain_questions import generate_domain_questions
+from general_aptitude import generate_aptitude_mcqs
 
 app = FastAPI()
 
@@ -21,7 +27,6 @@ app.add_middleware(
 
 @app.post("/api/assessment/upload_resume/")
 async def upload_resume(file: UploadFile = File(...), num_questions: int = Form(20)):
-    # Save uploaded file to a temporary location
     suffix = os.path.splitext(file.filename)[1]
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp.write(await file.read())
@@ -33,6 +38,68 @@ async def upload_resume(file: UploadFile = File(...), num_questions: int = Form(
         return JSONResponse(status_code=500, content={"error": str(e)})
     finally:
         os.remove(tmp_path)
+
+@app.post("/api/assessment/ats_score/")
+async def ats_score(file: UploadFile = File(...), job_role: str = Form("Software Engineer")):
+    suffix = os.path.splitext(file.filename)[1]
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+    try:
+        result = process_resume_file(tmp_path, job_role)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+    finally:
+        os.remove(tmp_path)
+
+@app.post("/api/assessment/resume_optimize/")
+async def resume_optimize(file: UploadFile = File(...), job_role: str = Form("Software Engineer")):
+    suffix = os.path.splitext(file.filename)[1]
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+    try:
+        # Use the new extraction logic for both PDF and DOCX
+        resume_text = extract_resume_text(tmp_path)
+        if resume_text is None or not resume_text.strip():
+            return JSONResponse(status_code=400, content={"error": "Could not extract text from the uploaded resume. Supported formats: PDF, DOCX."})
+        result = analyze_resume(tmp_path, job_role)  # analyze_resume still expects a file path
+        return JSONResponse(content={"result": result})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+    finally:
+        os.remove(tmp_path)
+
+@app.post("/api/assessment/communication_test/")
+async def communication_test(job_role: str = Form("Software Engineer")):
+    try:
+        result = generate_communication_test(job_role)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.post("/api/assessment/domain_questions/")
+async def domain_questions(file: UploadFile = File(...), job_role: str = Form("Software Engineer")):
+    suffix = os.path.splitext(file.filename)[1]
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+    try:
+        result = generate_domain_questions(tmp_path, job_role, is_pdf=True)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+    finally:
+        os.remove(tmp_path)
+
+@app.post("/api/assessment/general_aptitude/")
+async def general_aptitude(job_role: str = Form("Software Engineer")):
+    try:
+        result = generate_aptitude_mcqs(job_role)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
