@@ -176,8 +176,8 @@ This document outlines the recommended phases and steps to build a LockedIn AI-l
 ## Appendix: Useful Commands
 
 ```bash
-# Create Next.js app with TypeScript
-npx create-next-app@latest my-app -ts
+# Create Next.js app with JavaScript
+npx create-next-app@latest my-app -js
 
 # Install Tailwind CSS
 npm install -D tailwindcss postcss autoprefixer
