@@ -10,7 +10,7 @@ import os
 import tempfile
 load_dotenv()
 
-hf_api_key = os.getenv('HUGGINGFACEHUB_ACCESS_TOKEN')
+hf_api_key = os.getenv('HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP')
 
 llm = HuggingFaceEndpoint(
     model="mistralai/Mistral-7B-Instruct-v0.2",
@@ -95,7 +95,7 @@ def generate_assessment_from_pdf(pdf_file_path):
         'options': options
     }
 
-# If run as a script, test with a sample file
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
