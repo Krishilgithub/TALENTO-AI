@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import createClientForBrowser from '@/utils/supabase/client';
 
 export default function DashboardPage() {
 	const [user, setUser] = useState(null);
@@ -11,24 +12,32 @@ export default function DashboardPage() {
 	const router = useRouter();
 
 	useEffect(() => {
-		const userData = localStorage.getItem("user");
-		if (!userData) {
-			router.push("/login");
-			return;
-		}
-
-		const userObj = JSON.parse(userData);
-		if (userObj.role === "admin") {
-			router.push("/admin");
-			return;
-		}
-
-		setUser(userObj);
-		setIsLoading(false);
+		const fetchUser = async () => {
+			const supabase = createClientForBrowser();
+			const { data, error } = await supabase.auth.getUser();
+			if (data?.user) {
+				const userObj = {
+					name: data.user.user_metadata?.name || data.user.email,
+					email: data.user.email,
+					role: data.user.user_metadata?.role || 'user',
+					// add more fields as needed
+				};
+				if (userObj.role === "admin") {
+					router.push("/admin");
+					return;
+				}
+				setUser(userObj);
+				setIsLoading(false);
+			} else {
+				router.push("/login");
+			}
+		};
+		fetchUser();
 	}, [router]);
 
-	const handleLogout = () => {
-		localStorage.removeItem("user");
+	const handleLogout = async () => {
+		const supabase = createClientForBrowser();
+		await supabase.auth.signOut();
 		router.push("/");
 	};
 
@@ -49,21 +58,14 @@ export default function DashboardPage() {
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="flex justify-between items-center py-4">
 						<div className="flex items-center">
-							<Link href="/" className="text-2xl font-bold text-white">
+							<Link href="/dashboard" className="text-2xl font-bold text-white">
 								Talento AI
 							</Link>
 						</div>
 						<div className="flex items-center space-x-4">
-							<div className="text-sm text-gray-300">
-								Welcome,{" "}
-								<span className="font-semibold text-white">{user.name}</span>
-							</div>
-							<button
-								onClick={handleLogout}
-								className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200"
-							>
-								Logout
-							</button>
+							<Link href="/profile" className="bg-cyan-400 text-black px-4 py-2 rounded-lg font-medium hover:bg-cyan-300 transition-colors duration-200">
+								Profile
+							</Link>
 						</div>
 					</div>
 				</div>
@@ -96,16 +98,15 @@ export default function DashboardPage() {
 							{ id: "practice", name: "Practice Sessions", icon: "💬" },
 							{ id: "career", name: "Career Tools", icon: "🚀" },
 							{ id: "progress", name: "Progress", icon: "📈" },
-							{ id: "settings", name: "Settings", icon: "⚙️" },
+							// Removed settings tab
 						].map((tab) => (
 							<button
 								key={tab.id}
 								onClick={() => setActiveTab(tab.id)}
-								className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
-									activeTab === tab.id
+								className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${activeTab === tab.id
 										? "border-cyan-400 text-cyan-400"
 										: "border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600"
-								}`}
+									}`}
 							>
 								<span className="mr-2">{tab.icon}</span>
 								{tab.name}
@@ -121,7 +122,7 @@ export default function DashboardPage() {
 					{activeTab === "practice" && <PracticeSessionsTab />}
 					{activeTab === "career" && <CareerToolsTab />}
 					{activeTab === "progress" && <ProgressTab />}
-					{activeTab === "settings" && <SettingsTab user={user} />}
+					{/* Removed settings tab content */}
 				</div>
 			</div>
 		</div>
@@ -204,11 +205,10 @@ function OverviewTab({ user }) {
 								<p className="text-2xl font-bold text-white">{stat.value}</p>
 							</div>
 							<div
-								className={`text-sm font-medium ${
-									stat.changeType === "positive"
+								className={`text-sm font-medium ${stat.changeType === "positive"
 										? "text-green-400"
 										: "text-red-400"
-								}`}
+									}`}
 							>
 								{stat.change}
 							</div>
@@ -331,13 +331,12 @@ function InterviewPrepTab() {
 							<div className="text-3xl">{type.icon}</div>
 							<div className="text-right">
 								<span
-									className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-										type.difficulty === "Beginner"
+									className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${type.difficulty === "Beginner"
 											? "bg-green-900 text-green-300"
 											: type.difficulty === "Intermediate"
-											? "bg-yellow-900 text-yellow-200"
-											: "bg-red-900 text-red-300"
-									}`}
+												? "bg-yellow-900 text-yellow-200"
+												: "bg-red-900 text-red-300"
+										}`}
 								>
 									{type.difficulty}
 								</span>
@@ -819,115 +818,6 @@ function ProgressTab() {
 							<p className="text-sm text-gray-400 font-sans">{achievement.description}</p>
 						</div>
 					))}
-				</div>
-			</div>
-		</div>
-	);
-}
-
-// Settings Tab Component
-function SettingsTab({ user }) {
-	const [notifications, setNotifications] = useState({
-		email: true,
-		push: true,
-		weekly: false,
-	});
-
-	return (
-		<div className="space-y-6">
-			<div>
-				<h2 className="text-xl font-semibold text-white mb-2 font-sans">Account Settings</h2>
-				<p className="text-gray-300 font-sans">Manage your account preferences and settings.</p>
-			</div>
-
-			{/* Profile Information */}
-			<div className="bg-[#18191b] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-cyan-400 mb-4 font-sans">Profile Information</h3>
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label className="block text-sm font-medium text-gray-300 mb-2 font-sans">First Name</label>
-						<input
-							type="text"
-							defaultValue={user.firstName || user.name.split(" ")[0]}
-							className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-[#101113] text-white font-sans"
-						/>
-					</div>
-					<div>
-						<label className="block text-sm font-medium text-gray-300 mb-2 font-sans">Last Name</label>
-						<input
-							type="text"
-							defaultValue={user.lastName || user.name.split(" ")[1] || ""}
-							className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-[#101113] text-white font-sans"
-						/>
-					</div>
-					<div className="md:col-span-2">
-						<label className="block text-sm font-medium text-gray-300 mb-2 font-sans">Email</label>
-						<input
-							type="email"
-							defaultValue={user.email}
-							className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-[#101113] text-white font-sans"
-						/>
-					</div>
-				</div>
-				<button className="mt-4 bg-cyan-400 text-black px-4 py-2 rounded-lg hover:bg-cyan-300 transition-colors duration-200 font-sans">Save Changes</button>
-			</div>
-
-			{/* Notification Settings */}
-			<div className="bg-[#18191b] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-cyan-400 mb-4 font-sans">Notification Settings</h3>
-				<div className="space-y-4">
-					{Object.entries(notifications).map(([key, value]) => (
-						<div key={key} className="flex items-center justify-between">
-							<div>
-								<p className="font-medium text-white capitalize font-sans">{key} Notifications</p>
-								<p className="text-sm text-gray-400 font-sans">{key === "email" && "Receive updates via email"}{key === "push" && "Get push notifications"}{key === "weekly" && "Weekly progress reports"}</p>
-							</div>
-							<button
-								onClick={() =>
-									setNotifications((prev) => ({ ...prev, [key]: !value }))
-								}
-								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${value ? "bg-cyan-400" : "bg-[#232323]"}`}
-							>
-								<span
-									className={`inline-block h-4 w-4 transform rounded-full bg-[#101113] transition-transform duration-200 ${value ? "translate-x-6" : "translate-x-1"}`}
-								/>
-							</button>
-						</div>
-					))}
-				</div>
-			</div>
-
-			{/* Privacy Settings */}
-			<div className="bg-[#18191b] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-cyan-400 mb-4 font-sans">Privacy & Security</h3>
-				<div className="space-y-4">
-					<button className="w-full text-left p-4 bg-[#232323] rounded-lg border border-gray-700 hover:bg-[#232323] transition-colors duration-200 font-sans">
-						<div className="flex items-center justify-between">
-							<div>
-								<p className="font-medium text-white font-sans">Change Password</p>
-								<p className="text-sm text-gray-400 font-sans">Update your account password</p>
-							</div>
-							<span className="text-cyan-400">→</span>
-						</div>
-					</button>
-					<button className="w-full text-left p-4 bg-[#232323] rounded-lg border border-gray-700 hover:bg-[#232323] transition-colors duration-200 font-sans">
-						<div className="flex items-center justify-between">
-							<div>
-								<p className="font-medium text-white font-sans">Data Export</p>
-								<p className="text-sm text-gray-400 font-sans">Download your data</p>
-							</div>
-							<span className="text-cyan-400">→</span>
-						</div>
-					</button>
-					<button className="w-full text-left p-4 bg-[#232323] rounded-lg border border-gray-700 hover:bg-[#232323] transition-colors duration-200 font-sans">
-						<div className="flex items-center justify-between">
-							<div>
-								<p className="font-medium text-white font-sans">Delete Account</p>
-								<p className="text-sm text-gray-400 font-sans">Permanently delete your account</p>
-							</div>
-							<span className="text-red-400">→</span>
-						</div>
-					</button>
 				</div>
 			</div>
 		</div>
