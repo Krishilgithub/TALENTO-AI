@@ -1,6 +1,6 @@
 # Requires: fastapi, uvicorn, python-multipart
 # Install with: pip install fastapi uvicorn python-multipart
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -20,14 +20,14 @@ app.add_middleware(
 )
 
 @app.post("/api/assessment/upload_resume/")
-async def upload_resume(file: UploadFile = File(...)):
+async def upload_resume(file: UploadFile = File(...), num_questions: int = Form(20)):
     # Save uploaded file to a temporary location
     suffix = os.path.splitext(file.filename)[1]
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp.write(await file.read())
         tmp_path = tmp.name
     try:
-        result = generate_assessment_from_pdf(tmp_path)
+        result = generate_assessment_from_pdf(tmp_path, num_questions=num_questions)
         return JSONResponse(content=result)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})

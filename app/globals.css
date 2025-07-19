@@ -59,11 +59,23 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-html, body, * {
+html,
+body,
+* {
   cursor: url('/custom-cursor.svg'), pointer;
 }
 
 /* Add fallback for clickable elements */
-button, a, [role="button"], input[type="button"], input[type="submit"] {
+button,
+a,
+[role="button"],
+input[type="button"],
+input[type="submit"] {
   cursor: url('/custom-cursor.svg'), pointer;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
 }
