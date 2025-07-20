@@ -8,7 +8,7 @@ export default function Footer() {
 				<div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
 					<div className="flex items-center gap-2 mb-2 md:mb-0">
 						<Link href="/">
-							<Image src="/file.png" alt="Logo" width={30} height={30} />
+							<Image src="/resume2.png" alt="Logo" width={30} height={30} />
 						</Link>
 						<span>
 							© {new Date().getFullYear()} Talento AI. All rights reserved.
