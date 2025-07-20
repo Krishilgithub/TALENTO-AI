@@ -1,9 +1,9 @@
 'use client';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import createClientForBrowser from '../../utils/supabase/client';
 
-export default function VerifyOtpPage() {
+function VerifyOtpInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
@@ -64,5 +64,13 @@ export default function VerifyOtpPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyOtpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><span className="text-white">Loading...</span></div>}>
+      <VerifyOtpInner />
+    </Suspense>
   );
 }
