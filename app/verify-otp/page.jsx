@@ -1,41 +1,68 @@
-'use client'
-import { verifyOtp } from '@/utils/actions'
-import { useSearchParams } from 'next/navigation'
-import { useActionState, Suspense } from 'react'
+'use client';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import createClientForBrowser from '../../utils/supabase/client';
 
-function VerifyOtpForm() {
-  const searchParams = useSearchParams()
-  const email = searchParams.get('email') || ''
-  const [state, formAction, isPending] = useActionState(verifyOtp, {
-    error: '',
-    email,
-  })
-  const { error } = state
+export default function VerifyOtpPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get('email');
+  const [otp, setOtp] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+    const supabase = createClientForBrowser();
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: 'email',
+    });
+    if (error) {
+      setError(error.message);
+    } else {
+      router.push('/dashboard');
+    }
+    setIsLoading(false);
+  };
+
   return (
-    <div className='flex flex-col items-center justify-center h-screen gap-4'>
-      <h1 className='text-4xl font-bold'>Verify OTP</h1>
-      <form action={formAction}>
-        <label className='input input-bordered flex items-center gap-2'>
-          <input type='number' className='grow' placeholder='OTP' name='token' />
-        </label>
-        <button className='btn' type='submit' disabled={isPending}>
-          {isPending && <span className='loading loading-spinner'></span>}
-          Verify OTP
-        </button>
-        {error && (
-          <div role='alert' className='alert alert-error'>
-            <span>{error}</span>
-          </div>
-        )}
-      </form>
+    <div className="min-h-screen bg-[#101113] flex items-center justify-center px-4 py-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-white mb-2">Verify OTP</h1>
+          <h2 className="text-lg text-gray-300 mb-4">Enter the OTP sent to <span className="font-semibold text-cyan-400">{email}</span></h2>
+        </div>
+        <div className="bg-[#18191b] rounded-2xl shadow-xl p-8 border border-gray-700">
+          <form onSubmit={handleVerify} className="space-y-6">
+            <label className="block text-sm font-medium text-gray-300 mb-2" htmlFor="otp">OTP</label>
+            <input
+              id="otp"
+              type="text"
+              value={otp}
+              onChange={e => setOtp(e.target.value)}
+              required
+              placeholder="Enter OTP"
+              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200 bg-[#101113] text-white placeholder-gray-400 border-gray-600"
+            />
+            <button
+              type="submit"
+              className="w-full py-3 px-4 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-60"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Verifying...' : 'Verify OTP'}
+            </button>
+            {error && (
+              <div className="bg-red-900/20 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-2">
+                {error}
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
-
-const Page = () => (
-  <Suspense fallback={<div className='flex items-center justify-center h-screen'><span>Loading...</span></div>}>
-    <VerifyOtpForm />
-  </Suspense>
-)
-
-export default Page

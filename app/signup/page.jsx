@@ -94,10 +94,28 @@ export default function SignupPage() {
 					},
 				},
 			});
+
+			let alreadyExists = false;
 			if (error) {
+				if (
+					error.code === 'user_already_exists' ||
+					error.code === 'email_exists'
+				) {
+					alreadyExists = true;
+				}
+			}
+			if (!error && data && data.user && !data.session) {
+				alreadyExists = true;
+			}
+
+			if (alreadyExists) {
+				setErrors({
+					general: 'An account with this email already exists. Please try logging in.',
+				});
+			} else if (error) {
 				setErrors({ general: error.message });
 			} else {
-				router.push('/login');
+				router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
 			}
 		} catch (error) {
 			setErrors({ general: 'Signup failed. Please try again.' });
