@@ -60,7 +60,7 @@ export default function PricingSection() {
 								<li>✔️ Access to premium content</li>
 							</ul>
 							<span className="block text-3xl font-bold text-cyan-300 mb-2">
-								&#8377;29/mo
+								&#8377;1399/month
 							</span>
 							<a
 								href="#signup"
@@ -98,6 +98,7 @@ export default function PricingSection() {
 							>
 								Request Demo
 							</a>
+							
 						</div>
 					</motion.div>,
 				])}

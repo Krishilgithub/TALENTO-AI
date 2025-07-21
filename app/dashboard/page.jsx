@@ -52,77 +52,71 @@ export default function DashboardPage() {
 	if (!user) return null;
 
 	return (
-		<div className="min-h-screen bg-[#101113]">
-			{/* Header */}
-			<header className="bg-[#18191b] shadow-sm border-b border-gray-700">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="flex justify-between items-center py-4">
-						<div className="flex items-center">
-							<Link href="/dashboard" className="text-2xl font-bold text-white">
-								Talento AI
-							</Link>
-						</div>
-						<div className="flex items-center space-x-4">
-							<Link href="/profile" className="bg-cyan-400 text-black px-4 py-2 rounded-lg font-medium hover:bg-cyan-300 transition-colors duration-200">
-								Profile
-							</Link>
-						</div>
-					</div>
+		<div className="min-h-screen flex bg-[#101113]">
+			{/* Sidebar */}
+			<aside className="w-72 bg-[#18191b] border-r border-gray-800 flex flex-col py-6 px-4 min-h-screen">
+				{/* Logo */}
+				<div className="flex items-center mb-8">
+					<span className="text-2xl font-extrabold text-white tracking-wide">LOCKEDIN <span className="text-cyan-400">AI</span></span>
 				</div>
-			</header>
-
-			{/* Navigation for new features */}
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				{/* <div className="flex space-x-4 mb-8">
-					<Link href="/practice" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Start Practice Session</Link>
-					<Link href="/assessment" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Take Assessment</Link>
-					<Link href="/career" className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">Career Planning</Link>
-				</div> */}
-				{/* Dashboard Header */}
+				{/* User Info */}
 				<div className="mb-8">
-					<h1 className="text-3xl font-bold text-white mb-2">
-						Your Career Dashboard
-					</h1>
-					<p className="text-gray-300">
-						Master your interviews and accelerate your career with AI-powered
-						tools
-					</p>
+					<p className="text-white font-semibold text-lg">{user.name}</p>
+					<p className="text-gray-400 text-sm mb-2">{user.email}</p>
+					<button onClick={handleLogout} className="text-cyan-400 text-xs hover:underline">Logout</button>
 				</div>
-
-				{/* Navigation Tabs */}
-				<div className="bg-[#18191b] rounded-xl shadow-sm border border-gray-700 mb-8">
-					<nav className="flex space-x-8 px-6">
+				{/* Navigation */}
+				<nav className="flex-1">
+					<ul className="space-y-2">
 						{[
 							{ id: "overview", name: "Overview", icon: "📊" },
 							{ id: "interviews", name: "Interview Prep", icon: "🎯" },
 							{ id: "practice", name: "Practice Sessions", icon: "💬" },
 							{ id: "career", name: "Career Tools", icon: "🚀" },
 							{ id: "progress", name: "Progress", icon: "📈" },
-							// Removed settings tab
 						].map((tab) => (
-							<button
-								key={tab.id}
-								onClick={() => setActiveTab(tab.id)}
-								className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${activeTab === tab.id
-										? "border-cyan-400 text-cyan-400"
-										: "border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600"
+							<li key={tab.id}>
+								<button
+									onClick={() => setActiveTab(tab.id)}
+									className={`w-full flex items-center px-4 py-3 rounded-lg text-left font-medium transition-colors duration-200 ${activeTab === tab.id
+										? "bg-[#23272f] text-cyan-400"
+										: "text-gray-300 hover:bg-[#23272f] hover:text-cyan-300"
 									}`}
-							>
-								<span className="mr-2">{tab.icon}</span>
-								{tab.name}
-							</button>
+								>
+									<span className="mr-3 text-lg">{tab.icon}</span>
+									{tab.name}
+								</button>
+							</li>
 						))}
-					</nav>
+					</ul>
+				</nav>
+				{/* Extra Links */}
+				<div className="mt-8">
+					<Link href="/profile" className="block bg-cyan-400 text-black text-center py-2 rounded-lg font-medium hover:bg-cyan-300 transition-colors duration-200 mb-2">Profile</Link>
+				</div>
+			</aside>
+
+			{/* Main Content Area */}
+			<div className="flex-1 flex flex-col min-h-screen">
+				{/* Top Bar */}
+				<div className="bg-[#18191b] border-b border-gray-800 px-8 py-3 flex items-center justify-between">
+					<div className="flex items-center space-x-4">
+						<span className="bg-cyan-900/30 text-cyan-300 px-3 py-1 rounded-full text-xs font-semibold">O.P locked in an offer from Unilexxx</span>
+						<span className="bg-yellow-900/30 text-yellow-400 px-3 py-1 rounded-full text-xs font-semibold">🔥 Summer Sale: Use code <span className='font-bold'>"summer15"</span></span>
+					</div>
+					<button className="bg-[#23272f] text-cyan-400 px-4 py-2 rounded-lg font-medium hover:bg-cyan-500 hover:text-black transition-colors duration-200">Desktop App</button>
 				</div>
 
-				{/* Tab Content */}
-				<div className="bg-[#18191b] rounded-xl shadow-sm border border-gray-700 p-6">
-					{activeTab === "overview" && <OverviewTab user={user} />}
-					{activeTab === "interviews" && <InterviewPrepTab />}
-					{activeTab === "practice" && <PracticeSessionsTab />}
-					{activeTab === "career" && <CareerToolsTab />}
-					{activeTab === "progress" && <ProgressTab />}
-					{/* Removed settings tab content */}
+				{/* Main Card Content */}
+				<div className="flex-1 flex flex-col items-center justify-start py-10 px-4 bg-[#101113]">
+					<div className="w-full max-w-5xl bg-[#18191b] rounded-2xl shadow-lg border border-gray-800 p-8">
+						{/* Dashboard Header */}
+						{activeTab === "overview" && <OverviewTab user={user} />}
+						{activeTab === "interviews" && <InterviewPrepTab />}
+						{activeTab === "practice" && <PracticeSessionsTab />}
+						{activeTab === "career" && <CareerToolsTab />}
+						{activeTab === "progress" && <ProgressTab />}
+					</div>
 				</div>
 			</div>
 		</div>
