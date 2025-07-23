@@ -21,7 +21,7 @@ export default function DashboardPage() {
 				const userObj = {
 					name: data.user.user_metadata?.name || data.user.email,
 					email: data.user.email,
-					role: data.user.user_metadata?.role || 'user',
+					role: data.user.user_metadata?.role || "user",
 					// add more fields as needed
 				};
 				if (userObj.role === "admin") {
@@ -250,10 +250,11 @@ function OverviewTab({ user }) {
 								<p className="text-2xl font-bold text-white">{stat.value}</p>
 							</div>
 							<div
-								className={`text-sm font-medium ${stat.changeType === "positive"
+								className={`text-sm font-medium ${
+									stat.changeType === "positive"
 										? "text-green-400"
 										: "text-red-400"
-									}`}
+								}`}
 							>
 								{stat.change}
 							</div>
@@ -375,12 +376,13 @@ function InterviewPrepTab() {
 							<div className="text-3xl">{type.icon}</div>
 							<div className="text-right">
 								<span
-									className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${type.difficulty === "Beginner"
+									className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+										type.difficulty === "Beginner"
 											? "bg-green-900 text-green-300"
 											: type.difficulty === "Intermediate"
-												? "bg-yellow-900 text-yellow-200"
-												: "bg-red-900 text-red-300"
-										}`}
+											? "bg-yellow-900 text-yellow-200"
+											: "bg-red-900 text-red-300"
+									}`}
 								>
 									{type.difficulty}
 								</span>
@@ -631,13 +633,10 @@ function CareerToolsTab() {
 		formData.append("job_role", "Software Engineer"); // or allow user to select
 
 		try {
-			const res = await fetch(
-				"http://localhost:8000/api/assessment/ats_score/",
-				{
-					method: "POST",
-					body: formData,
-				}
-			);
+			const res = await fetch("/api/assessment/ats_score/", {
+				method: "POST",
+				body: formData,
+			});
 			const data = await res.json();
 			if (!res.ok || data.error) {
 				setAtsScore(null);
@@ -745,10 +744,15 @@ function CareerToolsTab() {
 						</div>
 						{/* Improvement Plan */}
 						<div className="mb-2">
-							<span className="font-semibold text-cyan-300">Improvement Plan:</span>
+							<span className="font-semibold text-cyan-300">
+								Improvement Plan:
+							</span>
 							<ul className="list-disc list-inside ml-4 text-gray-200">
-								{atsFeedback.improvement_plan && atsFeedback.improvement_plan.length > 0 ? (
-									atsFeedback.improvement_plan.map((imp, i) => <li key={i}>{imp}</li>)
+								{atsFeedback.improvement_plan &&
+								atsFeedback.improvement_plan.length > 0 ? (
+									atsFeedback.improvement_plan.map((imp, i) => (
+										<li key={i}>{imp}</li>
+									))
 								) : (
 									<li className="text-gray-400">None</li>
 								)}
