@@ -171,15 +171,4 @@ export default function OnboardingPage() {
     </div>
   );
   
-}// ...existing code...
-import { useRouter } from "next/navigation";
-// ...existing code...
-
-const router = useRouter();
-
-const handleSignup = async (formData) => {
-  // ...signup logic...
-  // After successful signup:
-  router.push("/onboarding");
-};
-// ...existing code...
+}
