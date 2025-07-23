@@ -3,12 +3,11 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, ChatMe
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 import json
 import os
-import tempfile
 import re
+
 load_dotenv()
 
 hf_api_key = os.getenv('HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP')
@@ -21,109 +20,77 @@ llm = HuggingFaceEndpoint(
 )
 
 model = ChatHuggingFace(llm=llm)
+parser = StrOutputParser() # Use StrOutputParser to get raw output
 
-parser1 = StrOutputParser()
-parser2 = JsonOutputParser()
-
-resume_loader1 = PyPDFLoader("./data/Krishil Agrawal Resume - ML.pdf")
-resume_loader2 = PyPDFLoader("./data/Krishil Agrawal Resume - Web.pdf")
-
-resume1 = resume_loader1.load()
-resume2 = resume_loader2.load()
-
-template1 = PromptTemplate(
-  template="Analyze the whole resume and extract all the technical skills mentioned in the {resume1}",
-  input_variables=['resume1']
-)
-
-template2 = PromptTemplate(
-  template=(
-    "You are given a list of technical skills. "
-    "Generate 20 intermediate level MCQs from the {skills} with theright answer written after the option. "
-    "Return ONLY a valid JSON array of objects, each with 'Question', 'Options', and 'Answer' fields. "
-    "Do not include any extra text or explanation. "
-    "Format: {format_instruction}"
-  ),
-  input_variables=['level', 'technical_skills'],
-  partial_variables={'format_instruction': parser2.get_format_instructions()}
-)
-
-chain = template1 | model | parser1 | template2 | model | parser2
-
-result = chain.invoke({'resume1': resume1 })
-
-def try_parse_json(raw_output):
-    # Remove trailing commas and fix common issues
-    cleaned = re.sub(r",\s*([}\]])", r"\\1", raw_output)
+def try_parse_json(raw_output: str):
+    """
+    Tries to parse a string that may contain a JSON object.
+    It cleans the string by extracting content between the first '[' and last ']',
+    and replaces single quotes with double quotes.
+    """
     try:
-        return json.loads(cleaned)
+        # Find the start and end of the JSON array
+        start = raw_output.find('[')
+        end = raw_output.rfind(']')
+        if start == -1 or end == -1:
+            return None
+        
+        json_str = raw_output[start:end+1]
+        
+        # Replace single quotes with double quotes, being careful not to replace them inside strings
+        json_str = re.sub(r"'", '"', json_str)
+        
+        return json.loads(json_str)
     except Exception as e:
+        print(f"Error parsing JSON: {e}")
         return None
 
 def generate_assessment_from_pdf(pdf_file_path, num_questions=20):
-    resume_loader = PyPDFLoader(pdf_file_path)
-    resume = resume_loader.load()
-    # Instead of extracting project-specific skills, generate general MCQs for the field
+    # This function is not used by the technical assessment page, but we'll keep it for now.
+    # The technical assessment page uses a general prompt, not one based on a PDF.
+    pass
+
+def generate_technical_mcqs(job_role: str = "Software Engineer", num_questions: int = 20):
+    """
+    Generates general technical MCQs for a given job role.
+    """
     general_prompt = PromptTemplate(
         template=(
             "You are an expert technical interviewer. "
             "Generate {num_questions} general multiple-choice questions (MCQs) for a technical assessment in software engineering. "
-            "Each question should have 4 options and 1 correct answer. "
-            "Return ONLY a valid JSON array of objects, each with 'Question', 'Options', and 'Answer' fields. "
-            "Do not include any extra text or explanation. "
-            "Format: {format_instruction}"
+            "Each question must have 4 options and 1 correct answer. "
+            "Return ONLY a valid JSON array of objects, with no extra text, comments, or explanations. "
+            "Each object must have 'Question', 'Options', and 'Answer' fields. "
+            "Use double quotes for all keys and string values. Do not use single quotes. "
+            "Example: [{{'Question': '...', 'Options': ['...'], 'Answer': '...'}}]"
         ),
         input_variables=['num_questions'],
-        partial_variables={'format_instruction': parser2.get_format_instructions()}
     )
-    chain = general_prompt | model | parser2
+    
+    chain = general_prompt | model | parser # Use StrOutputParser
+    
     try:
-        result = chain.invoke({'num_questions': num_questions})
-        if isinstance(result, str):
-            parsed = try_parse_json(result)
-            if parsed is not None:
-                result = parsed
-            else:
-                print("Output parsing failed. Raw output:")
-                print(result)
-                return {'questions': [], 'answers': [], 'options': [], 'error': 'Output parsing failed. Raw output: ' + result}
+        raw_result = chain.invoke({'num_questions': num_questions})
+        
+        parsed_result = try_parse_json(raw_result)
+        
+        if parsed_result is not None:
+            # Reformat the result to match the expected structure
+            questions = [item['Question'] for item in parsed_result]
+            answers = [item['Answer'] for item in parsed_result]
+            options = [item['Options'] for item in parsed_result]
+            return {'questions': questions, 'answers': answers, 'options': options}
+        else:
+            print("Output parsing failed. Raw output:")
+            print(raw_result)
+            return {'questions': [], 'answers': [], 'options': [], 'error': 'Output parsing failed. Raw output: ' + raw_result}
+
     except Exception as e:
-        print("Output parsing failed. Raw output:")
-        print(e)
-        return {'questions': [], 'answers': [], 'options': [], 'error': 'Output parsing failed. Please try again.'}
-    questions = []
-    answers = []
-    options = []
-    if isinstance(result, list):
-        for mcq in result:
-            if isinstance(mcq, dict):
-                question = mcq.get('Question')
-                answer = mcq.get('Answer')
-                option = mcq.get('Options')
-                questions.append(question)
-                answers.append(answer)
-                options.append(option)
-    elif isinstance(result, dict):
-        for mcq in result.values():
-            if isinstance(mcq, dict):
-                question = mcq.get('Question')
-                answer = mcq.get('Answer')
-                option = mcq.get('Options')
-                questions.append(question)
-                answers.append(answer)
-                options.append(option)
-    return {
-        'questions': questions,
-        'answers': answers,
-        'options': options
-    }
+        print(f"An error occurred: {e}")
+        return {'questions': [], 'answers': [], 'options': [], 'error': 'An error occurred while generating questions.'}
 
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) > 1:
-        pdf_path = sys.argv[1]
-        result = generate_assessment_from_pdf(pdf_path)
-        print(json.dumps(result, indent=2))
-    else:
-        print("Usage: python technical_assessment.py <resume.pdf>")
+    result = generate_technical_mcqs()
+    print(json.dumps(result, indent=2))

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import createClientForBrowser from '@/utils/supabase/client';
+import createClientForBrowser from "@/utils/supabase/client";
 
 export default function DashboardPage() {
 	const [user, setUser] = useState(null);
@@ -19,7 +19,7 @@ export default function DashboardPage() {
 				const userObj = {
 					name: data.user.user_metadata?.name || data.user.email,
 					email: data.user.email,
-					role: data.user.user_metadata?.role || 'user',
+					role: data.user.user_metadata?.role || "user",
 					// add more fields as needed
 				};
 				if (userObj.role === "admin") {
@@ -63,7 +63,10 @@ export default function DashboardPage() {
 							</Link>
 						</div>
 						<div className="flex items-center space-x-4">
-							<Link href="/profile" className="bg-cyan-400 text-black px-4 py-2 rounded-lg font-medium hover:bg-cyan-300 transition-colors duration-200">
+							<Link
+								href="/profile"
+								className="bg-cyan-400 text-black px-4 py-2 rounded-lg font-medium hover:bg-cyan-300 transition-colors duration-200"
+							>
 								Profile
 							</Link>
 						</div>
@@ -103,10 +106,11 @@ export default function DashboardPage() {
 							<button
 								key={tab.id}
 								onClick={() => setActiveTab(tab.id)}
-								className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${activeTab === tab.id
+								className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+									activeTab === tab.id
 										? "border-cyan-400 text-cyan-400"
 										: "border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600"
-									}`}
+								}`}
 							>
 								<span className="mr-2">{tab.icon}</span>
 								{tab.name}
@@ -205,10 +209,11 @@ function OverviewTab({ user }) {
 								<p className="text-2xl font-bold text-white">{stat.value}</p>
 							</div>
 							<div
-								className={`text-sm font-medium ${stat.changeType === "positive"
+								className={`text-sm font-medium ${
+									stat.changeType === "positive"
 										? "text-green-400"
 										: "text-red-400"
-									}`}
+								}`}
 							>
 								{stat.change}
 							</div>
@@ -330,12 +335,13 @@ function InterviewPrepTab() {
 							<div className="text-3xl">{type.icon}</div>
 							<div className="text-right">
 								<span
-									className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${type.difficulty === "Beginner"
+									className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+										type.difficulty === "Beginner"
 											? "bg-green-900 text-green-300"
 											: type.difficulty === "Intermediate"
-												? "bg-yellow-900 text-yellow-200"
-												: "bg-red-900 text-red-300"
-										}`}
+											? "bg-yellow-900 text-yellow-200"
+											: "bg-red-900 text-red-300"
+									}`}
 								>
 									{type.difficulty}
 								</span>
@@ -586,13 +592,10 @@ function CareerToolsTab() {
 		formData.append("job_role", "Software Engineer"); // or allow user to select
 
 		try {
-			const res = await fetch(
-				"http://localhost:8000/api/assessment/ats_score/",
-				{
-					method: "POST",
-					body: formData,
-				}
-			);
+			const res = await fetch("/api/assessment/ats_score/", {
+				method: "POST",
+				body: formData,
+			});
 			const data = await res.json();
 			if (!res.ok || data.error) {
 				setAtsScore(null);
@@ -700,10 +703,15 @@ function CareerToolsTab() {
 						</div>
 						{/* Improvement Plan */}
 						<div className="mb-2">
-							<span className="font-semibold text-cyan-300">Improvement Plan:</span>
+							<span className="font-semibold text-cyan-300">
+								Improvement Plan:
+							</span>
 							<ul className="list-disc list-inside ml-4 text-gray-200">
-								{atsFeedback.improvement_plan && atsFeedback.improvement_plan.length > 0 ? (
-									atsFeedback.improvement_plan.map((imp, i) => <li key={i}>{imp}</li>)
+								{atsFeedback.improvement_plan &&
+								atsFeedback.improvement_plan.length > 0 ? (
+									atsFeedback.improvement_plan.map((imp, i) => (
+										<li key={i}>{imp}</li>
+									))
 								) : (
 									<li className="text-gray-400">None</li>
 								)}

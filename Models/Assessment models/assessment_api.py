@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 import os
 import tempfile
-from technical_assessment import generate_assessment_from_pdf
+from technical_assessment import generate_technical_mcqs
 from resume_optimizer import analyze_resume
 from ats_score import calculate_ats_score
 from ats_score import process_resume_file, extract_resume_text
@@ -27,17 +27,14 @@ app.add_middleware(
 
 @app.post("/api/assessment/upload_resume/")
 async def upload_resume(file: UploadFile = File(...), num_questions: int = Form(20)):
-    suffix = os.path.splitext(file.filename)[1]
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(await file.read())
-        tmp_path = tmp.name
+    # This endpoint seems to be for the technical assessment, let's call the new function
     try:
-        result = generate_assessment_from_pdf(tmp_path, num_questions=num_questions)
+        # We don't need to save the file for the new general technical assessment
+        # We can just use the job_role and num_questions
+        result = generate_technical_mcqs(job_role="Software Engineer", num_questions=num_questions)
         return JSONResponse(content=result)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
-    finally:
-        os.remove(tmp_path)
 
 @app.post("/api/assessment/ats_score/")
 async def ats_score(file: UploadFile = File(...), job_role: str = Form("Software Engineer")):
