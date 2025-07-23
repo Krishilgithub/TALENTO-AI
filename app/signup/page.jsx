@@ -4,6 +4,20 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import createClientForBrowser from '@/utils/supabase/client';
+import { useRouter } from "next/navigation";
+// ...existing code...
+
+export default function SignupPage() {
+  const router = useRouter();
+
+  const handleSignup = async (formData) => {
+    // ...signup logic...
+    // After successful signup:
+    router.push("/onboarding");
+  };
+
+  // ...rest of your signup page code...
+}
 
 export default function SignupPage() {
 	const [formData, setFormData] = useState({
@@ -94,10 +108,28 @@ export default function SignupPage() {
 					},
 				},
 			});
+
+			let alreadyExists = false;
 			if (error) {
+				if (
+					error.code === 'user_already_exists' ||
+					error.code === 'email_exists'
+				) {
+					alreadyExists = true;
+				}
+			}
+			if (!error && data && data.user && !data.session) {
+				alreadyExists = true;
+			}
+
+			if (alreadyExists) {
+				setErrors({
+					general: 'An account with this email already exists. Please try logging in.',
+				});
+			} else if (error) {
 				setErrors({ general: error.message });
 			} else {
-				router.push('/login');
+				router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
 			}
 		} catch (error) {
 			setErrors({ general: 'Signup failed. Please try again.' });

@@ -67,7 +67,8 @@ const sendResetPasswordEmail = async (prev, formData) => {
     const supabase = await createClientForServer();
 
     const { error } = await supabase.auth.resetPasswordForEmail(
-        formData.get('email')
+        formData.get('email'),
+        { redirectTo: `${process.env.SITE_URL || 'http://localhost:3000'}/reset/update-password` }
     );
 
     if (error) {
@@ -140,6 +141,40 @@ const verifyOtp = async (prev, formData) => {
     redirect('/dashboard');
 };
 
+const sendResetOtp = async ({ email }) => {
+    const supabase = await createClientForServer();
+    // Send OTP to email
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    if (error) {
+        console.log('error', error);
+        return { error: error.message };
+    }
+    return { error: null };
+};
+
+const updatePasswordWithOtp = async ({ email, password, otp }) => {
+    const supabase = await createClientForServer();
+    // First, verify OTP
+    const { error: otpError } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'email',
+    });
+    if (otpError) {
+        console.log('otp error', otpError);
+        return { error: 'Invalid or expired OTP.' };
+    }
+    // If OTP is valid, update password
+    const { error: pwError } = await supabase.auth.updateUser({
+        password,
+    });
+    if (pwError) {
+        console.log('pw error', pwError);
+        return { error: pwError.message };
+    }
+    return { error: null };
+};
+
 export {
     signinWithGoogle,
     signinWithGithub,
@@ -151,4 +186,6 @@ export {
     signinWithMagicLink,
     signinWithOtp,
     verifyOtp,
+    sendResetOtp,
+    updatePasswordWithOtp,
 };

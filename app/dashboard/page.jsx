@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import createClientForBrowser from '@/utils/supabase/client';
+import { ChartBarIcon, ChatBubbleLeftRightIcon, PlayCircleIcon, BriefcaseIcon, ArrowTrendingUpIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export default function DashboardPage() {
 	const [user, setUser] = useState(null);
 	const [activeTab, setActiveTab] = useState("overview");
 	const [isLoading, setIsLoading] = useState(true);
+	const [sidebarOpen, setSidebarOpen] = useState(true);
 	const router = useRouter();
 
 	useEffect(() => {
@@ -54,59 +56,108 @@ export default function DashboardPage() {
 	return (
 		<div className="min-h-screen flex bg-[#101113]">
 			{/* Sidebar */}
-			<aside className="w-72 bg-[#18191b] border-r border-gray-800 flex flex-col py-6 px-4 min-h-screen">
-				{/* Logo */}
-				<div className="flex items-center mb-8">
-					<span className="text-2xl font-extrabold text-white tracking-wide">LOCKEDIN <span className="text-cyan-400">AI</span></span>
-				</div>
-				{/* User Info */}
-				<div className="mb-8">
-					<p className="text-white font-semibold text-lg">{user.name}</p>
-					<p className="text-gray-400 text-sm mb-2">{user.email}</p>
-					<button onClick={handleLogout} className="text-cyan-400 text-xs hover:underline">Logout</button>
-				</div>
-				{/* Navigation */}
-				<nav className="flex-1">
-					<ul className="space-y-2">
-						{[
-							{ id: "overview", name: "Overview", icon: "📊" },
-							{ id: "interviews", name: "Interview Prep", icon: "🎯" },
-							{ id: "practice", name: "Practice Sessions", icon: "💬" },
-							{ id: "career", name: "Career Tools", icon: "🚀" },
-							{ id: "progress", name: "Progress", icon: "📈" },
-						].map((tab) => (
-							<li key={tab.id}>
-								<button
-									onClick={() => setActiveTab(tab.id)}
-									className={`w-full flex items-center px-4 py-3 rounded-lg text-left font-medium transition-colors duration-200 ${activeTab === tab.id
-										? "bg-[#23272f] text-cyan-400"
-										: "text-gray-300 hover:bg-[#23272f] hover:text-cyan-300"
-									}`}
-								>
-									<span className="mr-3 text-lg">{tab.icon}</span>
-									{tab.name}
-								</button>
-							</li>
-						))}
-					</ul>
-				</nav>
-				{/* Extra Links */}
-				<div className="mt-8">
-					<Link href="/profile" className="block bg-cyan-400 text-black text-center py-2 rounded-lg font-medium hover:bg-cyan-300 transition-colors duration-200 mb-2">Profile</Link>
-				</div>
-			</aside>
+			{sidebarOpen && (
+				<aside className="w-72 bg-[#18191b] border-r border-gray-800 flex flex-col py-6 px-4 min-h-screen relative transition-all duration-300">
+					{/* Sidebar Toggle Arrow */}
+					<button
+						className="absolute -right-4 top-1/2 transform -translate-y-1/2 bg-[#23272f] border border-gray-700 rounded-full p-1 shadow hover:bg-cyan-900 transition z-20"
+						onClick={() => setSidebarOpen(false)}
+						title="Close sidebar"
+					>
+						<ChevronLeftIcon className="w-6 h-6 text-cyan-400" />
+					</button>
+					{/* Logo */}
+					<div className="flex items-center mb-8">
+						<span className="text-2xl font-extrabold text-white tracking-wide">TALENTO <span className="text-cyan-400">AI</span></span>
+					</div>
+					{/* Sidebar Top Row: Avatar, Plan, Credits (all in one line) */}
+					<div className="mb-8 flex flex-row items-center justify-center space-x-4 w-full">
+						{/* Profile Avatar as link to profile */}
+						<Link href="/profile">
+							<img src="/avatar1.jpg" alt="User Avatar" className="w-12 h-12 rounded-full border-2 border-cyan-400 object-cover cursor-pointer hover:opacity-80 transition" />
+						</Link>
+						{/* Subscription Plan Badge */}
+						<span className="flex items-center bg-[#23272f] text-cyan-300 px-3 py-1 rounded font-semibold text-sm">
+							<span className="mr-1"></span>FREE
+						</span>
+						{/* Token Count */}
+						<span className="flex items-center bg-[#23272f] text-cyan-300 px-2 py-0.5 rounded text-xs font-semibold">
+							<span className="mr-1">⏱</span>10
+						</span>
+						{/* Document Count */}
+						<span className="flex items-center bg-[#23272f] text-cyan-300 px-2 py-0.5 rounded text-xs font-semibold">
+							<span className="mr-1"></span>0
+						</span>
+					</div>
+					{/* User Name and Email */}
+					<div className="flex flex-col items-center mb-2">
+						<p className="text-white font-semibold text-lg">{user.name}</p>
+						<p className="text-gray-400 text-sm">{user.email}</p>
+					</div>
+					{/* Referral and Subscription Buttons */}
+					<div className="flex w-full space-x-2 mt-2 mb-8">
+						<button className="flex-1 bg-[#23272f] border border-cyan-400 text-cyan-300 py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-colors duration-200 flex items-center justify-center">
+							<span className="mr-2"></span>Referral
+						</button>
+						<button className="flex-1 bg-[#23272f] border border-cyan-400 text-cyan-300 py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-colors duration-200 flex items-center justify-center">
+							<span className="mr-2"></span>Subscription
+						</button>
+					</div>
+					{/* Navigation */}
+					<nav className="flex-1">
+						<ul className="space-y-2">
+							{[
+								{ id: "overview", name: "Overview", icon: ChartBarIcon },
+								{ id: "interviews", name: "Interview Prep", icon: ChatBubbleLeftRightIcon },
+								{ id: "practice", name: "Practice Sessions", icon: PlayCircleIcon },
+								{ id: "career", name: "Career Tools", icon: BriefcaseIcon },
+								{ id: "progress", name: "Progress", icon: ArrowTrendingUpIcon },
+							].map((tab) => (
+								<li key={tab.id}>
+									<button
+										onClick={() => setActiveTab(tab.id)}
+										className={`w-full flex items-center px-4 py-3 rounded-lg text-left font-medium transition-colors duration-200 ${activeTab === tab.id
+											? "bg-[#23272f] text-cyan-400"
+											: "text-gray-300 hover:bg-[#23272f] hover:text-cyan-300"
+										}`}
+									>
+										<tab.icon className={`w-5 h-5 mr-3 ${activeTab === tab.id ? 'text-cyan-400' : 'text-gray-400'}`} />
+										{tab.name}
+									</button>
+								</li>
+							))}
+						</ul>
+					</nav>
+					{/* History Section */}
+					<div className="mt-auto pt-8">
+						<h3 className="text-white font-semibold text-base mb-2">History</h3>
+						<div className="mb-3">
+							<input type="text" placeholder="Search..." className="w-full bg-[#23272f] text-gray-200 placeholder-gray-400 px-3 py-2 rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+						</div>
+						<ul className="space-y-1">
+							<li><button className="text-cyan-400 text-sm font-medium hover:underline">Recent</button></li>
+							<li><button className="text-cyan-400 text-sm font-medium hover:underline">Past 7 Days</button></li>
+							<li><button className="text-cyan-400 text-sm font-medium hover:underline">Past 30 Days</button></li>
+						</ul>
+					</div>
+				</aside>
+			)}
+			{!sidebarOpen && (
+				<>
+					{/* Sidebar collapsed toggle button */}
+					<button
+						className="fixed left-2 top-1/2 transform -translate-y-1/2 bg-[#23272f] border border-gray-700 rounded-full p-1 shadow hover:bg-cyan-900 transition z-30"
+						onClick={() => setSidebarOpen(true)}
+						title="Open sidebar"
+					>
+						<ChevronRightIcon className="w-6 h-6 text-cyan-400" />
+					</button>
+				</>
+			)}
 
 			{/* Main Content Area */}
 			<div className="flex-1 flex flex-col min-h-screen">
-				{/* Top Bar */}
-				<div className="bg-[#18191b] border-b border-gray-800 px-8 py-3 flex items-center justify-between">
-					<div className="flex items-center space-x-4">
-						<span className="bg-cyan-900/30 text-cyan-300 px-3 py-1 rounded-full text-xs font-semibold">O.P locked in an offer from Unilexxx</span>
-						<span className="bg-yellow-900/30 text-yellow-400 px-3 py-1 rounded-full text-xs font-semibold">🔥 Summer Sale: Use code <span className='font-bold'>"summer15"</span></span>
-					</div>
-					<button className="bg-[#23272f] text-cyan-400 px-4 py-2 rounded-lg font-medium hover:bg-cyan-500 hover:text-black transition-colors duration-200">Desktop App</button>
-				</div>
-
+				{/* Top Bar removed */}
 				{/* Main Card Content */}
 				<div className="flex-1 flex flex-col items-center justify-start py-10 px-4 bg-[#101113]">
 					<div className="w-full max-w-5xl bg-[#18191b] rounded-2xl shadow-lg border border-gray-800 p-8">
