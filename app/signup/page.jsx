@@ -103,7 +103,7 @@ export default function SignupPage() {
 			} else if (error) {
 				setErrors({ general: error.message });
 			} else {
-				router.push("/onboarding");
+				router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
 			}
 		} catch (error) {
 			setErrors({ general: 'Signup failed. Please try again.' });
