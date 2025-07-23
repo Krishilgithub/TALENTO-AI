@@ -89,26 +89,14 @@ export default function SignupPage() {
 				password: formData.password,
 				options: {
 					data: {
+						name: `${formData.firstName} ${formData.lastName}`.trim(),
 						firstName: formData.firstName,
 						lastName: formData.lastName,
 					},
 				},
 			});
 
-			let alreadyExists = false;
-			if (error) {
-				if (
-					error.code === 'user_already_exists' ||
-					error.code === 'email_exists'
-				) {
-					alreadyExists = true;
-				}
-			}
-			if (!error && data && data.user && !data.session) {
-				alreadyExists = true;
-			}
-
-			if (alreadyExists) {
+			if (error && (error.code === 'user_already_exists' || error.code === 'email_exists')) {
 				setErrors({
 					general: 'An account with this email already exists. Please try logging in.',
 				});
