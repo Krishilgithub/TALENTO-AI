@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import createClientForBrowser from '@/utils/supabase/client';
+import { ChartBarIcon, ChatBubbleLeftRightIcon, PlayCircleIcon, BriefcaseIcon, ArrowTrendingUpIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export default function DashboardPage() {
 	const [user, setUser] = useState(null);
 	const [activeTab, setActiveTab] = useState("overview");
 	const [isLoading, setIsLoading] = useState(true);
+	const [sidebarOpen, setSidebarOpen] = useState(true);
 	const router = useRouter();
 
 	useEffect(() => {
@@ -52,77 +54,120 @@ export default function DashboardPage() {
 	if (!user) return null;
 
 	return (
-		<div className="min-h-screen bg-[#101113]">
-			{/* Header */}
-			<header className="bg-[#18191b] shadow-sm border-b border-gray-700">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="flex justify-between items-center py-4">
-						<div className="flex items-center">
-							<Link href="/dashboard" className="text-2xl font-bold text-white">
-								Talento AI
-							</Link>
-						</div>
-						<div className="flex items-center space-x-4">
-							<Link href="/profile" className="bg-cyan-400 text-black px-4 py-2 rounded-lg font-medium hover:bg-cyan-300 transition-colors duration-200">
-								Profile
-							</Link>
-						</div>
+		<div className="min-h-screen flex bg-[#101113]">
+			{/* Sidebar */}
+			{sidebarOpen && (
+				<aside className="w-72 bg-[#18191b] border-r border-gray-800 flex flex-col py-6 px-4 min-h-screen relative transition-all duration-300">
+					{/* Sidebar Toggle Arrow */}
+					<button
+						className="absolute -right-4 top-1/2 transform -translate-y-1/2 bg-[#23272f] border border-gray-700 rounded-full p-1 shadow hover:bg-cyan-900 transition z-20"
+						onClick={() => setSidebarOpen(false)}
+						title="Close sidebar"
+					>
+						<ChevronLeftIcon className="w-6 h-6 text-cyan-400" />
+					</button>
+					{/* Logo */}
+					<div className="flex items-center mb-8">
+						<span className="text-2xl font-extrabold text-white tracking-wide">TALENTO <span className="text-cyan-400">AI</span></span>
 					</div>
-				</div>
-			</header>
-
-			{/* Navigation for new features */}
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				{/* <div className="flex space-x-4 mb-8">
-					<Link href="/practice" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Start Practice Session</Link>
-					<Link href="/assessment" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Take Assessment</Link>
-					<Link href="/career" className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">Career Planning</Link>
-				</div> */}
-				{/* Dashboard Header */}
-				<div className="mb-8">
-					<h1 className="text-3xl font-bold text-white mb-2">
-						Your Career Dashboard
-					</h1>
-					<p className="text-gray-300">
-						Master your interviews and accelerate your career with AI-powered
-						tools
-					</p>
-				</div>
-
-				{/* Navigation Tabs */}
-				<div className="bg-[#18191b] rounded-xl shadow-sm border border-gray-700 mb-8">
-					<nav className="flex space-x-8 px-6">
-						{[
-							{ id: "overview", name: "Overview", icon: "📊" },
-							{ id: "interviews", name: "Interview Prep", icon: "🎯" },
-							{ id: "practice", name: "Practice Sessions", icon: "💬" },
-							{ id: "career", name: "Career Tools", icon: "🚀" },
-							{ id: "progress", name: "Progress", icon: "📈" },
-							// Removed settings tab
-						].map((tab) => (
-							<button
-								key={tab.id}
-								onClick={() => setActiveTab(tab.id)}
-								className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${activeTab === tab.id
-										? "border-cyan-400 text-cyan-400"
-										: "border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600"
-									}`}
-							>
-								<span className="mr-2">{tab.icon}</span>
-								{tab.name}
-							</button>
-						))}
+					{/* Sidebar Top Row: Avatar, Plan, Credits (all in one line) */}
+					<div className="mb-8 flex flex-row items-center justify-center space-x-4 w-full">
+						{/* Profile Avatar as link to profile */}
+						<Link href="/profile">
+							<img src="/avatar1.jpg" alt="User Avatar" className="w-12 h-12 rounded-full border-2 border-cyan-400 object-cover cursor-pointer hover:opacity-80 transition" />
+						</Link>
+						{/* Subscription Plan Badge */}
+						<span className="flex items-center bg-[#23272f] text-cyan-300 px-3 py-1 rounded font-semibold text-sm">
+							<span className="mr-1"></span>FREE
+						</span>
+						{/* Token Count */}
+						<span className="flex items-center bg-[#23272f] text-cyan-300 px-2 py-0.5 rounded text-xs font-semibold">
+							<span className="mr-1">⏱</span>10
+						</span>
+						{/* Document Count */}
+						<span className="flex items-center bg-[#23272f] text-cyan-300 px-2 py-0.5 rounded text-xs font-semibold">
+							<span className="mr-1"></span>0
+						</span>
+					</div>
+					{/* User Name and Email */}
+					<div className="flex flex-col items-center mb-2">
+						<p className="text-white font-semibold text-lg">{user.name}</p>
+						<p className="text-gray-400 text-sm">{user.email}</p>
+					</div>
+					{/* Referral and Subscription Buttons */}
+					<div className="flex w-full space-x-2 mt-2 mb-8">
+						<button className="flex-1 bg-[#23272f] border border-cyan-400 text-cyan-300 py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-colors duration-200 flex items-center justify-center">
+							<span className="mr-2"></span>Referral
+						</button>
+						<button className="flex-1 bg-[#23272f] border border-cyan-400 text-cyan-300 py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-colors duration-200 flex items-center justify-center">
+							<span className="mr-2"></span>Subscription
+						</button>
+					</div>
+					{/* Navigation */}
+					<nav className="flex-1">
+						<ul className="space-y-2">
+							{[
+								{ id: "overview", name: "Overview", icon: ChartBarIcon },
+								{ id: "interviews", name: "Interview Prep", icon: ChatBubbleLeftRightIcon },
+								{ id: "practice", name: "Practice Sessions", icon: PlayCircleIcon },
+								{ id: "career", name: "Career Tools", icon: BriefcaseIcon },
+								{ id: "progress", name: "Progress", icon: ArrowTrendingUpIcon },
+							].map((tab) => (
+								<li key={tab.id}>
+									<button
+										onClick={() => setActiveTab(tab.id)}
+										className={`w-full flex items-center px-4 py-3 rounded-lg text-left font-medium transition-colors duration-200 ${activeTab === tab.id
+											? "bg-[#23272f] text-cyan-400"
+											: "text-gray-300 hover:bg-[#23272f] hover:text-cyan-300"
+										}`}
+									>
+										<tab.icon className={`w-5 h-5 mr-3 ${activeTab === tab.id ? 'text-cyan-400' : 'text-gray-400'}`} />
+										{tab.name}
+									</button>
+								</li>
+							))}
+						</ul>
 					</nav>
-				</div>
+					{/* History Section */}
+					<div className="mt-auto pt-8">
+						<h3 className="text-white font-semibold text-base mb-2">History</h3>
+						<div className="mb-3">
+							<input type="text" placeholder="Search..." className="w-full bg-[#23272f] text-gray-200 placeholder-gray-400 px-3 py-2 rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+						</div>
+						<ul className="space-y-1">
+							<li><button className="text-cyan-400 text-sm font-medium hover:underline">Recent</button></li>
+							<li><button className="text-cyan-400 text-sm font-medium hover:underline">Past 7 Days</button></li>
+							<li><button className="text-cyan-400 text-sm font-medium hover:underline">Past 30 Days</button></li>
+						</ul>
+					</div>
+				</aside>
+			)}
+			{!sidebarOpen && (
+				<>
+					{/* Sidebar collapsed toggle button */}
+					<button
+						className="fixed left-2 top-1/2 transform -translate-y-1/2 bg-[#23272f] border border-gray-700 rounded-full p-1 shadow hover:bg-cyan-900 transition z-30"
+						onClick={() => setSidebarOpen(true)}
+						title="Open sidebar"
+					>
+						<ChevronRightIcon className="w-6 h-6 text-cyan-400" />
+					</button>
+				</>
+			)}
 
-				{/* Tab Content */}
-				<div className="bg-[#18191b] rounded-xl shadow-sm border border-gray-700 p-6">
-					{activeTab === "overview" && <OverviewTab user={user} />}
-					{activeTab === "interviews" && <InterviewPrepTab />}
-					{activeTab === "practice" && <PracticeSessionsTab />}
-					{activeTab === "career" && <CareerToolsTab />}
-					{activeTab === "progress" && <ProgressTab />}
-					{/* Removed settings tab content */}
+			{/* Main Content Area */}
+			<div className="flex-1 flex flex-col min-h-screen">
+				{/* Top Bar removed */}
+				{/* Main Card Content */}
+				<div className="flex-1 flex flex-col items-center justify-start py-10 px-4 bg-[#101113]">
+					<div className="w-full max-w-5xl bg-[#18191b] rounded-2xl shadow-lg border border-gray-800 p-8">
+						{/* Dashboard Header */}
+						{activeTab === "overview" && <OverviewTab user={user} />}
+						{activeTab === "interviews" && <InterviewPrepTab />}
+						{activeTab === "practice" && <PracticeSessionsTab />}
+						{activeTab === "career" && <CareerToolsTab />}
+						{activeTab === "progress" && <ProgressTab />}
+					</div>
 				</div>
 			</div>
 		</div>
