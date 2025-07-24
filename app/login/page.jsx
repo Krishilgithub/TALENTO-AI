@@ -68,6 +68,12 @@ export default function LoginPage() {
 			} else {
 				localStorage.removeItem('rememberedCredentials');
 			}
+            // OTP verification check
+            if (result.user && !result.user.email_confirmed_at) {
+              router.push(`/verify-otp?email=${encodeURIComponent(result.user.email)}`);
+              setIsLoading(false);
+              return;
+            }
 			router.push('/dashboard');
 		}
 		setIsLoading(false);

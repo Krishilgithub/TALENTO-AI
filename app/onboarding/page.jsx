@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import createClientForBrowser from '@/utils/supabase/client';
 
 export default function OnboardingPage() {
   const [form, setForm] = useState({
@@ -20,6 +21,22 @@ export default function OnboardingPage() {
     socialLinks: "",
   });
   const router = useRouter();
+
+  useEffect(() => {
+    const checkOtp = async () => {
+      const supabase = createClientForBrowser();
+      const { data } = await supabase.auth.getUser();
+      if (!data?.user) {
+        router.push('/login');
+        return;
+      }
+      if (!data.user.email_confirmed_at) {
+        router.push(`/verify-otp?email=${encodeURIComponent(data.user.email)}`);
+        return;
+      }
+    };
+    checkOtp();
+  }, [router]);
 
   const handleCheckbox = (field, value) => {
     setForm(f => ({
@@ -171,15 +188,4 @@ export default function OnboardingPage() {
     </div>
   );
   
-}// ...existing code...
-import { useRouter } from "next/navigation";
-// ...existing code...
-
-const router = useRouter();
-
-const handleSignup = async (formData) => {
-  // ...signup logic...
-  // After successful signup:
-  router.push("/onboarding");
-};
-// ...existing code...
+}

@@ -19,7 +19,7 @@ function VerifyOtpInner() {
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token: otp,
-      type: 'email',
+      type: 'signup', // changed from 'email' to 'signup'
     });
     if (error) {
       setError(error.message);

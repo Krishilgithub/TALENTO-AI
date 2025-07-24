@@ -104,11 +104,17 @@ export default function SignupPage() {
 					alreadyExists = true;
 				}
 			}
+			// If user exists but is unverified, send to OTP
 			if (!error && data && data.user && !data.session) {
 				alreadyExists = true;
 			}
 
 			if (alreadyExists) {
+				// Check if user is unverified (email_confirmed_at is null)
+				if (data && data.user && !data.user.email_confirmed_at) {
+					router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+					return;
+				}
 				setErrors({
 					general: 'An account with this email already exists. Please try logging in.',
 				});
