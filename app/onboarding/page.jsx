@@ -50,6 +50,7 @@ export default function OnboardingPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Save form data to DB or Supabase
+    // After onboarding, redirect to dashboard
     router.push("/dashboard");
   };
 
