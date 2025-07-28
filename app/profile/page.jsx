@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { FiEdit2, FiCheck, FiX, FiLogOut } from 'react-icons/fi';
 import createClientForBrowser from '@/utils/supabase/client';
-import Navbar from '../Navbar';
 
 function getInitials(name, email) {
   if (name) {
@@ -119,94 +118,94 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#101113] via-[#18191b] to-[#23272f]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#101113] flex flex-col items-center justify-center px-4">
-      <Navbar />
-      <div className="bg-[#18191b] rounded-2xl shadow-xl p-8 border border-gray-700 w-full max-w-md mt-8">
-        <h1 className="text-3xl font-bold text-white mb-6 text-center">Profile</h1>
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-24 h-24 rounded-full overflow-hidden bg-cyan-800 flex items-center justify-center text-3xl font-bold text-white mb-2 relative">
-            {photoUrl ? (
-              <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <span>{getInitials(form.name, form.email)}</span>
-            )}
-            <label className="absolute bottom-0 right-0 bg-cyan-500 rounded-full p-1 cursor-pointer border-2 border-[#18191b]" title="Change Photo">
-              <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
-              <FiEdit2 className="text-white text-lg" />
-            </label>
-          </div>
-          {uploading && <span className="text-cyan-400 text-xs mt-1">Uploading...</span>}
+    <div className="min-h-screen flex bg-gradient-to-br from-[#101113] via-[#18191b] to-[#23272f]">
+      {/* Sidebar (dashboard style) */}
+      <aside className="w-72 bg-[#18191b] border-r border-gray-800 flex flex-col py-6 px-4 min-h-screen relative transition-all duration-300 shadow-2xl">
+        <div className="flex items-center mb-8">
+          <span className="text-2xl font-extrabold text-white tracking-wide">TALENTO <span className="text-cyan-400">AI</span></span>
         </div>
-        <div className="space-y-6">
-          {/* Name Field */}
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-gray-400 text-xs mb-1">Name</div>
-              {editField === 'name' ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    className="px-3 py-2 rounded-lg bg-[#101113] text-white border border-cyan-500 focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
-                  />
-                  <button type="button" onClick={() => handleSave('name')} className="text-cyan-400 hover:text-cyan-300"><FiCheck /></button>
-                  <button type="button" onClick={handleCancel} className="text-red-400 hover:text-red-300"><FiX /></button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="text-white text-lg font-medium">{form.name}</span>
+        <div className="mb-8 flex flex-col items-center w-full">
+          <img src={photoUrl || "/avatar1.jpg"} alt="User Avatar" className="w-20 h-20 rounded-full border-2 border-cyan-400 object-cover shadow-lg mb-2" />
+          <h2 className="text-xl font-bold text-cyan-400 mb-1">{form.name || getInitials(form.name, form.email)}</h2>
+          <p className="text-gray-400 text-sm">{form.email}</p>
+          <label className="mt-2 bg-cyan-400 hover:bg-cyan-300 text-black rounded-full px-4 py-1 shadow-lg cursor-pointer border-2 border-white transition-all duration-200 flex items-center justify-center text-xs font-semibold" title="Change Photo">
+            <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
+            {uploading ? 'Uploading...' : 'Change Photo'}
+          </label>
+        </div>
+        <nav className="flex flex-col gap-2 mt-8">
+          <a href="/dashboard" className="px-4 py-2 rounded-lg text-white hover:bg-cyan-900 transition font-semibold">Dashboard</a>
+          <a href="/profile" className="px-4 py-2 rounded-lg bg-cyan-400 text-black font-bold shadow hover:bg-cyan-300 transition">Profile</a>
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 mt-8 py-3 px-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg">
+            <FiLogOut className="text-lg" /> Logout
+          </button>
+        </nav>
+      </aside>
+      {/* Main profile info */}
+      <main className="flex-1 flex flex-col items-center justify-center px-8 py-12">
+        <div className="w-full max-w-2xl">
+          <h1 className="text-4xl font-extrabold text-white mb-4 tracking-tight">My Profile</h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+            {/* Name */}
+            <div className="flex flex-col items-start">
+              <span className="text-gray-400 text-xs mb-1">Name</span>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-2xl font-semibold">{form.name}</span>
+                {editField === 'name' ? (
+                  <>
+                    <input
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      className="px-3 py-2 rounded-lg bg-[#101113] text-white border border-cyan-500 focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-lg"
+                    />
+                    <button type="button" onClick={() => handleSave('name')} className="text-cyan-400 hover:text-cyan-300"><FiCheck /></button>
+                    <button type="button" onClick={handleCancel} className="text-red-400 hover:text-red-300"><FiX /></button>
+                  </>
+                ) : (
                   <button type="button" onClick={() => handleEdit('name')} className="text-cyan-400 hover:text-cyan-300" title="Edit Name"><FiEdit2 /></button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-          {/* Email Field */}
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-gray-400 text-xs mb-1">Email</div>
-              {editField === 'email' ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    className="px-3 py-2 rounded-lg bg-[#101113] text-white border border-cyan-500 focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
-                  />
-                  <button type="button" onClick={() => handleSave('email')} className="text-cyan-400 hover:text-cyan-300"><FiCheck /></button>
-                  <button type="button" onClick={handleCancel} className="text-red-400 hover:text-red-300"><FiX /></button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="text-white text-lg font-medium">{form.email}</span>
+            {/* Email */}
+            <div className="flex flex-col items-start">
+              <span className="text-gray-400 text-xs mb-1">Email</span>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-2xl font-semibold">{form.email}</span>
+                {editField === 'email' ? (
+                  <>
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      className="px-3 py-2 rounded-lg bg-[#101113] text-white border border-cyan-500 focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-lg"
+                    />
+                    <button type="button" onClick={() => handleSave('email')} className="text-cyan-400 hover:text-cyan-300"><FiCheck /></button>
+                    <button type="button" onClick={handleCancel} className="text-red-400 hover:text-red-300"><FiX /></button>
+                  </>
+                ) : (
                   <button type="button" onClick={() => handleEdit('email')} className="text-cyan-400 hover:text-cyan-300" title="Edit Email"><FiEdit2 /></button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
+          {(error || success) && (
+            <div className="mt-8 w-full">
+              {error && <div className="bg-red-900/20 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-2 text-center animate-fade-in">{error}</div>}
+              {success && <div className="bg-cyan-900/20 border border-cyan-500/30 text-cyan-400 px-4 py-3 rounded-lg text-sm mb-2 text-center animate-fade-in">{success}</div>}
+            </div>
+          )}
         </div>
-        {(error || success) && (
-          <div className="mt-6">
-            {error && <div className="bg-red-900/20 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-2">{error}</div>}
-            {success && <div className="bg-cyan-900/20 border border-cyan-500/30 text-cyan-400 px-4 py-3 rounded-lg text-sm mb-2">{success}</div>}
-          </div>
-        )}
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 mt-8 py-3 px-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-all duration-200"
-        >
-          <FiLogOut className="text-lg" /> Logout
-        </button>
-      </div>
+      </main>
     </div>
   );
 } 

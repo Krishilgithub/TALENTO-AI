@@ -24,7 +24,10 @@ function VerifyOtpInner() {
     if (error) {
       setError(error.message);
     } else {
-      router.push('/onboarding');
+      // Check onboarded flag in user metadata
+      const { data: userData } = await supabase.auth.getUser();
+      const onboarded = userData?.user?.user_metadata?.onboarded === true;
+      router.push(onboarded ? '/dashboard' : '/onboarding');
     }
     setIsLoading(false);
   };

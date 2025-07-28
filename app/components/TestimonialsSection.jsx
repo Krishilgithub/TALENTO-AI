@@ -10,8 +10,8 @@ export default function TestimonialsSection() {
 		>
 			<h2 className="text-3xl sm:text-4xl font-bold mb-8">Testimonials</h2>
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-				{React.Children.toArray([
-					<motion.div
+				{[
+					<motion.div key="testimonial-1"
 						initial={{ opacity: 0, y: 40 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true, amount: 0.3 }}
@@ -30,7 +30,7 @@ export default function TestimonialsSection() {
 							<Image src="/avatar1.jpg" alt="Jane Doe" width={56} height={56} className="rounded-full ml-4" />
 						</div>
 					</motion.div>,
-					<motion.div
+					<motion.div key="testimonial-2"
 						initial={{ opacity: 0, y: 40 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true, amount: 0.3 }}
@@ -49,7 +49,7 @@ export default function TestimonialsSection() {
 							<Image src="/avatar2.jpg" alt="John Smith" width={56} height={56} className="rounded-full ml-4" />
 						</div>
 					</motion.div>,
-					<motion.div
+					<motion.div key="testimonial-3"
 						initial={{ opacity: 0, y: 40 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true, amount: 0.3 }}
@@ -67,7 +67,7 @@ export default function TestimonialsSection() {
 							<Image src="/avatar3.jpg" alt="Priya Patel" width={56} height={56} className="rounded-full ml-4" />
 						</div>
 					</motion.div>,
-					<motion.div
+					<motion.div key="testimonial-4"
 						initial={{ opacity: 0, y: 40 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true, amount: 0.3 }}
@@ -85,7 +85,7 @@ export default function TestimonialsSection() {
 							<Image src="/avatar4.jpg" alt="Alex Lee" width={56} height={56} className="rounded-full ml-4" />
 						</div>
 					</motion.div>,
-				])}
+				]}
 			</div>
 		</section>
 	);

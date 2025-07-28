@@ -19,10 +19,10 @@ export default function DashboardPage() {
 			const { data, error } = await supabase.auth.getUser();
 			if (data?.user) {
 				const userObj = {
-					name: data.user.user_metadata?.name || data.user.email,
+					name: data.user.user_metadata?.name || data.user.user_metadata?.firstName || data.user.email.split('@')[0],
 					email: data.user.email,
 					role: data.user.user_metadata?.role || "user",
-					// add more fields as needed
+					avatar: data.user.user_metadata?.avatar_url || "/avatar1.jpg",
 				};
 				if (userObj.role === "admin") {
 					router.push("/admin");
@@ -59,10 +59,10 @@ export default function DashboardPage() {
 	if (!user) return null;
 
 	return (
-		<div className="min-h-screen flex bg-[#101113]">
+		<div className="min-h-screen flex bg-gradient-to-br from-[#101113] via-[#18191b] to-[#23272f]">
 			{/* Sidebar */}
 			{sidebarOpen && (
-				<aside className="w-72 bg-[#18191b] border-r border-gray-800 flex flex-col py-6 px-4 min-h-screen relative transition-all duration-300">
+				<aside className="w-72 bg-[#18191b] border-r border-gray-800 flex flex-col py-6 px-4 min-h-screen relative transition-all duration-300 shadow-2xl">
 					{/* Sidebar Toggle Arrow */}
 					<button
 						className="absolute -right-4 top-1/2 transform -translate-y-1/2 bg-[#23272f] border border-gray-700 rounded-full p-1 shadow hover:bg-cyan-900 transition z-20"
@@ -79,7 +79,7 @@ export default function DashboardPage() {
 					<div className="mb-8 flex flex-row items-center justify-center space-x-4 w-full">
 						{/* Profile Avatar as link to profile */}
 						<Link href="/profile">
-							<img src="/avatar1.jpg" alt="User Avatar" className="w-12 h-12 rounded-full border-2 border-cyan-400 object-cover cursor-pointer hover:opacity-80 transition" />
+							<img src={user.avatar} alt="User Avatar" className="w-14 h-14 rounded-full border-2 border-cyan-400 object-cover cursor-pointer hover:opacity-80 transition shadow-lg" />
 						</Link>
 						{/* Subscription Plan Badge */}
 						<span className="flex items-center bg-[#23272f] text-cyan-300 px-3 py-1 rounded font-semibold text-sm">
@@ -87,17 +87,16 @@ export default function DashboardPage() {
 						</span>
 						{/* Token Count */}
 						<span className="flex items-center bg-[#23272f] text-cyan-300 px-2 py-0.5 rounded text-xs font-semibold">
-							<span className="mr-1">⏱</span>10
+							<span className="mr-1">⏱️</span>10
 						</span>
 						{/* Document Count */}
 						<span className="flex items-center bg-[#23272f] text-cyan-300 px-2 py-0.5 rounded text-xs font-semibold">
 							<span className="mr-1"></span>0
 						</span>
 					</div>
-					{/* User Name and Email */}
+					{/* User Name Only */}
 					<div className="flex flex-col items-center mb-2">
-						<p className="text-white font-semibold text-lg">{user.name}</p>
-						<p className="text-gray-400 text-sm">{user.email}</p>
+						<p className="text-white font-bold text-xl tracking-wide mb-1">{user.name}</p>
 					</div>
 					{/* Referral and Subscription Buttons */}
 					<div className="flex w-full space-x-2 mt-2 mb-8">
