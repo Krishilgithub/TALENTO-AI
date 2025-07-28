@@ -10,7 +10,7 @@ export default function PricingSection() {
 			<h2 className="text-3xl sm:text-4xl font-bold mb-8">Pricing</h2>
 			<div className="flex flex-col sm:flex-row gap-8 justify-center">
 				{React.Children.toArray([
-					<motion.div
+					<motion.div key="pricing-1"
 						initial={{ opacity: 0, y: 40 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true, amount: 0.3 }}
@@ -39,7 +39,7 @@ export default function PricingSection() {
 							</a>
 						</div>
 					</motion.div>,
-					<motion.div
+					<motion.div key="pricing-2"
 						initial={{ opacity: 0, y: 40 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true, amount: 0.3 }}
@@ -70,7 +70,7 @@ export default function PricingSection() {
 							</a>
 						</div>
 					</motion.div>,
-					<motion.div
+					<motion.div key="pricing-3"
 						initial={{ opacity: 0, y: 40 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true, amount: 0.3 }}

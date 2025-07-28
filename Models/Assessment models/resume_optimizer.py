@@ -3,6 +3,8 @@ from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, Ch
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.document_loaders import PyPDFLoader
+from typing import TypedDict, Literal
+from pydantic import BaseModel
 from langchain_core.runnables import RunnableSequence
 from dotenv import load_dotenv
 
@@ -25,6 +27,12 @@ try:
     model = ChatHuggingFace(llm=llm)
 except Exception as e:
     raise ValueError(f"Failed to initialize Hugging Face Endpoint: {str(e)}")
+
+# class ModelParam(TypedDict):
+#     suggestions: str
+#     tips: str
+#     weakness: str
+#     strength: str
 
 # Output parser
 parser = StrOutputParser()

@@ -50,7 +50,7 @@
 
 ## 3. Database
 
-**Directory:**  
+**Directory:**
 _No explicit database directory or schema files available._
 
 **Technologies Used:**  

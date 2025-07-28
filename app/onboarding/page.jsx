@@ -47,9 +47,17 @@ export default function OnboardingPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Save form data to DB or Supabase
+    const supabase = createClientForBrowser();
+    const { data, error } = await supabase.auth.getUser();
+    if (data?.user) {
+      // Update user metadata to set onboarded: true
+      await supabase.auth.updateUser({
+        data: { onboarded: true },
+      });
+    }
     // After onboarding, redirect to dashboard
     router.push("/dashboard");
   };

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import createClientForBrowser from '@/utils/supabase/client';
+import { signinWithGoogle, signinWithGithub } from '@/utils/actions';
 
 export default function SignupPage() {
 	const [formData, setFormData] = useState({
@@ -89,6 +90,7 @@ export default function SignupPage() {
 				password: formData.password,
 				options: {
 					data: {
+						name: `${formData.firstName} ${formData.lastName}`.trim(),
 						firstName: formData.firstName,
 						lastName: formData.lastName,
 					},
@@ -130,19 +132,25 @@ export default function SignupPage() {
 		}
 	};
 
-	// Add handleSocialSignIn function (same as login page)
+	// Replace the handleSocialSignIn function with the unified version
 	const handleSocialSignIn = async (provider) => {
 		setIsLoading(true);
-		try {
-			const supabase = createClientForBrowser();
-			const { data, error } = await supabase.auth.signInWithOAuth({ provider });
-			if (error) {
+		const handler = {
+			google: signinWithGoogle,
+			github: signinWithGithub,
+		}[provider];
+
+		if (handler) {
+			try {
+				const { url, error } = await handler();
+				if (error) {
+					setErrors({ general: `${provider} sign-in failed.` });
+				} else {
+					window.location.href = url;
+				}
+			} catch (err) {
 				setErrors({ general: `${provider} sign-in failed.` });
-			} else {
-				window.location.href = data.url;
 			}
-		} catch (err) {
-			setErrors({ general: `${provider} sign-in failed.` });
 		}
 		setIsLoading(false);
 	};
