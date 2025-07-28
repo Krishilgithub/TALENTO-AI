@@ -1,11 +1,18 @@
+"use client";
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function NotFound() {
+  const [fadeIn, setFadeIn] = useState(false);
+  useEffect(() => {
+    setFadeIn(true);
+  }, []);
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#101113] via-[#18191b] to-[#23272f] text-white px-4">
-      <div className="flex flex-col items-center">
-        <div className="bg-cyan-400/10 rounded-full p-6 mb-6 animate-bounce">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-16 h-16 text-cyan-400">
+    <div className={`min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#101113] via-[#18191b] to-[#23272f] text-white px-4 transition-opacity duration-700 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+      <div className="flex flex-col items-center bg-[#18191b]/80 rounded-3xl shadow-2xl p-10 transition-transform duration-300 hover:scale-105">
+        <div className="bg-cyan-400/10 rounded-full p-6 mb-6 animate-bounce-smooth transition-transform duration-300 hover:scale-110 group">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-16 h-16 text-cyan-400 group-hover:text-blue-400 transition-colors duration-300">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9zm-9 4h.01" />
           </svg>
         </div>
@@ -16,6 +23,18 @@ export default function NotFound() {
           Go to Homepage
         </Link>
       </div>
+      <style jsx global>{`
+        @keyframes bounce-smooth {
+          0%, 100% { transform: translateY(0); }
+          20% { transform: translateY(-12px); }
+          40% { transform: translateY(-24px); }
+          60% { transform: translateY(-12px); }
+          80% { transform: translateY(-4px); }
+        }
+        .animate-bounce-smooth {
+          animation: bounce-smooth 2s infinite;
+        }
+      `}</style>
     </div>
   );
 } 

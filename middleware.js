@@ -51,8 +51,14 @@ export const middleware = async request => {
 
     const session = await supabase.auth.getUser()
 
-    if (isProtectedRoute && session.error) {
+    if (isProtectedRoute) {
+      if (session.error) {
         return NextResponse.redirect(new URL('/login', request.url))
+      }
+      // Onboarding check for protected routes
+      if (!session.data?.user?.user_metadata?.onboarded && pathname !== '/onboarding') {
+        return NextResponse.redirect(new URL('/onboarding', request.url))
+      }
     }
 
     return supabaseResponse

@@ -37,13 +37,16 @@ export default function DashboardPage() {
 					router.push("/admin");
 					return;
 				}
-				// OTP verification check
-				if (!data.user.email_confirmed_at) {
-					router.push(
-						`/verify-otp?email=${encodeURIComponent(data.user.email)}`
-					);
-					return;
-				}
+                // OTP verification check
+                if (!data.user.email_confirmed_at) {
+                  router.push(`/verify-otp?email=${encodeURIComponent(data.user.email)}`);
+                  return;
+                }
+                // Onboarding check
+                if (!data.user.user_metadata?.onboarded) {
+                  router.push("/onboarding");
+                  return;
+                }
 				setUser(userObj);
 				setIsLoading(false);
 			} else {
@@ -159,6 +162,17 @@ export default function DashboardPage() {
 							))}
 						</ul>
 					</nav>
+					{/* Logout Button at the bottom of the sidebar */}
+					<button
+						className="w-full mt-8 bg-gradient-to-r from-red-600 to-red-800 text-white py-2 rounded-lg font-semibold hover:from-red-700 hover:to-red-900 transition-colors duration-200 flex items-center justify-center shadow-md border border-red-400"
+						onClick={async () => {
+							const supabase = createClientForBrowser();
+							await supabase.auth.signOut();
+							router.push('/login');
+						}}
+					>
+						<span className="mr-2">🚪</span> Logout
+					</button>
 					{/* History Section */}
 					<div className="mt-auto pt-8">
 						<h3 className="text-white font-semibold text-base mb-2">History</h3>
