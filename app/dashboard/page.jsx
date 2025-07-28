@@ -37,11 +37,13 @@ export default function DashboardPage() {
 					router.push("/admin");
 					return;
 				}
-                // OTP verification check
-                if (!data.user.email_confirmed_at) {
-                  router.push(`/verify-otp?email=${encodeURIComponent(data.user.email)}`);
-                  return;
-                }
+				// OTP verification check
+				if (!data.user.email_confirmed_at) {
+					router.push(
+						`/verify-otp?email=${encodeURIComponent(data.user.email)}`
+					);
+					return;
+				}
 				setUser(userObj);
 				setIsLoading(false);
 			} else {
@@ -981,6 +983,7 @@ function JobSearchTab() {
 	const [categories, setCategories] = useState([]);
 	const [selectedCategories, setSelectedCategories] = useState([]); // multi-select
 	const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+	const [jobLimit, setJobLimit] = useState(20); // Add missing jobLimit state
 	const [jobTypes] = useState([
 		{ value: "full_time", label: "Full Time" },
 		{ value: "part_time", label: "Part Time" },
@@ -1046,6 +1049,12 @@ function JobSearchTab() {
 		histCategories = [],
 		histJobTypes = []
 	) => {
+		console.log("handleSearch called with:", {
+			query,
+			location,
+			selectedCategories,
+			selectedJobTypes,
+		});
 		if (e) e.preventDefault();
 		const q = fromHistory ? histQuery : query;
 		const l = fromHistory ? histLocation : location;
@@ -1061,9 +1070,15 @@ function JobSearchTab() {
 		if (c && c.length > 0) {
 			apiUrl += c.map((cat) => `&category=${encodeURIComponent(cat)}`).join("");
 		}
+
+		console.log("Searching with URL:", apiUrl);
+
 		try {
 			const res = await fetch(apiUrl);
+			console.log("Response status:", res.status);
 			const data = await res.json();
+			console.log("Response data:", data);
+
 			let jobs = data.results || [];
 			if (t && t.length > 0)
 				jobs = jobs.filter((j) => t.includes((j.job_type || "").toLowerCase()));
@@ -1074,6 +1089,7 @@ function JobSearchTab() {
 				setResults(jobs.map((j) => ({ ...j, fullDescription: j.description })));
 			}
 		} catch (err) {
+			console.error("Search error:", err);
 			setError("Failed to connect to server.");
 			setResults([]);
 		} finally {
@@ -1326,10 +1342,18 @@ function JobSearchTab() {
 							type="submit"
 							className="bg-cyan-400 text-black px-6 py-2 rounded font-semibold hover:bg-cyan-300 transition-colors font-sans"
 							disabled={loading}
+							onClick={() => console.log("Search button clicked")}
 						>
 							{loading ? "Searching..." : "Search"}
 						</button>
 					</form>
+					{/* Debug button - remove after testing */}
+					<button
+						onClick={() => handleSearch(null, false, "", "", [], [])}
+						className="mt-2 px-4 py-2 bg-red-500 text-white rounded text-sm"
+					>
+						Test Search (Debug)
+					</button>
 					<p className="text-xs text-gray-400 font-sans mb-2">
 						Popular locations: Worldwide, Anywhere, United States, Europe,
 						India, Remote, Mumbai, Bangalore, etc. (You can also enter a custom
@@ -1370,6 +1394,11 @@ function JobSearchTab() {
 						</div>
 					)}
 					{error && <div className="text-red-400 font-sans">{error}</div>}
+					{/* Debug info - remove after testing */}
+					<div className="text-xs text-gray-500 mb-2">
+						Debug: Query="{query}", Location="{location}", Results=
+						{results.length}, Loading={loading.toString()}
+					</div>
 					<div>
 						{loading && (
 							<div className="text-cyan-400 font-sans">Loading jobs...</div>
