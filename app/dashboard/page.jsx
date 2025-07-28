@@ -37,6 +37,11 @@ export default function DashboardPage() {
 					router.push("/admin");
 					return;
 				}
+                // OTP verification check
+                if (!data.user.email_confirmed_at) {
+                  router.push(`/verify-otp?email=${encodeURIComponent(data.user.email)}`);
+                  return;
+                }
 				setUser(userObj);
 				setIsLoading(false);
 			} else {

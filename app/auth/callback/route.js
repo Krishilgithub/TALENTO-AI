@@ -8,18 +8,32 @@ export async function GET(request) {
 
   if (code) {
     const supabase = await createClientForServer();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      // Try to get the user's email and email_confirmed_at from the session
+      let email = null;
+      let emailConfirmedAt = null;
+      if (data && data.session && data.session.user) {
+        email = data.session.user.email;
+        emailConfirmedAt = data.session.user.email_confirmed_at;
+      }
       const forwardedHost = request.headers.get('x-forwarded-host');
       const isLocalEnv = process.env.NODE_ENV === 'development';
-
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+      let redirectUrl;
+      if (emailConfirmedAt) {
+        // Social login or already verified user
+        redirectUrl = '/onboarding';
       } else {
-        return NextResponse.redirect(`${origin}${next}`);
+        // Needs OTP verification
+        redirectUrl = email ? `/verify-otp?email=${encodeURIComponent(email)}` : '/verify-otp';
+      }
+      if (isLocalEnv) {
+        return NextResponse.redirect(`${origin}${redirectUrl}`);
+      } else if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${redirectUrl}`);
+      } else {
+        return NextResponse.redirect(`${origin}${redirectUrl}`);
       }
     }
   }
