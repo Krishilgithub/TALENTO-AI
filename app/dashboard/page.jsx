@@ -178,7 +178,6 @@ export default function DashboardPage() {
 		</div>
 	);
 }
-
 // Overview Tab Component
 function OverviewTab({ user }) {
 	const stats = [
@@ -922,3 +921,4 @@ function ProgressTab() {
 		</div>
 	);
 }
+
