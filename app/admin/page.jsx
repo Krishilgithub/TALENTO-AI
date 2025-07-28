@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+// WARNING: This is demo code. Do NOT use localStorage for user management in production. Use a secure backend/database and proper authentication/authorization.
 export default function AdminPage() {
 	const [admin, setAdmin] = useState(null);
 	const [users, setUsers] = useState([]);

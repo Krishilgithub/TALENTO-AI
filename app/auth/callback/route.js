@@ -14,16 +14,18 @@ export async function GET(request) {
       // Try to get the user's email and email_confirmed_at from the session
       let email = null;
       let emailConfirmedAt = null;
+      let onboarded = false;
       if (data && data.session && data.session.user) {
         email = data.session.user.email;
         emailConfirmedAt = data.session.user.email_confirmed_at;
+        onboarded = data.session.user.user_metadata?.onboarded === true;
       }
       const forwardedHost = request.headers.get('x-forwarded-host');
       const isLocalEnv = process.env.NODE_ENV === 'development';
       let redirectUrl;
       if (emailConfirmedAt) {
         // Social login or already verified user
-        redirectUrl = '/onboarding';
+        redirectUrl = onboarded ? '/dashboard' : '/onboarding';
       } else {
         // Needs OTP verification
         redirectUrl = email ? `/verify-otp?email=${encodeURIComponent(email)}` : '/verify-otp';

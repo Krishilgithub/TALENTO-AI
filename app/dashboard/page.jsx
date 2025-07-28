@@ -28,10 +28,10 @@ export default function DashboardPage() {
 			const { data, error } = await supabase.auth.getUser();
 			if (data?.user) {
 				const userObj = {
-					name: data.user.user_metadata?.name || data.user.email,
+					name: data.user.user_metadata?.name || data.user.user_metadata?.firstName || data.user.email.split('@')[0],
 					email: data.user.email,
 					role: data.user.user_metadata?.role || "user",
-					// add more fields as needed
+					avatar: data.user.user_metadata?.avatar_url || "/avatar1.jpg",
 				};
 				if (userObj.role === "admin") {
 					router.push("/admin");
@@ -70,7 +70,7 @@ export default function DashboardPage() {
 	if (!user) return null;
 
 	return (
-		<div className="min-h-screen flex bg-[#101113]">
+		<div className="min-h-screen flex bg-gradient-to-br from-[#101113] via-[#18191b] to-[#23272f]">
 			{/* Sidebar */}
 			{sidebarOpen && (
 				<aside className="w-72 bg-gradient-to-b from-[#18191b] via-[#181b22] to-[#101113] border-r border-gray-800 flex flex-col py-8 px-5 min-h-screen relative transition-all duration-300 shadow-xl">
@@ -99,7 +99,7 @@ export default function DashboardPage() {
 						</span>
 						{/* Token Count */}
 						<span className="flex items-center bg-[#23272f] text-cyan-300 px-2 py-0.5 rounded text-xs font-semibold">
-							<span className="mr-1">⏱</span>10
+							<span className="mr-1">⏱️</span>10
 						</span>
 						{/* Document Count */}
 						<span className="flex items-center bg-[#23272f] text-cyan-300 px-2 py-0.5 rounded text-xs font-semibold">
