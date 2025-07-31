@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import createClientForBrowser from '@/utils/supabase/client';
 
 export default function TechnicalAttemptPage() {
 	const [questions, setQuestions] = useState([]);
@@ -13,18 +14,32 @@ export default function TechnicalAttemptPage() {
 	const router = useRouter();
 
 	useEffect(() => {
-		// Load data from sessionStorage
-		const data = sessionStorage.getItem("techAssessmentData");
-		if (data) {
-			const parsed = JSON.parse(data);
-			setQuestions(parsed.questions || []);
-			setOptions(parsed.options || []);
-			setAnswers(parsed.answers || []);
-			setUserAnswers(Array((parsed.questions || []).length).fill(null));
-		} else {
-			// If no data, redirect back to upload page
-			router.replace("/assessment/technical");
-		}
+		const fetchAssessment = async () => {
+			const supabase = createClientForBrowser();
+			const { data: userData } = await supabase.auth.getUser();
+			if (!userData?.user) {
+				router.replace("/assessment/technical");
+				return;
+			}
+			// Fetch the latest technical assessment for this user
+			const { data: assessments, error } = await supabase
+				.from('assessment_history')
+				.select('*')
+				.eq('user_id', userData.user.id)
+				.eq('type', 'technical')
+				.order('created_at', { ascending: false })
+				.limit(1);
+			if (error || !assessments || assessments.length === 0) {
+				router.replace("/assessment/technical");
+				return;
+			}
+			const assessment = assessments[0];
+			setQuestions(assessment.questions || []);
+			setOptions(assessment.options || []);
+			setAnswers(assessment.answers || []);
+			setUserAnswers(Array((assessment.questions || []).length).fill(null));
+		};
+		fetchAssessment();
 	}, [router]);
 
 	const handleSelect = (qIdx, oIdx) => {

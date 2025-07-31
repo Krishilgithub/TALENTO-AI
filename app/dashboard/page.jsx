@@ -10,6 +10,7 @@ import {
 	BriefcaseIcon,
 	ArrowTrendingUpIcon,
 } from "@heroicons/react/24/outline";
+// import { Dialog } from '@headlessui/react';
 
 // Import modular components
 import Sidebar from "./components/Sidebar";
@@ -28,6 +29,8 @@ export default function DashboardPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [sidebarOpen, setSidebarOpen] = useState(true);
 	const [showProfile, setShowProfile] = useState(false);
+	const [onboardingData, setOnboardingData] = useState(null);
+	const [showOnboardingModal, setShowOnboardingModal] = useState(false);
 	const router = useRouter();
 
 	useEffect(() => {
@@ -78,6 +81,27 @@ export default function DashboardPage() {
 		setShowProfile(false);
 	};
 
+	// Add fetch onboarding logic
+	const fetchOnboardingData = async () => {
+		if (!user) return;
+		const supabase = createClientForBrowser();
+		// Get the current user's id
+		const { data: authData } = await supabase.auth.getUser();
+		const userId = authData?.user?.id;
+		if (!userId) return;
+		const { data, error } = await supabase
+			.from('user_onboarding')
+			.select('*')
+			.eq('user_id', userId)
+			.single();
+		if (error) {
+			alert('Error fetching onboarding data: ' + error.message);
+			return;
+		}
+		setOnboardingData(data);
+		setShowOnboardingModal(true);
+	};
+
 	if (isLoading) {
 		return (
 			<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
@@ -115,6 +139,35 @@ export default function DashboardPage() {
 					<div className={`w-full max-w-5xl bg-[#18191b] rounded-2xl shadow-lg border border-gray-800 p-8 transition-all duration-300 ${
 						sidebarOpen ? 'ml-0' : 'mx-auto'
 					}`}>
+						{/* Fetch Onboarding Data Button */}
+						<button
+							onClick={fetchOnboardingData}
+							className="mb-6 px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-cyan-400 to-blue-500 text-black hover:from-cyan-300 hover:to-blue-400 transition-all duration-200 shadow-lg"
+						>
+							Show My Onboarding Details
+						</button>
+						{/* Onboarding Data Modal */}
+						{showOnboardingModal && onboardingData && (
+							<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+								<div className="bg-[#18191b] p-8 rounded-2xl shadow-2xl max-w-lg w-full relative">
+									<button
+										onClick={() => setShowOnboardingModal(false)}
+										className="absolute top-2 right-2 text-gray-400 hover:text-cyan-400 text-2xl font-bold"
+									>
+										&times;
+									</button>
+									<h2 className="text-2xl font-bold text-cyan-400 mb-4">My Onboarding Details</h2>
+									<div className="space-y-2 text-gray-200 max-h-96 overflow-y-auto">
+										{Object.entries(onboardingData).map(([key, value]) => (
+											<div key={key} className="flex flex-col">
+												<span className="font-semibold text-cyan-300">{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span>
+												<span className="ml-2 break-words">{Array.isArray(value) ? value.join(', ') : value?.toString()}</span>
+											</div>
+										))}
+									</div>
+								</div>
+							</div>
+						)}
 						{/* Dashboard Header */}
 						{showProfile ? (
 							<ProfilePage user={user} onBack={handleBackToDashboard} />

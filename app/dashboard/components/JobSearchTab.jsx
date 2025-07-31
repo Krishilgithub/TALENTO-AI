@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import createClientForBrowser from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function JobSearchTab() {
 	const [query, setQuery] = useState("");
@@ -30,6 +32,8 @@ export default function JobSearchTab() {
 	const [showJobTypeDropdown, setShowJobTypeDropdown] = useState(false);
 	const categoryDropdownRef = useRef(null);
 	const jobTypeDropdownRef = useRef(null);
+	const [supabaseLoading, setSupabaseLoading] = useState(false);
+	const [supabaseError, setSupabaseError] = useState('');
 
 	// Fetch categories from Remotive API
 	useEffect(() => {
@@ -56,6 +60,36 @@ export default function JobSearchTab() {
 	useEffect(() => {
 		localStorage.setItem("savedJobs", JSON.stringify(savedJobs));
 	}, [savedJobs]);
+
+	// Fetch saved jobs from Supabase on mount and when user changes
+	useEffect(() => {
+		const fetchSavedJobs = async () => {
+			setSupabaseLoading(true);
+			setSupabaseError('');
+			const supabase = createClientForBrowser();
+			const { data: userData, error: userError } = await supabase.auth.getUser();
+			if (userError || !userData?.user) {
+				setSupabaseError('You must be logged in to view saved jobs.');
+				setSupabaseLoading(false);
+				return;
+			}
+			const { data, error } = await supabase
+				.from('saved_jobs')
+				.select('*')
+				.eq('user_id', userData.user.id)
+				.order('id', { ascending: false });
+			if (error) {
+				setSupabaseError('Failed to fetch saved jobs.');
+				setSupabaseLoading(false);
+				return;
+			}
+			setSavedJobs(data || []);
+			setSupabaseLoading(false);
+		};
+		if (activeJobTab === 'saved') {
+			fetchSavedJobs();
+		}
+	}, [activeJobTab]);
 
 	const addToHistory = (q, l, c, t) => {
 		if (!q && !l && (!c || c.length === 0) && (!t || t.length === 0)) return;
@@ -136,14 +170,88 @@ export default function JobSearchTab() {
 		setTimeout(() => handleSearch(), 0);
 	};
 
-	const handleSaveJob = (job) => {
-		if (!savedJobs.some((j) => j.url === job.url)) {
-			setSavedJobs([job, ...savedJobs].slice(0, 30));
+	const handleSaveJob = async (job) => {
+		setSupabaseError('');
+		setSupabaseLoading(true);
+		const supabase = createClientForBrowser();
+		const { data: userData, error: userError } = await supabase.auth.getUser();
+		if (userError || !userData?.user) {
+			setSupabaseError('You must be logged in to save jobs.');
+			setSupabaseLoading(false);
+			return;
 		}
+		// Check if already saved
+		const { data: existing, error: existError } = await supabase
+			.from('saved_jobs')
+			.select('id')
+			.eq('user_id', userData.user.id)
+			.eq('job_data->>url', job.url)
+			.maybeSingle();
+		if (existing) {
+			setSupabaseError('Job already saved.');
+			setSupabaseLoading(false);
+			return;
+		}
+		// Save job and search params
+		const searchParams = {
+			query,
+			location,
+			categories: selectedCategories,
+			jobTypes: selectedJobTypes,
+		};
+		const { error } = await supabase.from('saved_jobs').insert([
+			{
+				user_id: userData.user.id,
+				job_data: job,
+				search_params: searchParams,
+			},
+		]);
+		if (error) {
+			setSupabaseError('Failed to save job.');
+		} else {
+			// Refresh saved jobs
+			setActiveJobTab('saved');
+		}
+		setSupabaseLoading(false);
 	};
 
-	const handleRemoveSavedJob = (jobUrl) => {
-		setSavedJobs(savedJobs.filter((j) => j.url !== jobUrl));
+	const handleRemoveSavedJob = async (jobUrl) => {
+		setSupabaseError('');
+		setSupabaseLoading(true);
+		const supabase = createClientForBrowser();
+		const { data: userData, error: userError } = await supabase.auth.getUser();
+		if (userError || !userData?.user) {
+			setSupabaseError('You must be logged in.');
+			setSupabaseLoading(false);
+			return;
+		}
+		// Find the job by url
+		const { data: jobs, error: fetchError } = await supabase
+			.from('saved_jobs')
+			.select('id, job_data')
+			.eq('user_id', userData.user.id);
+		if (fetchError) {
+			setSupabaseError('Failed to remove job.');
+			setSupabaseLoading(false);
+			return;
+		}
+		const jobToRemove = jobs.find(j => j.job_data.url === jobUrl);
+		if (!jobToRemove) {
+			setSupabaseError('Job not found.');
+			setSupabaseLoading(false);
+			return;
+		}
+		const { error: delError } = await supabase
+			.from('saved_jobs')
+			.delete()
+			.eq('id', jobToRemove.id);
+		if (delError) {
+			setSupabaseError('Failed to remove job.');
+		} else {
+			// Refresh saved jobs
+			setActiveJobTab('saved');
+		}
+		setSupabaseLoading(false);
 	};
 
 	const handleCategoryChange = (slug) => {
@@ -497,31 +605,40 @@ export default function JobSearchTab() {
 			)}
 			{activeJobTab === "saved" && (
 				<div>
-					{savedJobs.length === 0 && (
+					{supabaseLoading && (
+						<div className="text-cyan-400 font-sans">Loading saved jobs...</div>
+					)}
+					{supabaseError && (
+						<div className="text-red-400 font-sans mb-2">{supabaseError}</div>
+					)}
+					{!supabaseLoading && savedJobs.length === 0 && !supabaseError && (
 						<div className="text-gray-400 font-sans">No saved jobs yet.</div>
 					)}
-					{savedJobs.length > 0 && (
+					{!supabaseLoading && savedJobs.length > 0 && (
 						<ul className="space-y-4">
-							{savedJobs.map((job, idx) => (
+							{savedJobs.map((row, idx) => (
 								<li
-									key={idx}
+									key={row.id || idx}
 									className="bg-[#232323] border border-cyan-900 rounded-lg p-4"
 								>
 									<h3 className="text-lg font-semibold text-white font-sans">
-										{job.title}
+										{row.job_data?.title}
 									</h3>
 									<p className="text-gray-300 font-sans">
-										{job.company} - {job.location}
+										{row.job_data?.company} - {row.job_data?.location}
 									</p>
 									<p className="text-gray-400 text-sm font-sans mb-2">
-										{job.description}
+										{row.job_data?.description}
 									</p>
+									<div className="text-xs text-cyan-300 mb-2">
+										<span className="font-semibold">Search Params:</span> {row.search_params?.query && `Keyword: ${row.search_params.query}, `} {row.search_params?.location && `Location: ${row.search_params.location}, `} {row.search_params?.categories?.length > 0 && `Categories: ${row.search_params.categories.join(', ')}, `} {row.search_params?.jobTypes?.length > 0 && `Job Types: ${row.search_params.jobTypes.join(', ')}`}
+									</div>
 									<div className="flex gap-4">
 										<a
 											href="#"
-											onClick={(e) => {
+											onClick={e => {
 												e.preventDefault();
-												setSelectedJob(job);
+												setSelectedJob(row.job_data);
 												setShowJobModal(true);
 											}}
 											className="text-cyan-400 hover:underline font-sans"
@@ -529,7 +646,7 @@ export default function JobSearchTab() {
 											View & Apply
 										</a>
 										<button
-											onClick={() => handleRemoveSavedJob(job.url)}
+											onClick={() => handleRemoveSavedJob(row.job_data?.url)}
 											className="ml-2 px-3 py-1 bg-red-700 text-white rounded hover:bg-red-600 text-xs font-sans"
 										>
 											Remove

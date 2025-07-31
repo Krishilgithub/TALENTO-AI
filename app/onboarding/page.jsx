@@ -7,6 +7,10 @@ import { ChevronLeftIcon, ChevronRightIcon, ArrowRightIcon } from '@heroicons/re
 export default function OnboardingPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [form, setForm] = useState({
+    age: "",
+    profession: "",
+    year: "",
+    location: "",
     company: "",
     experience: "",
     careerLevel: "",
@@ -69,16 +73,52 @@ export default function OnboardingPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Save form data to DB or Supabase
     const supabase = createClientForBrowser();
     const { data, error } = await supabase.auth.getUser();
-    if (data?.user) {
-      // Update user metadata to set onboarded: true
-      await supabase.auth.updateUser({
-        data: { onboarded: true },
-      });
+    if (!data?.user) {
+      router.push('/login');
+      return;
     }
-    // After onboarding, redirect to dashboard
+    const user_id = data.user.id;
+
+    // Prepare the payload
+    const payload = {
+      user_id,
+      age: form.age ? parseInt(form.age) : null,
+      profession: form.profession,
+      year: form.year,
+      location: form.location,
+      company: form.company,
+      experience: form.experience ? parseInt(form.experience) : null,
+      career_level: form.careerLevel,
+      usage: form.usage,
+      usage_other: form.usageOther,
+      target_roles: form.targetRoles,
+      industry: form.industry,
+      looking_for: form.lookingFor,
+      skills: form.skills,
+      technical_interests: form.technicalInterests,
+      technical_other: form.technicalOther,
+      resume_style: form.resumeStyle,
+      add_sections: form.addSections,
+      social_links: form.socialLinks,
+    };
+
+    // Insert into Supabase
+    const { error: insertError } = await supabase
+      .from('user_onboarding')
+      .insert([payload]);
+
+    if (insertError) {
+      alert('Error saving onboarding data: ' + insertError.message);
+      return;
+    }
+
+    // Optionally update user metadata
+    await supabase.auth.updateUser({
+      data: { onboarded: true },
+    });
+
     router.push("/dashboard");
   };
 
@@ -91,7 +131,87 @@ export default function OnboardingPage() {
               <h2 className="text-3xl font-bold text-cyan-400 mb-2">Welcome to TALENTO AI</h2>
               <p className="text-gray-300">Let's get to know you better to personalize your experience</p>
             </div>
-            
+
+            {/* Age */}
+            <div className="space-y-4">
+              <label className="block text-lg font-semibold text-cyan-300">
+                Age
+              </label>
+              <input
+                type="number"
+                name="age"
+                value={form.age}
+                onChange={e => setForm(f => ({...f, age: e.target.value}))}
+                className="w-full px-4 py-3 rounded-lg bg-[#101113] text-white border border-gray-700 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500 outline-none transition-all text-lg"
+                min="10"
+                max="100"
+                placeholder="Your age"
+              />
+            </div>
+
+            {/* Profession */}
+            <div className="space-y-4">
+              <label className="block text-lg font-semibold text-cyan-300">
+                Profession
+              </label>
+              <select
+                name="profession"
+                value={form.profession}
+                onChange={e => setForm(f => ({...f, profession: e.target.value, year: ""}))}
+                className="w-full px-4 py-3 rounded-lg bg-[#101113] text-white border border-gray-700 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500 outline-none transition-all text-lg"
+              >
+                <option value="">Select your profession</option>
+                <option value="Student">Student</option>
+                <option value="Working Professional">Working Professional</option>
+                <option value="Freelancer">Freelancer</option>
+                <option value="Entrepreneur">Entrepreneur</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            {/* If Student, Which Year? */}
+            {(form.profession === "Student" || form.careerLevel === "Student") && (
+              <div className="space-y-4">
+                <label className="block text-lg font-semibold text-cyan-300">
+                  If Student, Which Year?
+                </label>
+                <select
+                  name="year"
+                  value={form.year}
+                  onChange={e => setForm(f => ({...f, year: e.target.value}))}
+                  className="w-full px-4 py-3 rounded-lg bg-[#101113] text-white border border-gray-700 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500 outline-none transition-all text-lg"
+                >
+                  <option value="">Select year</option>
+                  <option value="1st Year">1st Year</option>
+                  <option value="2nd Year">2nd Year</option>
+                  <option value="3rd Year">3rd Year</option>
+                  <option value="4th Year">4th Year</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            )}
+
+            {/* Location */}
+            <div className="space-y-4">
+              <label className="block text-lg font-semibold text-cyan-300">
+                Location
+              </label>
+              <select
+                name="location"
+                value={form.location}
+                onChange={e => setForm(f => ({...f, location: e.target.value}))}
+                className="w-full px-4 py-3 rounded-lg bg-[#101113] text-white border border-gray-700 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500 outline-none transition-all text-lg"
+              >
+                <option value="">Select your location</option>
+                <option value="India">India</option>
+                <option value="United States">United States</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="Canada">Canada</option>
+                <option value="Australia">Australia</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
             {/* Company/Institute */}
             <div className="space-y-4">
               <label className="block text-lg font-semibold text-cyan-300">

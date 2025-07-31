@@ -33,24 +33,58 @@ export default function ProfilePage({ user, onBack }) {
 	const [loading, setLoading] = useState(false);
 	const router = useRouter();
 
+	// Always fetch profile data from Supabase on mount and on auth state change
 	useEffect(() => {
-		// Load profile data from localStorage or API
-		const savedProfile = localStorage.getItem('userProfile');
-		if (savedProfile) {
-			setProfileData(JSON.parse(savedProfile));
-		}
-	}, []);
+		let isMounted = true;
+		const fetchProfile = async () => {
+			const supabase = createClientForBrowser();
+			const { data: userData, error: userError } = await supabase.auth.getUser();
+			if (!userData?.user) {
+				router.replace('/login');
+				return;
+			}
+			// Fetch profile from user_profile table (or users table)
+			const { data: profileRow } = await supabase
+				.from('users')
+				.select('*')
+				.eq('id', userData.user.id)
+				.single();
+			if (profileRow && isMounted) {
+				setProfileData({
+					name: profileRow.name || userData.user.user_metadata?.name || "",
+					email: userData.user.email,
+					phone: profileRow.phone || "",
+					location: profileRow.location || "",
+					education: profileRow.education || "",
+					experience: profileRow.experience || "",
+					bio: profileRow.bio || "",
+					skills: profileRow.skills || [],
+					interests: profileRow.interests || []
+				});
+			}
+		};
+		fetchProfile();
+		// Listen for auth state changes
+		const supabase = createClientForBrowser();
+		const { data: listener } = supabase.auth.onAuthStateChange(() => {
+			fetchProfile();
+		});
+		return () => {
+			isMounted = false;
+			listener?.subscription.unsubscribe();
+		};
+	}, [router]);
 
 	const handleSave = async () => {
 		setLoading(true);
 		try {
-			// Save to localStorage for now (can be replaced with API call)
-			localStorage.setItem('userProfile', JSON.stringify(profileData));
-			
-			// Update user metadata in Supabase
 			const supabase = createClientForBrowser();
-			await supabase.auth.updateUser({
-				data: { 
+			const { data: userData } = await supabase.auth.getUser();
+			if (!userData?.user) return;
+			// Update profile in users table
+			await supabase
+				.from('users')
+				.update({
 					name: profileData.name,
 					phone: profileData.phone,
 					location: profileData.location,
@@ -59,9 +93,8 @@ export default function ProfilePage({ user, onBack }) {
 					bio: profileData.bio,
 					skills: profileData.skills,
 					interests: profileData.interests
-				}
-			});
-			
+				})
+				.eq('id', userData.user.id);
 			setIsEditing(false);
 		} catch (error) {
 			console.error('Error saving profile:', error);
@@ -73,16 +106,47 @@ export default function ProfilePage({ user, onBack }) {
 	const handleLogout = async () => {
 		const supabase = createClientForBrowser();
 		await supabase.auth.signOut();
+		setProfileData({
+			name: "",
+			email: "",
+			phone: "",
+			location: "",
+			education: "",
+			experience: "",
+			bio: "",
+			skills: [],
+			interests: []
+		});
 		router.push('/login');
 	};
 
 	const handleCancel = () => {
 		setIsEditing(false);
-		// Reset to original data
-		const savedProfile = localStorage.getItem('userProfile');
-		if (savedProfile) {
-			setProfileData(JSON.parse(savedProfile));
-		}
+		// Refetch profile from Supabase
+		const fetchProfile = async () => {
+			const supabase = createClientForBrowser();
+			const { data: userData } = await supabase.auth.getUser();
+			if (!userData?.user) return;
+			const { data: profileRow } = await supabase
+				.from('users')
+				.select('*')
+				.eq('id', userData.user.id)
+				.single();
+			if (profileRow) {
+				setProfileData({
+					name: profileRow.name || userData.user.user_metadata?.name || "",
+					email: userData.user.email,
+					phone: profileRow.phone || "",
+					location: profileRow.location || "",
+					education: profileRow.education || "",
+					experience: profileRow.experience || "",
+					bio: profileRow.bio || "",
+					skills: profileRow.skills || [],
+					interests: profileRow.interests || []
+				});
+			}
+		};
+		fetchProfile();
 	};
 
 	return (

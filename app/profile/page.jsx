@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { FiEdit2, FiCheck, FiX, FiLogOut } from 'react-icons/fi';
 import createClientForBrowser from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
 function getInitials(name, email) {
   if (name) {
@@ -22,6 +23,7 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -34,13 +36,22 @@ export default function ProfilePage() {
           email: data.user.email || '',
         });
         setPhotoUrl(data.user.user_metadata?.avatar_url || '');
+        // Fetch name from users table
+        const { data: userRow, error: userError } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', data.user.id)
+          .single();
+        if (userRow && userRow.name) {
+          setForm(f => ({ ...f, name: userRow.name }));
+        }
         setIsLoading(false);
       } else {
-        window.location.href = '/login';
+        router.replace('/login');
       }
     };
     fetchUser();
-  }, []);
+  }, [router]);
 
   const handleEdit = (field) => {
     setEditField(field);

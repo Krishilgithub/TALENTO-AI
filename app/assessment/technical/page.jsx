@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import createClientForBrowser from '@/utils/supabase/client';
 
 export default function TechnicalAssessmentPage() {
 	const [selectedFile, setSelectedFile] = useState(null);
@@ -67,8 +68,22 @@ export default function TechnicalAssessmentPage() {
 			const data = await res.json();
 			setLoading(false);
 			if (data.questions && data.questions.length > 0) {
-				// Pass data to the attempt page using sessionStorage
-				sessionStorage.setItem("techAssessmentData", JSON.stringify(data));
+				// Save assessment data to Supabase
+				const supabase = createClientForBrowser();
+				const { data: userData } = await supabase.auth.getUser();
+				if (userData?.user) {
+					await supabase.from('assessment_history').insert([
+						{
+							user_id: userData.user.id,
+							type: 'technical',
+							questions: data.questions,
+							options: data.options,
+							answers: data.answers,
+							created_at: new Date().toISOString(),
+						},
+					]);
+				}
+				// Pass only an ID to the attempt page
 				router.push("/assessment/technical/attempt");
 			} else {
 				setError(
