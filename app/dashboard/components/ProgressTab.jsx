@@ -13,6 +13,7 @@ import {
 	Legend,
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { motion } from 'framer-motion';
 
 ChartJS.register(
 	CategoryScale,
