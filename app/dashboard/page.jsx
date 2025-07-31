@@ -105,6 +105,12 @@ export default function DashboardPage() {
 		setShowOnboardingModal(true);
 	};
 
+	// Replace setActiveTab with a handler that also closes the profile if open
+	const handleTabChange = (tabId) => {
+		setActiveTab(tabId);
+		setShowProfile(false);
+	};
+
 	if (isLoading) {
 		return (
 			<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
@@ -123,7 +129,7 @@ export default function DashboardPage() {
 				sidebarOpen={sidebarOpen}
 				setSidebarOpen={setSidebarOpen}
 				activeTab={activeTab}
-				setActiveTab={setActiveTab}
+				setActiveTab={handleTabChange}
 				ChartBarIcon={ChartBarIcon}
 				ChatBubbleLeftRightIcon={ChatBubbleLeftRightIcon}
 				PlayCircleIcon={PlayCircleIcon}
@@ -139,17 +145,10 @@ export default function DashboardPage() {
 				sidebarOpen ? 'ml-0' : 'ml-0'
 			}`}>
 				{/* Main Card Content */}
-				<div className="flex-1 flex flex-col items-center justify-start py-10 px-4 bg-[#101113]">
+				<div className="flex-1 flex flex-col items-center justify-start py-10 px-4 bg-[#101113] w-full">
 					<div className={`w-full max-w-5xl bg-[#18191b] rounded-2xl shadow-lg border border-gray-800 p-8 transition-all duration-300 ${
-						sidebarOpen ? 'ml-0' : 'mx-auto'
+						sidebarOpen ? 'ml-0' : 'mx-auto max-w-4xl'
 					}`}>
-						{/* Fetch Onboarding Data Button */}
-						<button
-							onClick={fetchOnboardingData}
-							className="mb-6 px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-cyan-400 to-blue-500 text-black hover:from-cyan-300 hover:to-blue-400 transition-all duration-200 shadow-lg"
-						>
-							Show My Onboarding Details
-						</button>
 						{/* Onboarding Data Modal */}
 						{showOnboardingModal && onboardingData && (
 							<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">

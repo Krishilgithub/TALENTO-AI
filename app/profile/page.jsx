@@ -155,7 +155,7 @@ export default function ProfilePage() {
           <a href="/dashboard" className="px-4 py-2 rounded-lg text-white hover:bg-cyan-900 transition font-semibold">Dashboard</a>
           <a href="/profile" className="px-4 py-2 rounded-lg bg-cyan-400 text-black font-bold shadow hover:bg-cyan-300 transition">Profile</a>
           <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 mt-8 py-3 px-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg">
-            <FiLogOut className="text-lg" /> Logout
+            <FiLogOut className="text-lg" /> <span className="text-gray-100">Logout</span>
           </button>
         </nav>
       </aside>
