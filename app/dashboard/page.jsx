@@ -103,6 +103,7 @@ export default function DashboardPage() {
 				BriefcaseIcon={BriefcaseIcon}
 				ArrowTrendingUpIcon={ArrowTrendingUpIcon}
 				onProfileClick={handleProfileClick}
+				onLogout={handleLogout}
 			/>
 			<SidebarToggle sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
