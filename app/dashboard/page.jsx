@@ -21,6 +21,9 @@ import CareerToolsTab from "./components/CareerToolsTab";
 import ProgressTab from "./components/ProgressTab";
 import JobSearchTab from "./components/JobSearchTab";
 import ProfilePage from "./components/ProfilePage";
+import SubscriptionTab from "./components/SubscriptionTab";
+import AssessmentTab from "./components/AssessmentTab";
+import CareerPlanningTab from "./components/CareerPlanningTab";
 
 export default function DashboardPage() {
 	const [user, setUser] = useState(null);
@@ -121,6 +124,9 @@ export default function DashboardPage() {
 						) : (
 							<>
 								{activeTab === "overview" && <OverviewTab user={user} />}
+								{activeTab === "assessment" && <AssessmentTab />}
+								{activeTab === "career-planning" && <CareerPlanningTab />}
+								{activeTab === "subscription" && <SubscriptionTab />}
 								{/* {activeTab === "interviews" && <InterviewPrepTab />} */}
 								{activeTab === "practice" && <PracticeSessionsTab />}
 								{activeTab === "career" && <CareerToolsTab />}

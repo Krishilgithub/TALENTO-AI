@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, ClipboardDocumentListIcon, AcademicCapIcon, CreditCardIcon } from "@heroicons/react/24/outline";
 import { getInitialFromName } from "../../../utils/getInitialFromName";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -24,6 +24,15 @@ export default function Sidebar({
 		<aside className={`w-72 bg-gradient-to-b from-[#18191b] via-[#181b22] to-[#101113] border-r border-gray-800 flex flex-col py-8 px-5 min-h-screen relative shadow-xl transition-all duration-300 ease-in-out transform ${
 			sidebarOpen ? 'translate-x-0' : '-translate-x-full'
 		}`}>
+			{/* Close Button */}
+			<button
+				onClick={() => setSidebarOpen(false)}
+				className="absolute top-4 right-4 p-2 rounded-full bg-[#23272f] border border-gray-700 hover:bg-cyan-900 transition-all duration-200 hover:scale-110 z-10"
+				title="Close sidebar"
+			>
+				<ChevronLeftIcon className="w-5 h-5 text-cyan-400" />
+			</button>
+
 			{/* Logo */}
 			<div className="flex items-center mb-10">
 				<span className="text-2xl font-extrabold text-white tracking-wide">
@@ -65,8 +74,11 @@ export default function Sidebar({
 				<button className="flex-1 bg-gradient-to-r from-cyan-700 to-blue-700 border border-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-all duration-200 flex items-center justify-center shadow-md hover:scale-105">
 					Referral
 				</button>
-				<button className="flex-1 bg-gradient-to-r from-cyan-700 to-blue-700 border border-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-all duration-200 flex items-center justify-center shadow-md hover:scale-105">
-					Upgrade
+				<button 
+					onClick={() => setActiveTab("subscription")}
+					className="flex-1 bg-gradient-to-r from-cyan-700 to-blue-700 border border-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-all duration-200 flex items-center justify-center shadow-md hover:scale-105"
+				>
+					Subscription
 				</button>
 			</div>
 			{/* Navigation */}
@@ -74,8 +86,8 @@ export default function Sidebar({
 				<ul className="space-y-2">
 					{[
 						{ id: "overview", name: "Overview", icon: ChartBarIcon },
-						{ id: "assessment", name: "Take Assessment", icon: null, href: "/assessment" },
-						{ id: "career-planning", name: "Career Planning", icon: null, href: "/career" },
+						{ id: "assessment", name: "Take Assessment", icon: ClipboardDocumentListIcon },
+						{ id: "career-planning", name: "Career Planning", icon: AcademicCapIcon },
 						// {
 						// 	id: "interviews",
 						// 	name: "Interview Prep",
@@ -91,32 +103,21 @@ export default function Sidebar({
 						{ id: "jobsearch", name: "Job Search", icon: BriefcaseIcon },
 					].map((tab) => (
 						<li key={tab.id}>
-							{tab.href ? (
-								<Link href={tab.href} className="block">
-									<button className="w-full flex items-center px-4 py-3 rounded-lg text-left font-medium transition-all duration-200 shadow-sm hover:scale-105 text-gray-300 hover:bg-[#23272f] hover:text-cyan-300 hover:shadow-md">
-										<span className="w-5 h-5 mr-3 text-gray-400">
-											{tab.id === "assessment" ? "" : ""}
-										</span>
-										{tab.name}
-									</button>
-								</Link>
-							) : (
-								<button
-									onClick={() => setActiveTab(tab.id)}
-									className={`w-full flex items-center px-4 py-3 rounded-lg text-left font-medium transition-all duration-200 shadow-sm hover:scale-105 ${
-										activeTab === tab.id
-											? "bg-gradient-to-r from-cyan-900 to-blue-900 text-cyan-400 shadow-lg border border-cyan-700"
-											: "text-gray-300 hover:bg-[#23272f] hover:text-cyan-300 hover:shadow-md"
+							<button
+								onClick={() => setActiveTab(tab.id)}
+								className={`w-full flex items-center px-4 py-3 rounded-lg text-left font-medium transition-all duration-200 shadow-sm hover:scale-105 ${
+									activeTab === tab.id
+										? "bg-gradient-to-r from-cyan-900 to-blue-900 text-cyan-400 shadow-lg border border-cyan-700"
+										: "text-gray-300 hover:bg-[#23272f] hover:text-cyan-300 hover:shadow-md"
+								}`}
+							>
+								<tab.icon
+									className={`w-5 h-5 mr-3 transition-all duration-200 ${
+										activeTab === tab.id ? "text-cyan-400 scale-110" : "text-gray-400"
 									}`}
-								>
-									<tab.icon
-										className={`w-5 h-5 mr-3 transition-all duration-200 ${
-											activeTab === tab.id ? "text-cyan-400 scale-110" : "text-gray-400"
-										}`}
-									/>
-									{tab.name}
-								</button>
-							)}
+								/>
+								{tab.name}
+							</button>
 						</li>
 					))}
 				</ul>

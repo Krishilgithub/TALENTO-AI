@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 
 export default function JobSearchTab() {
 	const [query, setQuery] = useState("");
@@ -446,8 +447,12 @@ export default function JobSearchTab() {
 							<>
 								<ul className="space-y-4">
 									{results.map((job, idx) => (
-										<li
+										<motion.li
 											key={idx}
+											initial={{ opacity: 0, y: 40 }}
+											whileInView={{ opacity: 1, y: 0 }}
+											viewport={{ once: true, amount: 0.3 }}
+											transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
 											className="bg-[#232323] border border-cyan-900 rounded-lg p-4"
 										>
 											<h3 className="text-lg font-semibold text-white font-sans">
@@ -481,7 +486,7 @@ export default function JobSearchTab() {
 													Save
 												</button>
 											</div>
-										</li>
+										</motion.li>
 									))}
 								</ul>
 								<button

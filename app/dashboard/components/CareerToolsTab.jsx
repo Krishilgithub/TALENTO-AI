@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 export default function CareerToolsTab() {
 	const [resumeFile, setResumeFile] = useState(null);
@@ -143,8 +144,8 @@ export default function CareerToolsTab() {
 								{atsFeedback.strengths && atsFeedback.strengths.length > 0 ? (
 									atsFeedback.strengths.map((s, i) => <li key={i}>{s}</li>)
 								) : (
-									<li className="text-gray-400">None</li>
-								)}
+									<li className="text-gray-400">None</li>)
+							}
 							</ul>
 						</div>
 						{/* Weaknesses */}
@@ -154,8 +155,8 @@ export default function CareerToolsTab() {
 								{atsFeedback.weaknesses && atsFeedback.weaknesses.length > 0 ? (
 									atsFeedback.weaknesses.map((w, i) => <li key={i}>{w}</li>)
 								) : (
-									<li className="text-gray-400">None</li>
-								)}
+									<li className="text-gray-400">None</li>)
+							}
 							</ul>
 						</div>
 						{/* Tips */}
@@ -165,8 +166,8 @@ export default function CareerToolsTab() {
 								{atsFeedback.tips && atsFeedback.tips.length > 0 ? (
 									atsFeedback.tips.map((t, i) => <li key={i}>{t}</li>)
 								) : (
-									<li className="text-gray-400">None</li>
-								)}
+									<li className="text-gray-400">None</li>)
+							}
 							</ul>
 						</div>
 						{/* Improvement Plan */}
@@ -181,8 +182,8 @@ export default function CareerToolsTab() {
 										<li key={i}>{imp}</li>
 									))
 								) : (
-									<li className="text-gray-400">None</li>
-								)}
+									<li className="text-gray-400">None</li>)
+							}
 							</ul>
 						</div>
 					</div>
@@ -194,10 +195,15 @@ export default function CareerToolsTab() {
 				)}
 			</div>
 
-			{/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				{tools.map((tool) => (
-					<div
+			{/* Tool Cards Grid with Animation */}
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				{tools.map((tool, idx) => (
+					<motion.div
 						key={tool.name}
+						initial={{ opacity: 0, y: 40 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true, amount: 0.3 }}
+						transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
 						className="bg-[#18191b] border border-cyan-900 rounded-lg p-6 flex items-center gap-4"
 					>
 						<div className="text-3xl">{tool.icon}</div>
@@ -214,9 +220,9 @@ export default function CareerToolsTab() {
 								Coming Soon
 							</span>
 						)}
-					</div>
+					</motion.div>
 				))}
-			</div> */}
+			</div>
 		</div>
 	);
 } 

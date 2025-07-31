@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 export default function ProgressTab() {
 	const progressData = {
 		skills: [
@@ -33,8 +35,14 @@ export default function ProgressTab() {
 					Skills Development
 				</h3>
 				<div className="space-y-4">
-					{progressData.skills.map((skill) => (
-						<div key={skill.name}>
+					{progressData.skills.map((skill, idx) => (
+						<motion.div
+							key={skill.name}
+							initial={{ opacity: 0, y: 40 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							viewport={{ once: true, amount: 0.3 }}
+							transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
+						>
 							<div className="flex justify-between items-center mb-2">
 								<span className="text-sm font-medium text-gray-300 font-sans">
 									{skill.name}
@@ -49,7 +57,7 @@ export default function ProgressTab() {
 									style={{ width: `${skill.progress}%` }}
 								></div>
 							</div>
-						</div>
+						</motion.div>
 					))}
 				</div>
 			</div>
@@ -60,8 +68,15 @@ export default function ProgressTab() {
 					Goals Progress
 				</h3>
 				<div className="space-y-4">
-					{progressData.goals.map((goal) => (
-						<div key={goal.name} className="bg-[#232323] rounded-lg p-4">
+					{progressData.goals.map((goal, idx) => (
+						<motion.div
+							key={goal.name}
+							initial={{ opacity: 0, y: 40 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							viewport={{ once: true, amount: 0.3 }}
+							transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
+							className="bg-[#232323] rounded-lg p-4"
+						>
 							<div className="flex justify-between items-center mb-2">
 								<span className="font-medium text-white font-sans">
 									{goal.name}
@@ -76,13 +91,13 @@ export default function ProgressTab() {
 									style={{ width: `${(goal.completed / goal.total) * 100}%` }}
 								></div>
 							</div>
-						</div>
+						</motion.div>
 					))}
 				</div>
 			</div>
 
 			{/* Achievements */}
-			<div>
+			{/* <div>
 				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
 					Recent Achievements
 				</h3>
@@ -118,7 +133,7 @@ export default function ProgressTab() {
 						</div>
 					))}
 				</div>
-			</div>
+			</div> */}
 		</div>
 	);
 } 

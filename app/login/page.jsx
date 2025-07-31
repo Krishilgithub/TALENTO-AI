@@ -103,6 +103,16 @@ export default function LoginPage() {
 
 	return (
 		<div className="min-h-screen bg-[#101113] flex items-center justify-center px-4">
+			<div className="absolute top-6 left-6">
+				<button
+					onClick={() => router.push('/')}
+					className="flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-400 bg-[#18191b] text-cyan-400 hover:bg-cyan-900 hover:text-white shadow-lg transition-all duration-200 font-semibold"
+					title="Back to Home"
+				>
+					<svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+					<span>Back</span>
+				</button>
+			</div>
 			<div className="max-w-md w-full space-y-8">
 				<div className="text-center">
 					<Link href="/" className="inline-block">
