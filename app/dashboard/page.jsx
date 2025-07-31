@@ -14,17 +14,15 @@ import {
 
 // Import modular components
 import Sidebar from "./components/Sidebar";
-import SidebarToggle from "./components/SidebarToggle";
 import OverviewTab from "./components/OverviewTab";
 import InterviewPrepTab from "./components/InterviewPrepTab";
 import PracticeSessionsTab from "./components/PracticeSessionsTab";
-import CareerToolsTab from "./components/CareerToolsTab";
 import ProgressTab from "./components/ProgressTab";
 import JobSearchTab from "./components/JobSearchTab";
 import ProfilePage from "./components/ProfilePage";
 import SubscriptionTab from "./components/SubscriptionTab";
 import AssessmentTab from "./components/AssessmentTab";
-import CareerPlanningTab from "./components/CareerPlanningTab";
+import LinkedInOptimizerTab from "./components/LinkedInOptimizerTab";
 
 export default function DashboardPage() {
 	const [user, setUser] = useState(null);
@@ -138,11 +136,10 @@ export default function DashboardPage() {
 				onProfileClick={handleProfileClick}
 				onLogout={handleLogout}
 			/>
-			<SidebarToggle sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
 			{/* Main Content Area */}
 			<div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${
-				sidebarOpen ? 'ml-0' : 'ml-0'
+				sidebarOpen ? 'ml-72' : 'ml-16'
 			}`}>
 				{/* Main Card Content */}
 				<div className="flex-1 flex flex-col items-center justify-start py-10 px-4 bg-[#101113] w-full">
@@ -178,13 +175,12 @@ export default function DashboardPage() {
 							<>
 								{activeTab === "overview" && <OverviewTab user={user} />}
 								{activeTab === "assessment" && <AssessmentTab />}
-								{activeTab === "career-planning" && <CareerPlanningTab />}
 								{activeTab === "subscription" && <SubscriptionTab />}
 								{/* {activeTab === "interviews" && <InterviewPrepTab />} */}
 								{activeTab === "practice" && <PracticeSessionsTab />}
-								{activeTab === "career" && <CareerToolsTab />}
 								{activeTab === "progress" && <ProgressTab />}
 								{activeTab === "jobsearch" && <JobSearchTab />}
+								{activeTab === "linkedin-optimizer" && <LinkedInOptimizerTab />}
 							</>
 						)}
 					</div>

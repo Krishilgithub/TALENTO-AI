@@ -3,6 +3,33 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
+const PRACTICE_CATEGORIES = [
+	{
+		key: "aptitude",
+		name: "Aptitude",
+		description:
+			"Sharpen your logical reasoning, quantitative, and verbal skills with practice questions.",
+	},
+	{
+		key: "coding",
+		name: "Coding",
+		description:
+			"Practice coding problems in various languages and improve your problem-solving skills.",
+	},
+	{
+		key: "communication",
+		name: "Communication",
+		description:
+			"Enhance your written and verbal communication through scenario-based exercises.",
+	},
+	{
+		key: "domain",
+		name: "Domain Knowledge",
+		description:
+			"Test your knowledge in your chosen field or industry with relevant questions.",
+	},
+];
+
 export default function PracticeSessionsTab() {
 	const [isRecording, setIsRecording] = useState(false);
 	const [sessionType, setSessionType] = useState("behavioral");
@@ -22,87 +49,46 @@ export default function PracticeSessionsTab() {
 					Practice Sessions
 				</h2>
 				<p className="text-gray-300 font-sans">
-					Start a new practice session with AI-powered feedback and analysis.
+					Welcome! Choose a category below to begin practicing and improving your skills. Each session is tailored to help you grow and track your progress.
 				</p>
 			</div>
 
-			{/* Session Setup */}
-			<div className="bg-[#18191b] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-cyan-400 mb-4 font-sans">
-					Start New Session
-				</h3>
-
-				<div className="space-y-4">
-					<div>
-						<label className="block text-sm font-medium text-black mb-2 font-sans">
-							Session Type
-						</label>
-						<select
-							value={sessionType}
-							onChange={(e) => setSessionType(e.target.value)}
-							className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans"
-						>
-							<option value="behavioral">Behavioral Interview</option>
-							<option value="technical">Technical Interview</option>
-							<option value="case">Case Study</option>
-							<option value="system">System Design</option>
-						</select>
-					</div>
-
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div>
-							<label className="block text-sm font-medium text-black mb-2 font-sans">
-								Duration
-							</label>
-							<select className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans">
-								<option>15 minutes</option>
-								<option>30 minutes</option>
-								<option>45 minutes</option>
-								<option>60 minutes</option>
-							</select>
-						</div>
-						<div>
-							<label className="block text-sm font-medium text-black mb-2 font-sans">
-								Difficulty
-							</label>
-							<select className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans">
-								<option>Beginner</option>
-								<option>Intermediate</option>
-								<option>Advanced</option>
-							</select>
-						</div>
-						<div>
-							<label className="block text-sm font-medium text-black mb-2 font-sans">
-								Questions Count
-							</label>
-							<select className="w-full px-3 py-2 border border-cyan-900 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-cyan-100 text-black font-sans">
-								<option>5 questions</option>
-								<option>10 questions</option>
-								<option>15 questions</option>
-								<option>20 questions</option>
-							</select>
-						</div>
-					</div>
-
-					<button
-						onClick={startSession}
-						disabled={isRecording}
-						className="w-full bg-cyan-400 text-black py-3 px-4 rounded-lg font-medium hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
+			{/* Practice Categories */}
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+				{PRACTICE_CATEGORIES.map((cat) => (
+					<motion.div
+						key={cat.key}
+						initial={{ opacity: 0, y: 40 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true, amount: 0.3 }}
+						transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
+						className="bg-[#18191b] rounded-xl shadow-md border border-cyan-900 p-6 flex flex-col items-start"
 					>
-						{isRecording ? (
-							<div className="flex items-center justify-center">
-								<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
-								Starting Session...
-							</div>
-						) : (
-							"Start Practice Session"
-						)}
-					</button>
-				</div>
+						<h3 className="text-xl font-semibold mb-2 text-cyan-400">
+							{cat.name}
+						</h3>
+						<p className="text-gray-400 mb-4">{cat.description}</p>
+						<button
+							className="mt-auto bg-cyan-400 text-black px-4 py-2 rounded hover:bg-cyan-300 transition-colors duration-200"
+							disabled
+						>
+							Start Practice
+						</button>
+					</motion.div>
+				))}
 			</div>
 
+			{/* Coming Soon Notice */}
+			{/* <div className="mt-8 text-center">
+				<div className="bg-[#232323] rounded-lg p-6 border border-gray-700">
+					<p className="text-gray-500 text-sm">
+						(Practice session functionality coming soon!)
+					</p>
+				</div>
+			</div> */}
+
 			{/* Recent Sessions */}
-			<div>
+			{/* <div>
 				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
 					Recent Sessions
 				</h3>
@@ -155,7 +141,7 @@ export default function PracticeSessionsTab() {
 						</motion.div>
 					))}
 				</div>
-			</div>
+			</div> */}
 		</div>
 	);
 } 

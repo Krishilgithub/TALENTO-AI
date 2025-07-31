@@ -490,12 +490,13 @@ export default function JobSearchTab() {
 						</button>
 					</form>
 					{/* Debug button - remove after testing */}
-					<button
+					{/* <button
 						onClick={() => handleSearch(null, false, "", "", [], [])}
 						className="mt-2 px-4 py-2 bg-red-500 text-white rounded text-sm"
 					>
 						Test Search (Debug)
-					</button>
+					</button> */}
+					<br></br>
 					<p className="text-xs text-gray-400 font-sans mb-2">
 						Popular locations: Worldwide, Anywhere, United States, Europe,
 						India, Remote, Mumbai, Bangalore, etc. (You can also enter a custom

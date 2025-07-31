@@ -14,7 +14,9 @@ import {
 	ArrowLeftIcon,
 	PencilIcon,
 	CheckIcon,
-	XMarkIcon
+	XMarkIcon,
+	CameraIcon,
+	CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 
 export default function ProfilePage({ user, onBack }) {
@@ -30,6 +32,8 @@ export default function ProfilePage({ user, onBack }) {
 		skills: [],
 		interests: []
 	});
+	const [profilePhoto, setProfilePhoto] = useState(null);
+	const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const router = useRouter();
 
@@ -100,6 +104,33 @@ export default function ProfilePage({ user, onBack }) {
 			console.error('Error saving profile:', error);
 		} finally {
 			setLoading(false);
+		}
+	};
+
+	const handlePhotoUpload = (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			if (file.size > 5 * 1024 * 1024) { // 5MB limit
+				alert("File size must be less than 5MB");
+				return;
+			}
+			
+			if (!file.type.startsWith('image/')) {
+				alert("Please upload an image file");
+				return;
+			}
+
+			setIsPhotoUploading(true);
+			
+			// Simulate photo upload
+			setTimeout(() => {
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					setProfilePhoto(e.target.result);
+					setIsPhotoUploading(false);
+				};
+				reader.readAsDataURL(file);
+			}, 1500);
 		}
 	};
 
@@ -197,8 +228,38 @@ export default function ProfilePage({ user, onBack }) {
 			<div className="bg-[#232323] rounded-xl p-6 border border-gray-700">
 				{/* Avatar and Basic Info */}
 				<div className="flex items-center gap-6 mb-8">
-					<div className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white bg-gradient-to-br from-cyan-500 to-blue-700 border-4 border-cyan-400 shadow-lg">
-						{getInitialFromName(profileData.name)}
+					<div className="relative">
+						{profilePhoto ? (
+							<div className="w-20 h-20 rounded-full overflow-hidden border-4 border-cyan-400 shadow-lg">
+								<img
+									src={profilePhoto}
+									alt="Profile"
+									className="w-full h-full object-cover"
+								/>
+							</div>
+						) : (
+							<div className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white bg-gradient-to-br from-cyan-500 to-blue-700 border-4 border-cyan-400 shadow-lg">
+								{getInitialFromName(profileData.name)}
+							</div>
+						)}
+						
+						{/* Photo Upload Button */}
+						<label className="absolute -bottom-1 -right-1 w-8 h-8 bg-cyan-400 rounded-full flex items-center justify-center cursor-pointer hover:bg-cyan-300 transition-colors duration-200 shadow-lg">
+							<CameraIcon className="w-4 h-4 text-black" />
+							<input
+								type="file"
+								accept="image/*"
+								onChange={handlePhotoUpload}
+								className="sr-only"
+								disabled={isPhotoUploading}
+							/>
+						</label>
+						
+						{isPhotoUploading && (
+							<div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+								<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-cyan-400"></div>
+							</div>
+						)}
 					</div>
 					<div className="flex-1">
 						{isEditing ? (
