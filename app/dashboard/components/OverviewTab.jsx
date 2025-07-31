@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function OverviewTab({ user }) {
 	const stats = [
@@ -66,9 +67,13 @@ export default function OverviewTab({ user }) {
 
 			{/* Stats Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-				{stats.map((stat) => (
-					<div
+				{stats.map((stat, idx) => (
+					<motion.div
 						key={stat.name}
+						initial={{ opacity: 0, y: 40 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true, amount: 0.3 }}
+						transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
 						className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg p-6 border border-gray-600"
 					>
 						<div className="flex items-center justify-between">
@@ -86,7 +91,7 @@ export default function OverviewTab({ user }) {
 								{stat.change}
 							</div>
 						</div>
-					</div>
+					</motion.div>
 				))}
 			</div>
 
@@ -101,33 +106,7 @@ export default function OverviewTab({ user }) {
 				</Link>
 			</div>
 
-			{/* Recent Activities */}
-			{/* <div>
-				<h3 className="text-lg font-semibold text-white mb-4">
-					Recent Activities
-				</h3>
-				<div className="space-y-3">
-					{recentActivities.map((activity, index) => (
-						<div
-							key={index}
-							className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700"
-						>
-							<div className="flex items-center space-x-3">
-								<div className="text-lg">
-									{activity.type === "practice" && "💬"}
-									{activity.type === "interview" && "🎯"}
-									{activity.type === "skill" && "📈"}
-									{activity.type === "assessment" && "📝"}
-								</div>
-								<div>
-									<p className="font-medium text-white">{activity.title}</p>
-									<p className="text-sm text-gray-400">{activity.time}</p>
-								</div>
-							</div>
-						</div>
-					))}
-				</div>
-			</div> */}
+			{/* Recent Activities (commented out) */}
 		</div>
 	);
 } 

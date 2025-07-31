@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 export default function PracticeSessionsTab() {
 	const [isRecording, setIsRecording] = useState(false);
@@ -126,8 +127,12 @@ export default function PracticeSessionsTab() {
 							duration: "35 min",
 						},
 					].map((session, index) => (
-						<div
+						<motion.div
 							key={index}
+							initial={{ opacity: 0, y: 40 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							viewport={{ once: true, amount: 0.3 }}
+							transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
 							className="flex items-center justify-between p-4 bg-[#232323] rounded-lg"
 						>
 							<div className="flex items-center space-x-4">
@@ -147,7 +152,7 @@ export default function PracticeSessionsTab() {
 								</p>
 								<p className="text-sm text-gray-400 font-sans">Score</p>
 							</div>
-						</div>
+						</motion.div>
 					))}
 				</div>
 			</div>
