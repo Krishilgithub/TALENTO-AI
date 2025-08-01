@@ -13,26 +13,24 @@ load_dotenv()
 
 # Set up Hugging Face API key
 hf_api_key = os.getenv("HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP")
-if not hf_api_key:
-    raise ValueError("HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP not found in .env file")
 
-# Initialize Hugging Face Endpoint for conversational task
-try:
-    llm = HuggingFaceEndpoint(
-        model="mistralai/Mistral-7B-Instruct-v0.2",
-        huggingfacehub_api_token=hf_api_key,
-        temperature=0.5,
-        max_new_tokens=1500,
-    )
-    model = ChatHuggingFace(llm=llm)
-except Exception as e:
-    raise ValueError(f"Failed to initialize Hugging Face Endpoint: {str(e)}")
-
-# class ModelParam(TypedDict):
-#     suggestions: str
-#     tips: str
-#     weakness: str
-#     strength: str
+# Initialize model with fallback
+model = None
+if hf_api_key:
+    try:
+        # Initialize Hugging Face Endpoint for conversational task
+        llm = HuggingFaceEndpoint(
+            model="mistralai/Mistral-7B-Instruct-v0.2",
+            huggingfacehub_api_token=hf_api_key,
+            temperature=0.5,
+            max_new_tokens=1500,
+        )
+        model = ChatHuggingFace(llm=llm)
+    except Exception as e:
+        print(f"Warning: Failed to initialize Hugging Face Endpoint: {str(e)}")
+        model = None
+else:
+    print("Warning: HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP not found. Using fallback mode.")
 
 # Output parser
 parser = StrOutputParser()
@@ -78,15 +76,37 @@ resume_analysis_prompt = PromptTemplate(
     template=resume_analysis_template
 )
 
-# Create RunnableSequence (replacing LLMChain)
-resume_analysis_chain = RunnableSequence(resume_analysis_prompt | model | parser)
+# Create RunnableSequence (replacing LLMChain) only if model is available
+resume_analysis_chain = None
+if model:
+    resume_analysis_chain = RunnableSequence(resume_analysis_prompt | model | parser)
 
 # Function to analyze resume
 def analyze_resume(pdf_path: str, job_role: str = "Software Engineer") -> str:
     try:
         resume_text = load_resume_text(pdf_path)
-        result = resume_analysis_chain.invoke({"resume_text": resume_text, "job_role": job_role})
-        return result
+        
+        if resume_analysis_chain:
+            result = resume_analysis_chain.invoke({"resume_text": resume_text, "job_role": job_role})
+            return result
+        else:
+            # Fallback response when model is not available
+            return f"""
+**Resume Analysis for {job_role}**
+
+**Key Components**:
+- Resume text extracted successfully
+- Analysis requires HuggingFace API token
+
+**Feedback**:
+- Strengths: Resume text was successfully extracted and processed
+- Weaknesses: Full AI-powered analysis not available due to missing API token
+
+**Suggestions**:
+- Please add HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP environment variable for full analysis
+- Resume text length: {len(resume_text)} characters
+- Extracted content preview: {resume_text[:200]}...
+            """
     except Exception as e:
         return f"Error analyzing resume: {str(e)} 😵"
 

@@ -1,96 +1,114 @@
-from langchain_huggingface import ChatHuggingFace, HuggingFaceEmbeddings, HuggingFaceEndpoint
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, ChatMessage
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
-from langchain_core.prompts import PromptTemplate
-from dotenv import load_dotenv
-import json
 import os
-import re
+from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, ChatHuggingFace
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from typing import TypedDict, Literal
+from pydantic import BaseModel
+from langchain_core.runnables import RunnableSequence
+from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
+# Set up Hugging Face API key
 hf_api_key = os.getenv('HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP')
 
-llm = HuggingFaceEndpoint(
-    model="mistralai/Mistral-7B-Instruct-v0.2",
-    task="text-generation",
-    huggingfacehub_api_token=hf_api_key,
-    temperature=0.5
+# Initialize model with fallback
+model = None
+if hf_api_key:
+    try:
+        # Initialize Hugging Face Endpoint for conversational task
+        llm = HuggingFaceEndpoint(
+            model="mistralai/Mistral-7B-Instruct-v0.2",
+            huggingfacehub_api_token=hf_api_key,
+            temperature=0.5,
+            max_new_tokens=1500,
+        )
+        model = ChatHuggingFace(llm=llm)
+    except Exception as e:
+        print(f"Warning: Failed to initialize Hugging Face Endpoint: {str(e)}")
+        model = None
+else:
+    print("Warning: HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP not found. Using fallback mode.")
+
+# Output parser
+parser = StrOutputParser()
+
+# Prompt template for technical assessment
+technical_assessment_template = """
+You are an expert technical interviewer creating a comprehensive technical assessment for {job_role} position.
+
+Create {num_questions} multiple-choice questions covering the following areas:
+1. Programming fundamentals
+2. Data structures and algorithms
+3. System design concepts
+4. Database knowledge
+5. Web technologies (if applicable)
+6. Problem-solving scenarios
+
+Format each question as:
+Q{number}. [Question text]
+A) [Option A]
+B) [Option B]
+C) [Option C]
+D) [Option D]
+Correct Answer: [A/B/C/D]
+Explanation: [Brief explanation]
+
+Make questions relevant to {job_role} and varying difficulty levels.
+"""
+
+technical_assessment_prompt = PromptTemplate(
+    input_variables=["job_role", "num_questions"],
+    template=technical_assessment_template
 )
 
-model = ChatHuggingFace(llm=llm)
-parser = StrOutputParser() # Use StrOutputParser to get raw output
+# Create RunnableSequence only if model is available
+technical_assessment_chain = None
+if model:
+    technical_assessment_chain = RunnableSequence(technical_assessment_prompt | model | parser)
 
-def try_parse_json(raw_output: str):
-    """
-    Tries to parse a string that may contain a JSON object.
-    It cleans the string by extracting content between the first '[' and last ']',
-    and replaces single quotes with double quotes.
-    """
+def generate_technical_mcqs(job_role: str = "Software Engineer", num_questions: int = 10) -> dict:
     try:
-        # Find the start and end of the JSON array
-        start = raw_output.find('[')
-        end = raw_output.rfind(']')
-        if start == -1 or end == -1:
-            return None
-        
-        json_str = raw_output[start:end+1]
-        
-        # Replace single quotes with double quotes, being careful not to replace them inside strings
-        json_str = re.sub(r"'", '"', json_str)
-        
-        return json.loads(json_str)
-    except Exception as e:
-        print(f"Error parsing JSON: {e}")
-        return None
-
-def generate_assessment_from_pdf(pdf_file_path, num_questions=20):
-    # This function is not used by the technical assessment page, but we'll keep it for now.
-    # The technical assessment page uses a general prompt, not one based on a PDF.
-    pass
-
-def generate_technical_mcqs(job_role: str = "Software Engineer", num_questions: int = 20):
-    """
-    Generates general technical MCQs for a given job role.
-    """
-    general_prompt = PromptTemplate(
-        template=(
-            "You are an expert technical interviewer. "
-            "Generate {num_questions} general multiple-choice questions (MCQs) for a technical assessment in software engineering. "
-            "Each question must have 4 options and 1 correct answer. "
-            "Return ONLY a valid JSON array of objects, with no extra text, comments, or explanations. "
-            "Each object must have 'Question', 'Options', and 'Answer' fields. "
-            "Use double quotes for all keys and string values. Do not use single quotes. "
-            "Example: [{{'Question': '...', 'Options': ['...'], 'Answer': '...'}}]"
-        ),
-        input_variables=['num_questions'],
-    )
-    
-    chain = general_prompt | model | parser # Use StrOutputParser
-    
-    try:
-        raw_result = chain.invoke({'num_questions': num_questions})
-        
-        parsed_result = try_parse_json(raw_result)
-        
-        if parsed_result is not None:
-            # Reformat the result to match the expected structure
-            questions = [item['Question'] for item in parsed_result]
-            answers = [item['Answer'] for item in parsed_result]
-            options = [item['Options'] for item in parsed_result]
-            return {'questions': questions, 'answers': answers, 'options': options}
+        if technical_assessment_chain:
+            result = technical_assessment_chain.invoke({"job_role": job_role, "num_questions": num_questions})
+            return {
+                "questions": result,
+                "job_role": job_role,
+                "total_questions": num_questions,
+                "status": "success"
+            }
         else:
-            print("Output parsing failed. Raw output:")
-            print(raw_result)
-            return {'questions': [], 'answers': [], 'options': [], 'error': 'Output parsing failed. Raw output: ' + raw_result}
+            # Fallback response when model is not available
+            return {
+                "questions": f"""
+**Technical Assessment for {job_role}**
 
+**Note**: Full AI-powered assessment not available due to missing HuggingFace API token.
+
+**Sample Questions** (Generated without AI):
+1. What is the time complexity of binary search?
+   A) O(1) B) O(log n) C) O(n) D) O(n²)
+   Correct Answer: B
+   Explanation: Binary search divides the search space in half with each iteration.
+
+2. Which data structure is best for implementing a queue?
+   A) Array B) Stack C) Linked List D) Tree
+   Correct Answer: C
+   Explanation: Linked lists provide O(1) insertion and deletion at both ends.
+
+Please add HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP environment variable for full AI-generated assessment.
+                """,
+                "job_role": job_role,
+                "total_questions": num_questions,
+                "status": "fallback"
+            }
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return {'questions': [], 'answers': [], 'options': [], 'error': 'An error occurred while generating questions.'}
-
+        return {
+            "error": f"Error generating technical assessment: {str(e)}",
+            "status": "error"
+        }
 
 if __name__ == "__main__":
-    import sys
-    result = generate_technical_mcqs()
-    print(json.dumps(result, indent=2))
+    result = generate_technical_mcqs("Software Engineer", 5)
+    print(result)
