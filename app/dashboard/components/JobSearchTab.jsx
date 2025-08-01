@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import createClientForBrowser from '@/utils/supabase/client';
-import { useRouter } from 'next/navigation';
+import { motion } from "framer-motion";
+import createClientForBrowser from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function JobSearchTab() {
 	const [query, setQuery] = useState("");
@@ -33,7 +34,7 @@ export default function JobSearchTab() {
 	const categoryDropdownRef = useRef(null);
 	const jobTypeDropdownRef = useRef(null);
 	const [supabaseLoading, setSupabaseLoading] = useState(false);
-	const [supabaseError, setSupabaseError] = useState('');
+	const [supabaseError, setSupabaseError] = useState("");
 
 	// Fetch categories from Remotive API
 	useEffect(() => {
@@ -65,28 +66,29 @@ export default function JobSearchTab() {
 	useEffect(() => {
 		const fetchSavedJobs = async () => {
 			setSupabaseLoading(true);
-			setSupabaseError('');
+			setSupabaseError("");
 			const supabase = createClientForBrowser();
-			const { data: userData, error: userError } = await supabase.auth.getUser();
+			const { data: userData, error: userError } =
+				await supabase.auth.getUser();
 			if (userError || !userData?.user) {
-				setSupabaseError('You must be logged in to view saved jobs.');
+				setSupabaseError("You must be logged in to view saved jobs.");
 				setSupabaseLoading(false);
 				return;
 			}
 			const { data, error } = await supabase
-				.from('saved_jobs')
-				.select('*')
-				.eq('user_id', userData.user.id)
-				.order('id', { ascending: false });
+				.from("saved_jobs")
+				.select("*")
+				.eq("user_id", userData.user.id)
+				.order("id", { ascending: false });
 			if (error) {
-				setSupabaseError('Failed to fetch saved jobs.');
+				setSupabaseError("Failed to fetch saved jobs.");
 				setSupabaseLoading(false);
 				return;
 			}
 			setSavedJobs(data || []);
 			setSupabaseLoading(false);
 		};
-		if (activeJobTab === 'saved') {
+		if (activeJobTab === "saved") {
 			fetchSavedJobs();
 		}
 	}, [activeJobTab]);
@@ -171,24 +173,24 @@ export default function JobSearchTab() {
 	};
 
 	const handleSaveJob = async (job) => {
-		setSupabaseError('');
+		setSupabaseError("");
 		setSupabaseLoading(true);
 		const supabase = createClientForBrowser();
 		const { data: userData, error: userError } = await supabase.auth.getUser();
 		if (userError || !userData?.user) {
-			setSupabaseError('You must be logged in to save jobs.');
+			setSupabaseError("You must be logged in to save jobs.");
 			setSupabaseLoading(false);
 			return;
 		}
 		// Check if already saved
 		const { data: existing, error: existError } = await supabase
-			.from('saved_jobs')
-			.select('id')
-			.eq('user_id', userData.user.id)
-			.eq('job_data->>url', job.url)
+			.from("saved_jobs")
+			.select("id")
+			.eq("user_id", userData.user.id)
+			.eq("job_data->>url", job.url)
 			.maybeSingle();
 		if (existing) {
-			setSupabaseError('Job already saved.');
+			setSupabaseError("Job already saved.");
 			setSupabaseLoading(false);
 			return;
 		}
@@ -199,7 +201,7 @@ export default function JobSearchTab() {
 			categories: selectedCategories,
 			jobTypes: selectedJobTypes,
 		};
-		const { error } = await supabase.from('saved_jobs').insert([
+		const { error } = await supabase.from("saved_jobs").insert([
 			{
 				user_id: userData.user.id,
 				job_data: job,
@@ -207,49 +209,49 @@ export default function JobSearchTab() {
 			},
 		]);
 		if (error) {
-			setSupabaseError('Failed to save job.');
+			setSupabaseError("Failed to save job.");
 		} else {
 			// Refresh saved jobs
-			setActiveJobTab('saved');
+			setActiveJobTab("saved");
 		}
 		setSupabaseLoading(false);
 	};
 
 	const handleRemoveSavedJob = async (jobUrl) => {
-		setSupabaseError('');
+		setSupabaseError("");
 		setSupabaseLoading(true);
 		const supabase = createClientForBrowser();
 		const { data: userData, error: userError } = await supabase.auth.getUser();
 		if (userError || !userData?.user) {
-			setSupabaseError('You must be logged in.');
+			setSupabaseError("You must be logged in.");
 			setSupabaseLoading(false);
 			return;
 		}
 		// Find the job by url
 		const { data: jobs, error: fetchError } = await supabase
-			.from('saved_jobs')
-			.select('id, job_data')
-			.eq('user_id', userData.user.id);
+			.from("saved_jobs")
+			.select("id, job_data")
+			.eq("user_id", userData.user.id);
 		if (fetchError) {
-			setSupabaseError('Failed to remove job.');
+			setSupabaseError("Failed to remove job.");
 			setSupabaseLoading(false);
 			return;
 		}
-		const jobToRemove = jobs.find(j => j.job_data.url === jobUrl);
+		const jobToRemove = jobs.find((j) => j.job_data.url === jobUrl);
 		if (!jobToRemove) {
-			setSupabaseError('Job not found.');
+			setSupabaseError("Job not found.");
 			setSupabaseLoading(false);
 			return;
 		}
 		const { error: delError } = await supabase
-			.from('saved_jobs')
+			.from("saved_jobs")
 			.delete()
-			.eq('id', jobToRemove.id);
+			.eq("id", jobToRemove.id);
 		if (delError) {
-			setSupabaseError('Failed to remove job.');
+			setSupabaseError("Failed to remove job.");
 		} else {
 			// Refresh saved jobs
-			setActiveJobTab('saved');
+			setActiveJobTab("saved");
 		}
 		setSupabaseLoading(false);
 	};
@@ -560,7 +562,11 @@ export default function JobSearchTab() {
 											initial={{ opacity: 0, y: 40 }}
 											whileInView={{ opacity: 1, y: 0 }}
 											viewport={{ once: true, amount: 0.3 }}
-											transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
+											transition={{
+												duration: 0.6,
+												type: "spring",
+												bounce: 0.2,
+											}}
 											className="bg-[#232323] border border-cyan-900 rounded-lg p-4"
 										>
 											<h3 className="text-lg font-semibold text-white font-sans">
@@ -636,12 +642,22 @@ export default function JobSearchTab() {
 										{row.job_data?.description}
 									</p>
 									<div className="text-xs text-cyan-300 mb-2">
-										<span className="font-semibold">Search Params:</span> {row.search_params?.query && `Keyword: ${row.search_params.query}, `} {row.search_params?.location && `Location: ${row.search_params.location}, `} {row.search_params?.categories?.length > 0 && `Categories: ${row.search_params.categories.join(', ')}, `} {row.search_params?.jobTypes?.length > 0 && `Job Types: ${row.search_params.jobTypes.join(', ')}`}
+										<span className="font-semibold">Search Params:</span>{" "}
+										{row.search_params?.query &&
+											`Keyword: ${row.search_params.query}, `}{" "}
+										{row.search_params?.location &&
+											`Location: ${row.search_params.location}, `}{" "}
+										{row.search_params?.categories?.length > 0 &&
+											`Categories: ${row.search_params.categories.join(
+												", "
+											)}, `}{" "}
+										{row.search_params?.jobTypes?.length > 0 &&
+											`Job Types: ${row.search_params.jobTypes.join(", ")}`}
 									</div>
 									<div className="flex gap-4">
 										<a
 											href="#"
-											onClick={e => {
+											onClick={(e) => {
 												e.preventDefault();
 												setSelectedJob(row.job_data);
 												setShowJobModal(true);
@@ -703,4 +719,4 @@ export default function JobSearchTab() {
 			)}
 		</div>
 	);
-} 
+}

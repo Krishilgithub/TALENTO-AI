@@ -41,6 +41,14 @@ async def upload_resume(file: UploadFile = File(...), num_questions: int = Form(
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+@app.post("/api/assessment/technical_assessment/")
+async def technical_assessment(job_role: str = Form("Software Engineer"), num_questions: int = Form(10)):
+    try:
+        result = generate_technical_mcqs(job_role=job_role, num_questions=num_questions)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
 @app.post("/api/assessment/ats_score/")
 async def ats_score(file: UploadFile = File(...), job_role: str = Form("Software Engineer")):
     suffix = os.path.splitext(file.filename)[1]
@@ -74,9 +82,17 @@ async def resume_optimize(file: UploadFile = File(...), job_role: str = Form("So
         os.remove(tmp_path)
 
 @app.post("/api/assessment/communication_test/")
-async def communication_test(job_role: str = Form("Software Engineer")):
+async def communication_test(job_role: str = Form("Software Engineer"), num_questions: int = Form(10)):
     try:
-        result = generate_communication_test(job_role)
+        result = generate_communication_test(job_role, num_questions)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.post("/api/assessment/general_aptitude/")
+async def general_aptitude(job_role: str = Form("Software Engineer"), num_questions: int = Form(10)):
+    try:
+        result = generate_aptitude_mcqs(job_role, num_questions)
         return JSONResponse(content=result)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
@@ -94,14 +110,6 @@ async def domain_questions(file: UploadFile = File(...), job_role: str = Form("S
         return JSONResponse(status_code=500, content={"error": str(e)})
     finally:
         os.remove(tmp_path)
-
-@app.post("/api/assessment/general_aptitude/")
-async def general_aptitude(job_role: str = Form("Software Engineer")):
-    try:
-        result = generate_aptitude_mcqs(job_role)
-        return JSONResponse(content=result)
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

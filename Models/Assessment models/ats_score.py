@@ -8,6 +8,11 @@ from langchain_core.runnables import RunnableSequence
 from dotenv import load_dotenv
 import re
 
+# Add imports for file handling
+import pdfplumber
+import docx
+from typing import Optional
+
 # Load environment variables
 load_dotenv()
 
@@ -59,18 +64,54 @@ ats_scoring_chain = None
 if model:
     ats_scoring_chain = RunnableSequence(ats_scoring_prompt | model | parser)
 
-def extract_resume_text(file_path: str) -> str:
+def extract_text_from_pdf(file_path: str) -> str:
+    """Extract text from PDF file"""
+    try:
+        with pdfplumber.open(file_path) as pdf:
+            text = "\n".join(page.extract_text() or '' for page in pdf.pages)
+        return text
+    except Exception as e:
+        print(f"Error extracting text from PDF: {e}")
+        return ""
+
+def extract_text_from_docx(file_path: str) -> str:
+    """Extract text from DOCX file"""
+    try:
+        doc = docx.Document(file_path)
+        text = "\n".join([para.text for para in doc.paragraphs])
+        return text
+    except Exception as e:
+        print(f"Error extracting text from DOCX: {e}")
+        return ""
+
+def extract_resume_text(file_path: str) -> Optional[str]:
     """Extract text from resume file (PDF or DOCX)"""
     try:
-        # Simplified text extraction for fallback
-        return f"Resume content from {file_path}"
+        ext = os.path.splitext(file_path)[1].lower()
+        if ext == ".pdf":
+            return extract_text_from_pdf(file_path)
+        elif ext == ".docx":
+            return extract_text_from_docx(file_path)
+        elif ext == ".doc":
+            # For .doc files, we'll try to extract as much as possible
+            return extract_text_from_docx(file_path)
+        else:
+            print(f"Unsupported file format: {ext}")
+            return None
     except Exception as e:
-        return f"Error extracting text: {str(e)}"
+        print(f"Error extracting resume text: {e}")
+        return None
 
 def process_resume_file(file_path: str, job_role: str = "Software Engineer") -> dict:
     """Process resume file and return ATS analysis"""
     try:
         resume_text = extract_resume_text(file_path)
+        
+        if not resume_text or not resume_text.strip():
+            return {
+                "error": "Could not extract text from the uploaded resume. Please ensure the file is not corrupted and is in PDF or DOCX format.",
+                "status": "error"
+            }
         
         if ats_scoring_chain:
             result = ats_scoring_chain.invoke({"resume_text": resume_text, "job_role": job_role})
@@ -86,6 +127,9 @@ def process_resume_file(file_path: str, job_role: str = "Software Engineer") -> 
 **ATS Analysis for {job_role}**
 
 **Note**: Full AI-powered analysis not available due to missing HuggingFace API token.
+
+**Resume Text Extracted**: {len(resume_text)} characters
+**Preview**: {resume_text[:200]}...
 
 **Sample Analysis**:
 - **ATS Score**: 75/100 (estimated)

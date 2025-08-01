@@ -12,15 +12,18 @@ export async function POST(req) {
 
 		// Call your backend API directly with the original FormData
 		const backendUrl = process.env.BACKEND_API_URL || "http://localhost:8000";
-		const response = await fetch(`${backendUrl}/api/assessment/ats_score/`, {
-			method: "POST",
-			body: formData, // Pass the original FormData directly
-		});
+		const response = await fetch(
+			`${backendUrl}/api/assessment/resume_optimize/`,
+			{
+				method: "POST",
+				body: formData, // Pass the original FormData directly
+			}
+		);
 
 		if (!response.ok) {
 			const errorData = await response.json();
 			return NextResponse.json(
-				{ error: errorData.error || "Failed to calculate ATS score" },
+				{ error: errorData.error || "Failed to optimize resume" },
 				{ status: response.status }
 			);
 		}
@@ -28,7 +31,7 @@ export async function POST(req) {
 		const result = await response.json();
 		return NextResponse.json(result);
 	} catch (error) {
-		console.error("ATS scoring error:", error);
+		console.error("Resume optimization error:", error);
 		return NextResponse.json(
 			{ error: "Internal server error" },
 			{ status: 500 }

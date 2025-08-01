@@ -1,15 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { BrainIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 export default function AptitudeAssessmentPage() {
 	const [jobRole, setJobRole] = useState("Software Engineer");
+	const [numQuestions, setNumQuestions] = useState(10);
 	const [questions, setQuestions] = useState([]);
 	const [userAnswers, setUserAnswers] = useState([]);
 	const [submitted, setSubmitted] = useState(false);
 	const [score, setScore] = useState(0);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
+	const [currentQuestion, setCurrentQuestion] = useState(0);
 
 	const handleStart = async () => {
 		setLoading(true);
@@ -18,21 +22,33 @@ export default function AptitudeAssessmentPage() {
 		setUserAnswers([]);
 		setSubmitted(false);
 		setScore(0);
+		setCurrentQuestion(0);
 		try {
 			const formData = new FormData();
 			formData.append("job_role", jobRole);
+			formData.append("num_questions", numQuestions);
 			const res = await fetch("/api/assessment/general_aptitude/", {
 				method: "POST",
 				body: formData,
 			});
 			if (!res.ok) throw new Error("Failed to generate aptitude questions");
 			const data = await res.json();
+			
+			// Handle different response formats
 			let questionsArr = [];
-			if (Array.isArray(data)) {
-				questionsArr = data;
-			} else if (Array.isArray(data.questions)) {
+			if (data.questions) {
 				questionsArr = data.questions;
+			} else if (Array.isArray(data)) {
+				questionsArr = data;
+			} else if (typeof data === 'string') {
+				// If it's a string response (fallback mode), create a simple question
+				questionsArr = [{
+					question: "Sample Aptitude Question",
+					options: ["Option A", "Option B", "Option C", "Option D"],
+					correct_answer: "Option A"
+				}];
 			}
+			
 			if (questionsArr.length > 0) {
 				setQuestions(questionsArr);
 				setUserAnswers(Array(questionsArr.length).fill(null));
@@ -73,91 +89,214 @@ export default function AptitudeAssessmentPage() {
 		setSubmitted(true);
 	};
 
+	const getScoreColor = () => {
+		const percentage = (score / questions.length) * 100;
+		if (percentage >= 80) return "text-green-400";
+		if (percentage >= 60) return "text-yellow-400";
+		return "text-red-400";
+	};
+
+	const getScoreMessage = () => {
+		const percentage = (score / questions.length) * 100;
+		if (percentage >= 80) return "Excellent! You have strong aptitude skills.";
+		if (percentage >= 60) return "Good! You have solid aptitude skills.";
+		return "Keep practicing! Focus on improving your logical reasoning.";
+	};
+
 	return (
-		<div className="min-h-screen flex flex-col items-center justify-center bg-[#101113] py-12 px-4">
-			<h1 className="text-3xl font-bold mb-2 text-white">
-				General Aptitude Test
-			</h1>
-			<div className="mb-6 w-full max-w-xl">
-				<label className="block text-green-400 font-semibold mb-2">
-					Job Role
-				</label>
-				<input
-					type="text"
-					value={jobRole}
-					onChange={(e) => setJobRole(e.target.value)}
-					className="w-full px-3 py-2 rounded bg-[#18191b] text-white border border-green-400 mb-4"
-				/>
-				<button
-					onClick={handleStart}
-					className="bg-green-400 text-black px-6 py-2 rounded hover:bg-green-300 transition-colors duration-200 w-full font-semibold"
-					disabled={loading}
+		<div className="min-h-screen bg-[#101113] py-12 px-4">
+			<div className="max-w-4xl mx-auto">
+				{/* Header */}
+				<motion.div
+					initial={{ opacity: 0, y: -20 }}
+					animate={{ opacity: 1, y: 0 }}
+					className="text-center mb-8"
 				>
-					{loading ? "Generating..." : "Start Test"}
-				</button>
-				{error && <div className="mt-4 text-red-400">{error}</div>}
-			</div>
-			{questions.length > 0 && (
-				<form
-					className="w-full max-w-3xl bg-[#18191b] rounded-xl p-6 text-white"
-					onSubmit={(e) => {
-						e.preventDefault();
-						handleSubmit();
-					}}
-				>
-					<ol className="list-decimal list-inside space-y-8">
-						{questions.map((q, idx) => (
-							<li key={idx} className="mb-4">
-								<div className="mb-2 font-semibold">{q.question}</div>
-								<div className="ml-4 flex flex-col gap-2">
-									{q.options &&
-										q.options.map((opt, oidx) => (
-											<label
-												key={oidx}
-												className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded transition-colors duration-150 ${
-													userAnswers[idx] === oidx
-														? "bg-green-900/40 border border-green-400"
-														: "hover:bg-green-900/20"
-												}`}
-											>
-												<input
-													type="radio"
-													name={`q${idx}`}
-													value={oidx}
-													checked={userAnswers[idx] === oidx}
-													onChange={() => handleSelect(idx, oidx)}
-													disabled={submitted}
-													className="accent-green-400"
-												/>
-												<span>
-													{String.fromCharCode(65 + oidx)}. {opt}
-												</span>
-											</label>
-										))}
-								</div>
-								{submitted && (
-									<div className="mt-2 text-green-400 text-sm">
-										Correct Answer: {q.correct_answer}
-									</div>
-								)}
-							</li>
-						))}
-					</ol>
-					{!submitted ? (
-						<button
-							type="submit"
-							className="mt-8 bg-green-400 text-black px-8 py-2 rounded hover:bg-green-300 transition-colors duration-200 w-full font-semibold"
-							disabled={userAnswers.some((ans) => ans === null)}
-						>
-							Submit Answers
-						</button>
-					) : (
-						<div className="mt-8 text-xl font-bold text-green-300 text-center">
-							Your Score: {score} / {questions.length}
+					<div className="flex items-center justify-center mb-4">
+						<BrainIcon className="h-8 w-8 text-green-400 mr-3" />
+						<h1 className="text-3xl font-bold text-white">
+							General Aptitude Test
+						</h1>
+					</div>
+					<p className="text-lg text-gray-300 max-w-2xl mx-auto">
+						Evaluate your logical, quantitative, and verbal reasoning skills with our comprehensive aptitude assessment.
+					</p>
+				</motion.div>
+
+				{/* Setup Section */}
+				{questions.length === 0 && (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mb-8"
+					>
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<label className="block text-green-400 font-semibold mb-2">
+									Job Role
+								</label>
+								<input
+									type="text"
+									value={jobRole}
+									onChange={(e) => setJobRole(e.target.value)}
+									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+									placeholder="e.g., Software Engineer"
+								/>
+							</div>
+							<div>
+								<label className="block text-green-400 font-semibold mb-2">
+									Number of Questions
+								</label>
+								<input
+									type="number"
+									min="5"
+									max="20"
+									value={numQuestions}
+									onChange={(e) => setNumQuestions(Number(e.target.value))}
+									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+								/>
+							</div>
 						</div>
-					)}
-				</form>
-			)}
+						<button
+							onClick={handleStart}
+							className="mt-6 bg-green-400 text-black px-8 py-3 rounded-lg hover:bg-green-300 transition-colors duration-200 w-full font-semibold text-lg"
+							disabled={loading}
+						>
+							{loading ? (
+								<div className="flex items-center justify-center">
+									<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
+									Generating Questions...
+								</div>
+							) : (
+								"Start Aptitude Test"
+							)}
+						</button>
+						{error && (
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								className="mt-4 text-red-400 bg-red-900/20 p-3 rounded"
+							>
+								{error}
+							</motion.div>
+						)}
+					</motion.div>
+				)}
+
+				{/* Questions Section */}
+				{questions.length > 0 && (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8"
+					>
+						{/* Progress Bar */}
+						<div className="mb-6">
+							<div className="flex justify-between items-center mb-2">
+								<span className="text-green-400 font-semibold">
+									Question {currentQuestion + 1} of {questions.length}
+								</span>
+								<span className="text-gray-400">
+									{Math.round(((currentQuestion + 1) / questions.length) * 100)}%
+								</span>
+							</div>
+							<div className="w-full bg-gray-700 rounded-full h-2">
+								<div
+									className="bg-green-400 h-2 rounded-full transition-all duration-300"
+									style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
+								></div>
+							</div>
+						</div>
+
+						{/* Question */}
+						<div className="mb-8">
+							<h3 className="text-xl font-semibold text-white mb-6">
+								{questions[currentQuestion]?.question || "Loading question..."}
+							</h3>
+							<div className="space-y-3">
+								{questions[currentQuestion]?.options?.map((option, idx) => (
+									<motion.button
+										key={idx}
+										initial={{ opacity: 0, x: -20 }}
+										animate={{ opacity: 1, x: 0 }}
+										transition={{ delay: idx * 0.1 }}
+										onClick={() => handleSelect(currentQuestion, idx)}
+										className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+											userAnswers[currentQuestion] === idx
+												? "border-green-400 bg-green-900/20"
+												: "border-gray-600 hover:border-green-400 hover:bg-green-900/10"
+										}`}
+									>
+										<div className="flex items-center">
+											<span className="text-green-400 font-semibold mr-3">
+												{String.fromCharCode(65 + idx)}.
+											</span>
+											<span className="text-white">{option}</span>
+										</div>
+									</motion.button>
+								))}
+							</div>
+						</div>
+
+						{/* Navigation */}
+						<div className="flex justify-between">
+							<button
+								onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
+								disabled={currentQuestion === 0}
+								className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								Previous
+							</button>
+							{currentQuestion < questions.length - 1 ? (
+								<button
+									onClick={() => setCurrentQuestion(currentQuestion + 1)}
+									disabled={userAnswers[currentQuestion] === null}
+									className="px-6 py-2 bg-green-400 text-black rounded hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									Next
+								</button>
+							) : (
+								<button
+									onClick={handleSubmit}
+									disabled={userAnswers.some((ans) => ans === null)}
+									className="px-6 py-2 bg-green-400 text-black rounded hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									Submit Test
+								</button>
+							)}
+						</div>
+					</motion.div>
+				)}
+
+				{/* Results Section */}
+				{submitted && (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mt-8"
+					>
+						<div className="text-center">
+							<h2 className="text-2xl font-bold text-white mb-4">Test Results</h2>
+							<div className={`text-4xl font-bold mb-2 ${getScoreColor()}`}>
+								{score} / {questions.length}
+							</div>
+							<div className="text-lg text-gray-300 mb-6">
+								{getScoreMessage()}
+							</div>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div className="bg-green-900/20 p-4 rounded">
+									<h3 className="text-green-400 font-semibold mb-2">Correct Answers</h3>
+									<div className="text-2xl font-bold text-green-400">{score}</div>
+								</div>
+								<div className="bg-red-900/20 p-4 rounded">
+									<h3 className="text-red-400 font-semibold mb-2">Incorrect Answers</h3>
+									<div className="text-2xl font-bold text-red-400">{questions.length - score}</div>
+								</div>
+							</div>
+						</div>
+					</motion.div>
+				)}
+			</div>
 		</div>
 	);
 }

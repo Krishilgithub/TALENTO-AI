@@ -3,12 +3,23 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
-import { CloudArrowUpIcon, DocumentTextIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+	CloudArrowUpIcon,
+	DocumentTextIcon,
+	XMarkIcon,
+	SparklesIcon,
+	ChartBarIcon,
+} from "@heroicons/react/24/outline";
 
 export default function OverviewTab({ user }) {
 	const [isDragOver, setIsDragOver] = useState(false);
 	const [uploadedFile, setUploadedFile] = useState(null);
 	const [isUploading, setIsUploading] = useState(false);
+	const [isOptimizing, setIsOptimizing] = useState(false);
+	const [isScoring, setIsScoring] = useState(false);
+	const [optimizationResult, setOptimizationResult] = useState(null);
+	const [atsScoreResult, setAtsScoreResult] = useState(null);
+	const [jobRole, setJobRole] = useState("Software Engineer");
 
 	const stats = [
 		{
@@ -73,7 +84,7 @@ export default function OverviewTab({ user }) {
 	const handleDrop = useCallback((e) => {
 		e.preventDefault();
 		setIsDragOver(false);
-		
+
 		const files = Array.from(e.dataTransfer.files);
 		if (files.length > 0) {
 			handleFileUpload(files[0]);
@@ -88,19 +99,25 @@ export default function OverviewTab({ user }) {
 	};
 
 	const handleFileUpload = (file) => {
-		if (file.type !== "application/pdf" && file.type !== "application/msword" && file.type !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+		if (
+			file.type !== "application/pdf" &&
+			file.type !== "application/msword" &&
+			file.type !==
+				"application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+		) {
 			alert("Please upload a PDF or Word document");
 			return;
 		}
 
 		setIsUploading(true);
-		
+
 		// Simulate upload
 		setTimeout(() => {
 			setUploadedFile({
 				name: file.name,
 				size: file.size,
-				type: file.type
+				type: file.type,
+				file: file, // Store the actual file for processing
 			});
 			setIsUploading(false);
 		}, 2000);
@@ -108,6 +125,76 @@ export default function OverviewTab({ user }) {
 
 	const removeFile = () => {
 		setUploadedFile(null);
+		setOptimizationResult(null);
+		setAtsScoreResult(null);
+	};
+
+	const handleOptimizeResume = async () => {
+		if (!uploadedFile) {
+			alert("Please upload a resume first");
+			return;
+		}
+
+		setIsOptimizing(true);
+		setOptimizationResult(null);
+
+		try {
+			const formData = new FormData();
+			formData.append("file", uploadedFile.file);
+			formData.append("job_role", jobRole);
+
+			const response = await fetch("/api/assessment/resume_optimize", {
+				method: "POST",
+				body: formData,
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				setOptimizationResult(result);
+			} else {
+				alert(result.error || "Failed to optimize resume");
+			}
+		} catch (error) {
+			console.error("Optimization error:", error);
+			alert("Failed to optimize resume. Please try again.");
+		} finally {
+			setIsOptimizing(false);
+		}
+	};
+
+	const handleFindAtsScore = async () => {
+		if (!uploadedFile) {
+			alert("Please upload a resume first");
+			return;
+		}
+
+		setIsScoring(true);
+		setAtsScoreResult(null);
+
+		try {
+			const formData = new FormData();
+			formData.append("file", uploadedFile.file);
+			formData.append("job_role", jobRole);
+
+			const response = await fetch("/api/assessment/ats_score", {
+				method: "POST",
+				body: formData,
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				setAtsScoreResult(result);
+			} else {
+				alert(result.error || "Failed to calculate ATS score");
+			}
+		} catch (error) {
+			console.error("ATS scoring error:", error);
+			alert("Failed to calculate ATS score. Please try again.");
+		} finally {
+			setIsScoring(false);
+		}
 	};
 
 	return (
@@ -151,13 +238,12 @@ export default function OverviewTab({ user }) {
 				))}
 			</div>
 
-
 			{/* Resume Upload Section */}
 			<div className="bg-[#18191b] rounded-lg p-6 border border-gray-700">
 				<h3 className="text-lg font-semibold text-cyan-400 mb-4">
 					📄 Upload Your Resume below
 				</h3>
-				
+
 				{!uploadedFile ? (
 					<div
 						onDragOver={handleDragOver}
@@ -218,9 +304,96 @@ export default function OverviewTab({ user }) {
 						<span className="text-cyan-400">Uploading...</span>
 					</div>
 				)}
+
+				{/* Job Role Input */}
+				{uploadedFile && (
+					<div className="mt-4">
+						<label
+							htmlFor="job-role"
+							className="block text-sm font-medium text-gray-300 mb-2"
+						>
+							Target Job Role:
+						</label>
+						<input
+							id="job-role"
+							type="text"
+							value={jobRole}
+							onChange={(e) => setJobRole(e.target.value)}
+							placeholder="e.g., Software Engineer, Data Scientist"
+							className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+						/>
+					</div>
+				)}
+
+				{/* Action Buttons */}
+				{uploadedFile && (
+					<div className="mt-6 flex flex-col sm:flex-row gap-4">
+						<button
+							onClick={handleOptimizeResume}
+							disabled={isOptimizing}
+							className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-lg hover:from-cyan-700 hover:to-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							<SparklesIcon className="h-5 w-5 mr-2" />
+							{isOptimizing ? "Optimizing..." : "Optimize Resume"}
+						</button>
+						<button
+							onClick={handleFindAtsScore}
+							disabled={isScoring}
+							className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							<ChartBarIcon className="h-5 w-5 mr-2" />
+							{isScoring ? "Calculating..." : "Find ATS Score"}
+						</button>
+					</div>
+				)}
+
+				{/* Results Section */}
+				{(optimizationResult || atsScoreResult) && (
+					<div className="mt-6 space-y-4">
+						{/* Optimization Results */}
+						{optimizationResult && (
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								className="bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border border-cyan-500/30 rounded-lg p-6"
+							>
+								<div className="flex items-center mb-4">
+									<SparklesIcon className="h-6 w-6 text-cyan-400 mr-2" />
+									<h3 className="text-lg font-semibold text-cyan-400">
+										Resume Optimization Results
+									</h3>
+								</div>
+								<div className="text-gray-200 text-sm leading-relaxed">
+									<pre className="whitespace-pre-wrap font-sans">
+										{optimizationResult.result || optimizationResult}
+									</pre>
+								</div>
+							</motion.div>
+						)}
+
+						{/* ATS Score Results */}
+						{atsScoreResult && (
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								className="bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-lg p-6"
+							>
+								<div className="flex items-center mb-4">
+									<ChartBarIcon className="h-6 w-6 text-purple-400 mr-2" />
+									<h3 className="text-lg font-semibold text-purple-400">
+										ATS Score Results
+									</h3>
+								</div>
+								<div className="text-gray-200 text-sm leading-relaxed">
+									<pre className="whitespace-pre-wrap font-sans">
+										{atsScoreResult.analysis || atsScoreResult}
+									</pre>
+								</div>
+							</motion.div>
+						)}
+					</div>
+				)}
 			</div>
-
-
 
 			{/* Quick Actions */}
 			{/* <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
@@ -236,4 +409,4 @@ export default function OverviewTab({ user }) {
 			{/* Recent Activities (commented out) */}
 		</div>
 	);
-} 
+}
