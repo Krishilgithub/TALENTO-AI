@@ -3,9 +3,9 @@
 import React from "react";
 import { motion } from "framer-motion";
 import {
-	BrainIcon,
-	ChatBubbleLeftRightIcon,
 	CpuChipIcon,
+	ChatBubbleLeftRightIcon,
+	CodeBracketIcon,
 	UserIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -14,8 +14,9 @@ export default function AssessmentPage() {
 	const assessments = [
 		{
 			title: "General Aptitude",
-			description: "Test your logical reasoning, problem-solving, and analytical skills",
-			icon: BrainIcon,
+			description:
+				"Test your logical reasoning, problem-solving, and analytical skills",
+			icon: CpuChipIcon,
 			href: "/assessment/aptitude",
 			color: "text-blue-400",
 			bgColor: "bg-blue-500/10",
@@ -33,7 +34,7 @@ export default function AssessmentPage() {
 		{
 			title: "Technical Assessment",
 			description: "Evaluate your technical knowledge and programming skills",
-			icon: CpuChipIcon,
+			icon: CodeBracketIcon,
 			href: "/assessment/technical",
 			color: "text-purple-400",
 			bgColor: "bg-purple-500/10",
@@ -41,7 +42,8 @@ export default function AssessmentPage() {
 		},
 		{
 			title: "Personality Assessment",
-			description: "Discover your work style, leadership approach, and communication preferences",
+			description:
+				"Discover your work style, leadership approach, and communication preferences",
 			icon: UserIcon,
 			href: "/assessment/personality",
 			color: "text-orange-400",
