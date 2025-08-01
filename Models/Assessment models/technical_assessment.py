@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Set up Hugging Face API key
-hf_api_key = os.getenv('HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP')
+hf_api_key = os.getenv("HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP")
 
 # Initialize model with fallback
 model = None
@@ -36,24 +36,26 @@ parser = StrOutputParser()
 
 # Prompt template for technical assessment
 technical_assessment_template = """
-You are an expert technical interviewer creating a comprehensive technical assessment for {job_role} position.
+You are an expert technical interviewer. Generate {num_questions} technical multiple-choice questions for {job_role} position.
 
-Create {num_questions} multiple-choice questions covering the following areas:
+Cover these technical areas:
 1. Programming fundamentals
 2. Data structures and algorithms
-3. System design concepts
-4. Database knowledge
-5. Web technologies (if applicable)
-6. Problem-solving scenarios
+3. System design
+4. Database concepts
+5. Web technologies
+6. DevOps and tools
+7. Problem-solving
+8. Best practices
 
 Format each question as:
-Q{number}. [Question text]
+Q{{number}}. [Technical question]
 A) [Option A]
 B) [Option B]
 C) [Option C]
 D) [Option D]
 Correct Answer: [A/B/C/D]
-Explanation: [Brief explanation]
+Explanation: [Brief technical explanation]
 
 Make questions relevant to {job_role} and varying difficulty levels.
 """
@@ -79,33 +81,50 @@ def generate_technical_mcqs(job_role: str = "Software Engineer", num_questions: 
                 "status": "success"
             }
         else:
-            # Fallback response when model is not available
+            # Fallback response with structured data
+            fallback_questions = [
+                {
+                    "question": "What is the time complexity of binary search?",
+                    "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+                    "correct_answer": "O(log n)",
+                    "explanation": "Binary search divides the search space in half each iteration, resulting in logarithmic time complexity."
+                },
+                {
+                    "question": "Which data structure is best for implementing a stack?",
+                    "options": ["Array", "Linked List", "Tree", "Graph"],
+                    "correct_answer": "Array",
+                    "explanation": "Arrays provide O(1) push and pop operations, making them ideal for stack implementation."
+                },
+                {
+                    "question": "What does REST stand for in web development?",
+                    "options": ["Remote State Transfer", "Representational State Transfer", "Resource State Transfer", "Request State Transfer"],
+                    "correct_answer": "Representational State Transfer",
+                    "explanation": "REST is an architectural style for designing networked applications."
+                },
+                {
+                    "question": "Which HTTP method is used to create a new resource?",
+                    "options": ["GET", "POST", "PUT", "DELETE"],
+                    "correct_answer": "POST",
+                    "explanation": "POST is typically used to create new resources in RESTful APIs."
+                },
+                {
+                    "question": "What is the primary purpose of a database index?",
+                    "options": ["To save storage space", "To improve query performance", "To ensure data integrity", "To encrypt data"],
+                    "correct_answer": "To improve query performance",
+                    "explanation": "Indexes speed up data retrieval by providing quick access paths to data."
+                }
+            ]
+            
+            # Return only the requested number of questions
             return {
-                "questions": f"""
-**Technical Assessment for {job_role}**
-
-**Note**: Full AI-powered assessment not available due to missing HuggingFace API token.
-
-**Sample Questions** (Generated without AI):
-1. What is the time complexity of binary search?
-   A) O(1) B) O(log n) C) O(n) D) O(n²)
-   Correct Answer: B
-   Explanation: Binary search divides the search space in half with each iteration.
-
-2. Which data structure is best for implementing a queue?
-   A) Array B) Stack C) Linked List D) Tree
-   Correct Answer: C
-   Explanation: Linked lists provide O(1) insertion and deletion at both ends.
-
-Please add HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP environment variable for full AI-generated assessment.
-                """,
+                "questions": fallback_questions[:min(num_questions, len(fallback_questions))],
                 "job_role": job_role,
-                "total_questions": num_questions,
+                "total_questions": min(num_questions, len(fallback_questions)),
                 "status": "fallback"
             }
     except Exception as e:
         return {
-            "error": f"Error generating technical assessment: {str(e)}",
+            "error": f"Error generating technical questions: {str(e)}",
             "status": "error"
         }
 

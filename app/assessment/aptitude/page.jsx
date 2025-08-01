@@ -2,7 +2,11 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { BrainIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import {
+	CpuChipIcon,
+	CheckCircleIcon,
+	XCircleIcon,
+} from "@heroicons/react/24/outline";
 
 export default function AptitudeAssessmentPage() {
 	const [jobRole, setJobRole] = useState("Software Engineer");
@@ -24,31 +28,57 @@ export default function AptitudeAssessmentPage() {
 		setScore(0);
 		setCurrentQuestion(0);
 		try {
+			console.log("Starting aptitude assessment...");
 			const formData = new FormData();
 			formData.append("job_role", jobRole);
 			formData.append("num_questions", numQuestions);
+
+			console.log("Making API call to:", "/api/assessment/general_aptitude/");
 			const res = await fetch("/api/assessment/general_aptitude/", {
 				method: "POST",
 				body: formData,
 			});
-			if (!res.ok) throw new Error("Failed to generate aptitude questions");
+
+			console.log("Response status:", res.status);
+			if (!res.ok) {
+				const errorText = await res.text();
+				console.error("API Error:", errorText);
+				throw new Error(
+					`Failed to generate aptitude questions: ${res.status} ${errorText}`
+				);
+			}
+
 			const data = await res.json();
-			
+			console.log("API Response:", data);
+
 			// Handle different response formats
 			let questionsArr = [];
-			if (data.questions) {
+			if (data.questions && Array.isArray(data.questions)) {
+				// If questions is already an array of objects
 				questionsArr = data.questions;
+			} else if (data.questions && typeof data.questions === 'string') {
+				// If questions is a string (AI response), parse it
+				console.log("Parsing string response:", data.questions);
+				questionsArr = parseQuestionsFromString(data.questions);
 			} else if (Array.isArray(data)) {
 				questionsArr = data;
-			} else if (typeof data === 'string') {
-				// If it's a string response (fallback mode), create a simple question
-				questionsArr = [{
-					question: "Sample Aptitude Question",
-					options: ["Option A", "Option B", "Option C", "Option D"],
-					correct_answer: "Option A"
-				}];
+			} else if (typeof data === "string") {
+				// If the entire response is a string
+				console.log("Parsing string response:", data);
+				questionsArr = parseQuestionsFromString(data);
+			} else {
+				// Fallback to sample questions
+				questionsArr = [
+					{
+						question: "Sample Aptitude Question",
+						options: ["Option A", "Option B", "Option C", "Option D"],
+						correct_answer: "Option A",
+					},
+				];
 			}
-			
+
+			console.log("Processed questions:", questionsArr);
+
 			if (questionsArr.length > 0) {
 				setQuestions(questionsArr);
 				setUserAnswers(Array(questionsArr.length).fill(null));
@@ -56,9 +86,96 @@ export default function AptitudeAssessmentPage() {
 				setError(data.error || "No questions generated.");
 			}
 		} catch (err) {
+			console.error("Assessment error:", err);
 			setError(err.message || "Something went wrong");
 		} finally {
 			setLoading(false);
+		}
+	};
+
+	// Function to parse questions from AI-generated string
+	const parseQuestionsFromString = (text) => {
+		try {
+			console.log("Parsing text:", text);
+			const questions = [];
+			const lines = text.split('\n');
+			let currentQuestion = null;
+			let questionNumber = 1;
+			
+			for (let i = 0; i < lines.length; i++) {
+				const line = lines[i].trim();
+				
+				// Look for question patterns like "Q1.", "Q2.", etc.
+				if (line.match(/^Q\d+\./)) {
+					if (currentQuestion) {
+						questions.push(currentQuestion);
+					}
+					currentQuestion = {
+						question: line.replace(/^Q\d+\.\s*/, ''),
+						options: [],
+						correct_answer: '',
+						explanation: ''
+					};
+				}
+				// Look for option patterns like "A)", "B)", etc.
+				else if (line.match(/^[A-D]\)/)) {
+					if (currentQuestion) {
+						const option = line.replace(/^[A-D]\)\s*/, '');
+						currentQuestion.options.push(option);
+					}
+				}
+				// Look for correct answer
+				else if (line.toLowerCase().includes('correct answer:')) {
+					if (currentQuestion) {
+						const answer = line.replace(/.*correct answer:\s*/i, '').trim();
+						currentQuestion.correct_answer = answer;
+					}
+				}
+				// Look for explanation
+				else if (line.toLowerCase().includes('explanation:')) {
+					if (currentQuestion) {
+						const explanation = line.replace(/.*explanation:\s*/i, '').trim();
+						currentQuestion.explanation = explanation;
+					}
+				}
+			}
+			
+			// Add the last question
+			if (currentQuestion) {
+				questions.push(currentQuestion);
+			}
+			
+			console.log("Parsed questions:", questions);
+			
+			// If parsing failed, return fallback questions
+			if (questions.length === 0) {
+				return [
+					{
+						question: "If a train travels 120 km in 2 hours, what is its speed in km/h?",
+						options: ["40", "60", "80", "100"],
+						correct_answer: "60",
+						explanation: "Speed = Distance/Time = 120/2 = 60 km/h"
+					},
+					{
+						question: "Which number comes next: 2, 4, 8, 16, __?",
+						options: ["24", "32", "30", "28"],
+						correct_answer: "32",
+						explanation: "Each number is multiplied by 2: 2×2=4, 4×2=8, 8×2=16, 16×2=32"
+					}
+				];
+			}
+			
+			return questions;
+		} catch (error) {
+			console.error("Error parsing questions:", error);
+			return [
+				{
+					question: "If a train travels 120 km in 2 hours, what is its speed in km/h?",
+					options: ["40", "60", "80", "100"],
+					correct_answer: "60",
+					explanation: "Speed = Distance/Time = 120/2 = 60 km/h"
+				}
+			];
 		}
 	};
 
@@ -113,13 +230,14 @@ export default function AptitudeAssessmentPage() {
 					className="text-center mb-8"
 				>
 					<div className="flex items-center justify-center mb-4">
-						<BrainIcon className="h-8 w-8 text-green-400 mr-3" />
+						<CpuChipIcon className="h-8 w-8 text-green-400 mr-3" />
 						<h1 className="text-3xl font-bold text-white">
 							General Aptitude Test
 						</h1>
 					</div>
 					<p className="text-lg text-gray-300 max-w-2xl mx-auto">
-						Evaluate your logical, quantitative, and verbal reasoning skills with our comprehensive aptitude assessment.
+						Evaluate your logical, quantitative, and verbal reasoning skills
+						with our comprehensive aptitude assessment.
 					</p>
 				</motion.div>
 
@@ -197,13 +315,18 @@ export default function AptitudeAssessmentPage() {
 									Question {currentQuestion + 1} of {questions.length}
 								</span>
 								<span className="text-gray-400">
-									{Math.round(((currentQuestion + 1) / questions.length) * 100)}%
+									{Math.round(((currentQuestion + 1) / questions.length) * 100)}
+									%
 								</span>
 							</div>
 							<div className="w-full bg-gray-700 rounded-full h-2">
 								<div
 									className="bg-green-400 h-2 rounded-full transition-all duration-300"
-									style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
+									style={{
+										width: `${
+											((currentQuestion + 1) / questions.length) * 100
+										}%`,
+									}}
 								></div>
 							</div>
 						</div>
@@ -241,7 +364,9 @@ export default function AptitudeAssessmentPage() {
 						{/* Navigation */}
 						<div className="flex justify-between">
 							<button
-								onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
+								onClick={() =>
+									setCurrentQuestion(Math.max(0, currentQuestion - 1))
+								}
 								disabled={currentQuestion === 0}
 								className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
@@ -276,7 +401,9 @@ export default function AptitudeAssessmentPage() {
 						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mt-8"
 					>
 						<div className="text-center">
-							<h2 className="text-2xl font-bold text-white mb-4">Test Results</h2>
+							<h2 className="text-2xl font-bold text-white mb-4">
+								Test Results
+							</h2>
 							<div className={`text-4xl font-bold mb-2 ${getScoreColor()}`}>
 								{score} / {questions.length}
 							</div>
@@ -285,12 +412,20 @@ export default function AptitudeAssessmentPage() {
 							</div>
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								<div className="bg-green-900/20 p-4 rounded">
-									<h3 className="text-green-400 font-semibold mb-2">Correct Answers</h3>
-									<div className="text-2xl font-bold text-green-400">{score}</div>
+									<h3 className="text-green-400 font-semibold mb-2">
+										Correct Answers
+									</h3>
+									<div className="text-2xl font-bold text-green-400">
+										{score}
+									</div>
 								</div>
 								<div className="bg-red-900/20 p-4 rounded">
-									<h3 className="text-red-400 font-semibold mb-2">Incorrect Answers</h3>
-									<div className="text-2xl font-bold text-red-400">{questions.length - score}</div>
+									<h3 className="text-red-400 font-semibold mb-2">
+										Incorrect Answers
+									</h3>
+									<div className="text-2xl font-bold text-red-400">
+										{questions.length - score}
+									</div>
 								</div>
 							</div>
 						</div>

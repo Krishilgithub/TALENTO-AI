@@ -47,7 +47,7 @@ Cover these areas:
 6. Critical thinking
 
 Format each question as:
-Q{number}. [Question text]
+Q{{number}}. [Question text]
 A) [Option A]
 B) [Option B]
 C) [Option C]
@@ -79,33 +79,50 @@ def generate_aptitude_mcqs(job_role: str = "Software Engineer", num_questions: i
                 "status": "success"
             }
         else:
-            # Fallback response when model is not available
+            # Fallback response with structured data
+            fallback_questions = [
+                {
+                    "question": "If a train travels 120 km in 2 hours, what is its speed in km/h?",
+                    "options": ["40", "60", "80", "100"],
+                    "correct_answer": "60",
+                    "explanation": "Speed = Distance/Time = 120/2 = 60 km/h"
+                },
+                {
+                    "question": "Which number comes next: 2, 4, 8, 16, __?",
+                    "options": ["24", "32", "30", "28"],
+                    "correct_answer": "32",
+                    "explanation": "Each number is multiplied by 2: 2×2=4, 4×2=8, 8×2=16, 16×2=32"
+                },
+                {
+                    "question": "If all Roses are Flowers and some Flowers are Red, then:",
+                    "options": ["All Roses are Red", "Some Roses are Red", "No Roses are Red", "Cannot be determined"],
+                    "correct_answer": "Cannot be determined",
+                    "explanation": "We know Roses are Flowers, but we don't know if the Red Flowers include Roses"
+                },
+                {
+                    "question": "A company's revenue increased by 20% from 2022 to 2023. If revenue in 2022 was $100,000, what was the revenue in 2023?",
+                    "options": ["$110,000", "$120,000", "$130,000", "$140,000"],
+                    "correct_answer": "$120,000",
+                    "explanation": "20% increase = 100,000 × 1.20 = $120,000"
+                },
+                {
+                    "question": "Which word is most similar to 'Eloquent'?",
+                    "options": ["Quiet", "Articulate", "Simple", "Rude"],
+                    "correct_answer": "Articulate",
+                    "explanation": "Eloquent means fluent or persuasive in speech, similar to articulate"
+                }
+            ]
+            
+            # Return only the requested number of questions
             return {
-                "questions": f"""
-**Aptitude Assessment for {job_role}**
-
-**Note**: Full AI-powered assessment not available due to missing HuggingFace API token.
-
-**Sample Questions** (Generated without AI):
-1. If a train travels 120 km in 2 hours, what is its speed in km/h?
-   A) 40 B) 60 C) 80 D) 100
-   Correct Answer: B
-   Explanation: Speed = Distance/Time = 120/2 = 60 km/h
-
-2. Which number comes next: 2, 4, 8, 16, __?
-   A) 24 B) 32 C) 30 D) 28
-   Correct Answer: B
-   Explanation: Each number is multiplied by 2: 2×2=4, 4×2=8, 8×2=16, 16×2=32
-
-Please add HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP environment variable for full AI-generated assessment.
-                """,
+                "questions": fallback_questions[:min(num_questions, len(fallback_questions))],
                 "job_role": job_role,
-                "total_questions": num_questions,
+                "total_questions": min(num_questions, len(fallback_questions)),
                 "status": "fallback"
             }
     except Exception as e:
         return {
-            "error": f"Error generating aptitude assessment: {str(e)}",
+            "error": f"Error generating aptitude questions: {str(e)}",
             "status": "error"
         }
 

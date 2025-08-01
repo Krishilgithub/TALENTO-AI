@@ -2,203 +2,433 @@
 
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import createClientForBrowser from '@/utils/supabase/client';
+import { motion } from "framer-motion";
+import { CodeBracketIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import createClientForBrowser from "@/utils/supabase/client";
 
 export default function TechnicalAssessmentPage() {
-	const [selectedFile, setSelectedFile] = useState(null);
-	const [difficulty, setDifficulty] = useState("easy");
-	const [numQuestions, setNumQuestions] = useState(5);
-	const [error, setError] = useState("");
-	const [dragActive, setDragActive] = useState(false);
+	const [jobRole, setJobRole] = useState("Software Engineer");
+	const [numQuestions, setNumQuestions] = useState(10);
+	const [questions, setQuestions] = useState([]);
+	const [userAnswers, setUserAnswers] = useState([]);
+	const [submitted, setSubmitted] = useState(false);
+	const [score, setScore] = useState(0);
 	const [loading, setLoading] = useState(false);
-	const fileInputRef = useRef();
+	const [error, setError] = useState("");
+	const [currentQuestion, setCurrentQuestion] = useState(0);
 	const router = useRouter();
 
-	const handleFileChange = (e) => {
-		setSelectedFile(e.target.files[0]);
-		setError("");
-	};
-
-	const handleDrop = (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setDragActive(false);
-		if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-			setSelectedFile(e.dataTransfer.files[0]);
-			setError("");
-		}
-	};
-
-	const handleDragOver = (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setDragActive(true);
-	};
-
-	const handleDragLeave = (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setDragActive(false);
-	};
-
-	const handleClickDropzone = () => {
-		fileInputRef.current.click();
-	};
-
 	const handleStart = async () => {
-		if (!selectedFile) {
-			setError("Please upload your resume (PDF)");
-			return;
-		}
-		setError("");
 		setLoading(true);
+		setError("");
+		setQuestions([]);
+		setUserAnswers([]);
+		setSubmitted(false);
+		setScore(0);
+		setCurrentQuestion(0);
 		try {
+			console.log("Starting technical assessment...");
 			const formData = new FormData();
-			formData.append("file", selectedFile);
-			formData.append("num_questions", numQuestions); // Pass number of questions
-			// You can add difficulty to the backend if supported
-			const res = await fetch(
-				"http://localhost:8000/api/assessment/upload_resume/",
-				{
-					method: "POST",
-					body: formData,
-				}
-			);
-			if (!res.ok) throw new Error("Failed to generate assessment");
+			formData.append("job_role", jobRole);
+			formData.append("num_questions", numQuestions);
+			
+			console.log("Making API call to:", "/api/assessment/technical_assessment/");
+			const res = await fetch("/api/assessment/technical_assessment/", {
+				method: "POST",
+				body: formData,
+			});
+			
+			console.log("Response status:", res.status);
+			if (!res.ok) {
+				const errorText = await res.text();
+				console.error("API Error:", errorText);
+				throw new Error(`Failed to generate technical questions: ${res.status} ${errorText}`);
+			}
+			
 			const data = await res.json();
-			setLoading(false);
-			if (data.questions && data.questions.length > 0) {
-				// Save assessment data to Supabase
-				const supabase = createClientForBrowser();
-				const { data: userData } = await supabase.auth.getUser();
-				if (userData?.user) {
-					await supabase.from('assessment_history').insert([
-						{
-							user_id: userData.user.id,
-							type: 'technical',
-							questions: data.questions,
-							options: data.options,
-							answers: data.answers,
-							created_at: new Date().toISOString(),
-						},
-					]);
-				}
-				// Pass only an ID to the attempt page
-				router.push("/assessment/technical/attempt");
+			console.log("API Response:", data);
+			
+			// Handle different response formats
+			let questionsArr = [];
+			if (data.questions && Array.isArray(data.questions)) {
+				// If questions is already an array of objects
+				questionsArr = data.questions;
+			} else if (data.questions && typeof data.questions === 'string') {
+				// If questions is a string (AI response), parse it
+				console.log("Parsing string response:", data.questions);
+				questionsArr = parseQuestionsFromString(data.questions);
+			} else if (Array.isArray(data)) {
+				questionsArr = data;
+			} else if (typeof data === "string") {
+				// If the entire response is a string
+				console.log("Parsing string response:", data);
+				questionsArr = parseQuestionsFromString(data);
 			} else {
-				setError(
-					data.error ||
-						"No questions generated. Please try again or upload a different resume."
-				);
+				// Fallback to sample questions
+				questionsArr = [
+					{
+						question: "What is the time complexity of binary search?",
+						options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+						correct_answer: "O(log n)",
+					},
+				];
+			}
+			
+			console.log("Processed questions:", questionsArr);
+			
+			if (questionsArr.length > 0) {
+				setQuestions(questionsArr);
+				setUserAnswers(Array(questionsArr.length).fill(null));
+			} else {
+				setError(data.error || "No questions generated.");
 			}
 		} catch (err) {
+			console.error("Assessment error:", err);
 			setError(err.message || "Something went wrong");
+		} finally {
 			setLoading(false);
 		}
+	};
+
+	// Function to parse questions from AI-generated string
+	const parseQuestionsFromString = (text) => {
+		try {
+			console.log("Parsing text:", text);
+			const questions = [];
+			const lines = text.split('\n');
+			let currentQuestion = null;
+			let questionNumber = 1;
+			
+			for (let i = 0; i < lines.length; i++) {
+				const line = lines[i].trim();
+				
+				// Look for question patterns like "Q1.", "Q2.", etc.
+				if (line.match(/^Q\d+\./)) {
+					if (currentQuestion) {
+						questions.push(currentQuestion);
+					}
+					currentQuestion = {
+						question: line.replace(/^Q\d+\.\s*/, ''),
+						options: [],
+						correct_answer: '',
+						explanation: ''
+					};
+				}
+				// Look for option patterns like "A)", "B)", etc.
+				else if (line.match(/^[A-D]\)/)) {
+					if (currentQuestion) {
+						const option = line.replace(/^[A-D]\)\s*/, '');
+						currentQuestion.options.push(option);
+					}
+				}
+				// Look for correct answer
+				else if (line.toLowerCase().includes('correct answer:')) {
+					if (currentQuestion) {
+						const answer = line.replace(/.*correct answer:\s*/i, '').trim();
+						currentQuestion.correct_answer = answer;
+					}
+				}
+				// Look for explanation
+				else if (line.toLowerCase().includes('explanation:')) {
+					if (currentQuestion) {
+						const explanation = line.replace(/.*explanation:\s*/i, '').trim();
+						currentQuestion.explanation = explanation;
+					}
+				}
+			}
+			
+			// Add the last question
+			if (currentQuestion) {
+				questions.push(currentQuestion);
+			}
+			
+			console.log("Parsed questions:", questions);
+			
+			// If parsing failed, return fallback questions
+			if (questions.length === 0) {
+				return [
+					{
+						question: "What is the time complexity of binary search?",
+						options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+						correct_answer: "O(log n)",
+						explanation: "Binary search divides the search space in half each iteration."
+					},
+					{
+						question: "Which data structure is best for implementing a stack?",
+						options: ["Array", "Linked List", "Tree", "Graph"],
+						correct_answer: "Array",
+						explanation: "Arrays provide O(1) push and pop operations."
+					}
+				];
+			}
+			
+			return questions;
+		} catch (error) {
+			console.error("Error parsing questions:", error);
+			return [
+				{
+					question: "What is the time complexity of binary search?",
+					options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+					correct_answer: "O(log n)",
+					explanation: "Binary search divides the search space in half each iteration."
+				}
+			];
+		}
+	};
+
+	const handleSelect = (qIdx, oIdx) => {
+		if (submitted) return;
+		setUserAnswers((prev) => {
+			const updated = [...prev];
+			updated[qIdx] = oIdx;
+			return updated;
+		});
+	};
+
+	const handleSubmit = () => {
+		let correct = 0;
+		userAnswers.forEach((selectedIdx, idx) => {
+			if (
+				selectedIdx !== null &&
+				questions[idx] &&
+				questions[idx].options &&
+				questions[idx].correct_answer &&
+				questions[idx].options[selectedIdx].toString().trim().toLowerCase() ===
+					questions[idx].correct_answer.toString().trim().toLowerCase()
+			) {
+				correct++;
+			}
+		});
+		setScore(correct);
+		setSubmitted(true);
+	};
+
+	const getScoreColor = () => {
+		const percentage = (score / questions.length) * 100;
+		if (percentage >= 80) return "text-green-400";
+		if (percentage >= 60) return "text-yellow-400";
+		return "text-red-400";
+	};
+
+	const getScoreMessage = () => {
+		const percentage = (score / questions.length) * 100;
+		if (percentage >= 80) return "Excellent! You have strong technical skills.";
+		if (percentage >= 60) return "Good! You have solid technical knowledge.";
+		return "Keep practicing! Focus on improving your technical skills.";
 	};
 
 	return (
-		<div className="min-h-screen flex flex-col items-center justify-center bg-[#101113] py-12 px-4">
-			<h1 className="text-3xl font-bold mb-2 text-white">
-				Technical Assessment
-			</h1>
-			<p className="text-lg text-gray-300 mb-8 text-center max-w-2xl">
-				Upload your resume and select your preferences to generate a technical
-				assessment tailored for you.
-			</p>
-			<div className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 w-full max-w-xl flex flex-col items-center">
-				<label className="text-green-400 font-semibold mb-4 w-full text-left text-lg">
-					Upload Resume (PDF)
-				</label>
-				<div
-					className={`w-full h-40 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer transition-colors duration-200 ${
-						dragActive
-							? "border-green-400 bg-green-950/30"
-							: "border-green-700 bg-[#101113]"
-					} mb-6`}
-					onClick={handleClickDropzone}
-					onDrop={handleDrop}
-					onDragOver={handleDragOver}
-					onDragLeave={handleDragLeave}
+		<div className="min-h-screen bg-[#101113] py-12 px-4">
+			<div className="max-w-4xl mx-auto">
+				{/* Header */}
+				<motion.div
+					initial={{ opacity: 0, y: -20 }}
+					animate={{ opacity: 1, y: 0 }}
+					className="text-center mb-8"
 				>
-					<input
-						type="file"
-						accept="application/pdf"
-						onChange={handleFileChange}
-						ref={fileInputRef}
-						className="hidden"
-					/>
-					{selectedFile ? (
-						<div className="text-green-300 text-lg font-medium text-center">
-							{selectedFile.name}
-						</div>
-					) : (
-						<>
-							<div className="text-gray-400 text-lg font-medium mb-2 text-center">
-								Drag & drop your PDF resume here
-							</div>
-							<div className="text-gray-500 text-sm">
-								or click to select a file
-							</div>
-						</>
-					)}
-				</div>
-				<label className="text-green-400 font-semibold mb-2 w-full text-left">
-					Select Difficulty
-				</label>
-				<select
-					value={difficulty}
-					onChange={(e) => setDifficulty(e.target.value)}
-					className="mb-4 px-3 py-2 rounded bg-[#101113] text-white border border-green-400 w-full"
-				>
-					<option value="easy">Easy</option>
-					<option value="moderate">Moderate</option>
-					<option value="hard">Hard</option>
-				</select>
-				<label className="text-green-400 font-semibold mb-2 w-full text-left">
-					Number of Questions
-				</label>
-				<input
-					type="number"
-					min={1}
-					max={50}
-					value={numQuestions}
-					onChange={(e) => setNumQuestions(Number(e.target.value))}
-					className="mb-6 px-3 py-2 rounded bg-[#101113] text-white border border-green-400 w-full"
-				/>
-				<button
-					onClick={handleStart}
-					className="bg-green-400 text-black px-6 py-2 rounded hover:bg-green-300 transition-colors duration-200 w-full font-semibold"
-					disabled={loading}
-				>
-					{loading ? "Generating..." : "Start Assessment"}
-				</button>
-				{error && <div className="mt-4 text-red-400">{error}</div>}
-			</div>
-			{/* Loading screen overlay */}
-			{loading && (
-				<div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-					<div className="bg-[#18191b] p-8 rounded-xl shadow-xl flex flex-col items-center">
-						<div
-							className="loader mb-4"
-							style={{
-								width: 48,
-								height: 48,
-								border: "6px solid #22d3ee",
-								borderTop: "6px solid transparent",
-								borderRadius: "50%",
-								animation: "spin 1s linear infinite",
-							}}
-						/>
-						<div className="text-cyan-300 text-lg font-semibold">
-							Generating your assessment...
-						</div>
+					<div className="flex items-center justify-center mb-4">
+						<CodeBracketIcon className="h-8 w-8 text-green-400 mr-3" />
+						<h1 className="text-3xl font-bold text-white">
+							Technical Assessment
+						</h1>
 					</div>
-				</div>
-			)}
+					<p className="text-lg text-gray-300 max-w-2xl mx-auto">
+						Test your technical knowledge in programming, engineering, and your
+						chosen field with our comprehensive assessment.
+					</p>
+				</motion.div>
+
+				{/* Setup Section */}
+				{questions.length === 0 && (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mb-8"
+					>
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<label className="block text-green-400 font-semibold mb-2">
+									Job Role
+								</label>
+								<input
+									type="text"
+									value={jobRole}
+									onChange={(e) => setJobRole(e.target.value)}
+									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+									placeholder="e.g., Software Engineer"
+								/>
+							</div>
+							<div>
+								<label className="block text-green-400 font-semibold mb-2">
+									Number of Questions
+								</label>
+								<input
+									type="number"
+									min="5"
+									max="20"
+									value={numQuestions}
+									onChange={(e) => setNumQuestions(Number(e.target.value))}
+									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+								/>
+							</div>
+						</div>
+						<button
+							onClick={handleStart}
+							className="mt-6 bg-green-400 text-black px-8 py-3 rounded-lg hover:bg-green-300 transition-colors duration-200 w-full font-semibold text-lg"
+							disabled={loading}
+						>
+							{loading ? (
+								<div className="flex items-center justify-center">
+									<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
+									Generating Questions...
+								</div>
+							) : (
+								"Start Technical Assessment"
+							)}
+						</button>
+						{error && (
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								className="mt-4 text-red-400 bg-red-900/20 p-3 rounded"
+							>
+								{error}
+							</motion.div>
+						)}
+					</motion.div>
+				)}
+
+				{/* Questions Section */}
+				{questions.length > 0 && (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8"
+					>
+						{/* Progress Bar */}
+						<div className="mb-6">
+							<div className="flex justify-between items-center mb-2">
+								<span className="text-green-400 font-semibold">
+									Question {currentQuestion + 1} of {questions.length}
+								</span>
+								<span className="text-gray-400">
+									{Math.round(((currentQuestion + 1) / questions.length) * 100)}
+									%
+								</span>
+							</div>
+							<div className="w-full bg-gray-700 rounded-full h-2">
+								<div
+									className="bg-green-400 h-2 rounded-full transition-all duration-300"
+									style={{
+										width: `${
+											((currentQuestion + 1) / questions.length) * 100
+										}%`,
+									}}
+								></div>
+							</div>
+						</div>
+
+						{/* Question */}
+						<div className="mb-8">
+							<h3 className="text-xl font-semibold text-white mb-6">
+								{questions[currentQuestion]?.question || "Loading question..."}
+							</h3>
+							<div className="space-y-3">
+								{questions[currentQuestion]?.options?.map((option, idx) => (
+									<motion.button
+										key={idx}
+										initial={{ opacity: 0, x: -20 }}
+										animate={{ opacity: 1, x: 0 }}
+										transition={{ delay: idx * 0.1 }}
+										onClick={() => handleSelect(currentQuestion, idx)}
+										className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+											userAnswers[currentQuestion] === idx
+												? "border-green-400 bg-green-900/20"
+												: "border-gray-600 hover:border-green-400 hover:bg-green-900/10"
+										}`}
+									>
+										<div className="flex items-center">
+											<span className="text-green-400 font-semibold mr-3">
+												{String.fromCharCode(65 + idx)}.
+											</span>
+											<span className="text-white">{option}</span>
+										</div>
+									</motion.button>
+								))}
+							</div>
+						</div>
+
+						{/* Navigation */}
+						<div className="flex justify-between">
+							<button
+								onClick={() =>
+									setCurrentQuestion(Math.max(0, currentQuestion - 1))
+								}
+								disabled={currentQuestion === 0}
+								className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								Previous
+							</button>
+							{currentQuestion < questions.length - 1 ? (
+								<button
+									onClick={() => setCurrentQuestion(currentQuestion + 1)}
+									disabled={userAnswers[currentQuestion] === null}
+									className="px-6 py-2 bg-green-400 text-black rounded hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									Next
+								</button>
+							) : (
+								<button
+									onClick={handleSubmit}
+									disabled={userAnswers.some((ans) => ans === null)}
+									className="px-6 py-2 bg-green-400 text-black rounded hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									Submit Test
+								</button>
+							)}
+						</div>
+					</motion.div>
+				)}
+
+				{/* Results Section */}
+				{submitted && (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mt-8"
+					>
+						<div className="text-center">
+							<h2 className="text-2xl font-bold text-white mb-4">
+								Test Results
+							</h2>
+							<div className={`text-4xl font-bold mb-2 ${getScoreColor()}`}>
+								{score} / {questions.length}
+							</div>
+							<div className="text-lg text-gray-300 mb-6">
+								{getScoreMessage()}
+							</div>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div className="bg-green-900/20 p-4 rounded">
+									<h3 className="text-green-400 font-semibold mb-2">
+										Correct Answers
+									</h3>
+									<div className="text-2xl font-bold text-green-400">
+										{score}
+									</div>
+								</div>
+								<div className="bg-red-900/20 p-4 rounded">
+									<h3 className="text-red-400 font-semibold mb-2">
+										Incorrect Answers
+									</h3>
+									<div className="text-2xl font-bold text-red-400">
+										{questions.length - score}
+									</div>
+								</div>
+							</div>
+						</div>
+					</motion.div>
+				)}
+			</div>
 		</div>
 	);
 }
-
-// Add this to your global CSS or in a style tag for the loader animation
-// @keyframes spin { 100% { transform: rotate(360deg); } }

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 const ASSESSMENTS = [
 	{
@@ -33,11 +34,12 @@ const ASSESSMENTS = [
 export default function AssessmentTab() {
 	const [selectedAssessment, setSelectedAssessment] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const router = useRouter();
 
 	const handleAssessmentSelect = (assessment) => {
 		setSelectedAssessment(assessment);
-		// Here you can add logic to start the assessment
-		console.log(`Starting ${assessment.name}`);
+		// Navigate to the assessment page
+		router.push(`/assessment/${assessment.key}`);
 	};
 
 	return (
@@ -70,7 +72,13 @@ export default function AssessmentTab() {
 								</h3>
 							</div>
 							<p className="text-cyan-200 mb-4">{assessment.description}</p>
-							<button className="bg-cyan-400 border border-cyan-700 text-black px-4 py-2 rounded-lg font-medium hover:scale-105 transition-all duration-200">
+							<button 
+								className="bg-cyan-400 border border-cyan-700 text-black px-4 py-2 rounded-lg font-medium hover:scale-105 transition-all duration-200"
+								onClick={(e) => {
+									e.stopPropagation();
+									handleAssessmentSelect(assessment);
+								}}
+							>
 								Start Assessment
 							</button>
 						</div>

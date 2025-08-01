@@ -2,130 +2,183 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import {
+	CpuChipIcon,
+	CodeBracketIcon,
+	ChatBubbleLeftRightIcon,
+	UserGroupIcon,
+	ArrowRightIcon,
+} from "@heroicons/react/24/outline";
 
 const ASSESSMENTS = [
 	{
 		key: "aptitude",
 		name: "General Aptitude Test",
 		description:
-			"Evaluate your logical, quantitative, and verbal reasoning skills.",
+			"Evaluate your logical, quantitative, and verbal reasoning skills with comprehensive aptitude questions.",
+		icon: CpuChipIcon,
+		color: "from-green-500 to-emerald-500",
+		bgColor: "bg-green-900/20",
+		borderColor: "border-green-500/30",
+		textColor: "text-green-400",
 	},
 	{
 		key: "technical",
 		name: "Technical Assessment",
 		description:
-			"Test your technical knowledge in programming, engineering, or your chosen field.",
+			"Test your technical knowledge in programming, engineering, and your chosen field with domain-specific questions.",
+		icon: CodeBracketIcon,
+		color: "from-blue-500 to-cyan-500",
+		bgColor: "bg-blue-900/20",
+		borderColor: "border-blue-500/30",
+		textColor: "text-blue-400",
+	},
+	{
+		key: "communication",
+		name: "Communication Skills Test",
+		description:
+			"Assess your written and verbal communication abilities with real-world scenarios and practical exercises.",
+		icon: ChatBubbleLeftRightIcon,
+		color: "from-purple-500 to-pink-500",
+		bgColor: "bg-purple-900/20",
+		borderColor: "border-purple-500/30",
+		textColor: "text-purple-400",
 	},
 	{
 		key: "personality",
 		name: "Personality Assessment",
 		description:
-			"Discover your strengths, work style, and ideal career environments.",
-	},
-	{
-		key: "communication",
-		name: "Communication Skills Test",
-		description: "Assess your written and verbal communication abilities.",
+			"Discover your strengths, work style, and ideal career environments through comprehensive personality analysis.",
+		icon: UserGroupIcon,
+		color: "from-orange-500 to-red-500",
+		bgColor: "bg-orange-900/20",
+		borderColor: "border-orange-500/30",
+		textColor: "text-orange-400",
 	},
 ];
 
 export default function AssessmentPage() {
 	const router = useRouter();
-	const [selectedFile, setSelectedFile] = useState(null);
-	const [loading, setLoading] = useState(false);
-	const [questions, setQuestions] = useState([]);
-	const [options, setOptions] = useState([]);
-	const [answers, setAnswers] = useState([]);
-	const [error, setError] = useState("");
-
-	const handleFileChange = (e) => {
-		setSelectedFile(e.target.files[0]);
-	};
-
-	const handleStartAssessment = async () => {
-		if (!selectedFile) return;
-		setLoading(true);
-		setError("");
-		setQuestions([]);
-		setOptions([]);
-		setAnswers([]);
-		try {
-			const formData = new FormData();
-			formData.append("file", selectedFile);
-			const res = await fetch(
-				"http://localhost:8000/api/assessment/upload_resume/",
-				{
-					method: "POST",
-					body: formData,
-				}
-			);
-			if (!res.ok) throw new Error("Failed to generate assessment");
-			const data = await res.json();
-			setQuestions(data.questions || []);
-			setOptions(data.options || []);
-			setAnswers(data.answers || []);
-		} catch (err) {
-			setError(err.message || "Something went wrong");
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	return (
-		<div className="min-h-screen flex flex-col items-center justify-center bg-[#101113] py-12 px-4">
-			<h1 className="text-3xl font-bold mb-2 text-white">Take Assessment</h1>
-			<p className="text-lg text-gray-300 mb-8 text-center max-w-2xl">
-				Ready to evaluate your skills? Choose an assessment below to get
-				started. Your results will help guide your learning and career planning.
-			</p>
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl">
-				{ASSESSMENTS.map((assess) => (
-					<div
-						key={assess.key}
-						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-6 flex flex-col items-start"
-					>
-						<h2 className="text-xl font-semibold mb-2 text-green-400">
-							{assess.name}
-						</h2>
-						<p className="text-gray-400 mb-4">{assess.description}</p>
-						<button
-							className="mt-auto bg-green-400 text-black px-4 py-2 rounded hover:bg-green-300 transition-colors duration-200"
-							onClick={() => router.push(`/assessment/${assess.key}`)}
+		<div className="min-h-screen bg-[#101113] py-12 px-4">
+			<div className="max-w-6xl mx-auto">
+				{/* Header */}
+				<motion.div
+					initial={{ opacity: 0, y: -20 }}
+					animate={{ opacity: 1, y: 0 }}
+					className="text-center mb-12"
+				>
+					<h1 className="text-4xl font-bold mb-4 text-white">
+						Take Assessment
+					</h1>
+					<p className="text-xl text-gray-300 max-w-3xl mx-auto">
+						Ready to evaluate your skills? Choose an assessment below to get
+						started. Your results will help guide your learning and career
+						planning.
+					</p>
+				</motion.div>
+
+				{/* Assessment Cards */}
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+					{ASSESSMENTS.map((assessment, index) => (
+						<motion.div
+							key={assessment.key}
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: index * 0.1 }}
+							className={`${assessment.bgColor} ${assessment.borderColor} border rounded-xl p-6 hover:scale-105 transition-all duration-300 cursor-pointer group`}
+							onClick={() => router.push(`/assessment/${assessment.key}`)}
 						>
-							Start Assessment
+							<div className="flex items-start justify-between mb-4">
+								<div
+									className={`p-3 rounded-lg bg-gradient-to-r ${assessment.color}`}
+								>
+									<assessment.icon className="h-6 w-6 text-white" />
+								</div>
+								<ArrowRightIcon
+									className={`h-5 w-5 ${assessment.textColor} group-hover:translate-x-1 transition-transform duration-200`}
+								/>
+							</div>
+
+							<h2
+								className={`text-xl font-semibold mb-3 ${assessment.textColor}`}
+							>
+								{assessment.name}
+							</h2>
+
+							<p className="text-gray-300 mb-6 leading-relaxed">
+								{assessment.description}
+							</p>
+
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-gray-400">Click to start</span>
+								<div
+									className={`px-4 py-2 rounded-lg bg-gradient-to-r ${assessment.color} text-white text-sm font-medium`}
+								>
+									Start Test
+								</div>
+							</div>
+						</motion.div>
+					))}
+				</div>
+
+				{/* Additional Info */}
+				<motion.div
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ delay: 0.4 }}
+					className="mt-12 bg-[#18191b] rounded-xl border border-gray-700 p-8"
+				>
+					<h3 className="text-2xl font-bold text-white mb-4 text-center">
+						Why Take These Assessments?
+					</h3>
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+						<div className="text-center">
+							<div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+								<CpuChipIcon className="h-6 w-6 text-green-400" />
+							</div>
+							<h4 className="text-white font-semibold mb-2">
+								Skill Evaluation
+							</h4>
+							<p className="text-gray-400 text-sm">
+								Get a comprehensive understanding of your current skill levels
+								across different domains.
+							</p>
+						</div>
+						<div className="text-center">
+							<div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+								<CodeBracketIcon className="h-6 w-6 text-blue-400" />
+							</div>
+							<h4 className="text-white font-semibold mb-2">Career Guidance</h4>
+							<p className="text-gray-400 text-sm">
+								Identify your strengths and areas for improvement to make
+								informed career decisions.
+							</p>
+						</div>
+						<div className="text-center">
+							<div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+								<ChatBubbleLeftRightIcon className="h-6 w-6 text-purple-400" />
+							</div>
+							<h4 className="text-white font-semibold mb-2">Personal Growth</h4>
+							<p className="text-gray-400 text-sm">
+								Track your progress over time and set meaningful goals for your
+								professional development.
+							</p>
+						</div>
+					</div>
+
+					{/* Test Navigation Button */}
+					<div className="mt-8 text-center">
+						<button
+							onClick={() => router.push("/assessment/test")}
+							className="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-400"
+						>
+							Test Navigation
 						</button>
 					</div>
-				))}
-			</div>
-			{error && <div className="mt-8 text-red-400">{error}</div>}
-			{questions.length > 0 && (
-				<div className="mt-12 w-full max-w-3xl bg-[#18191b] rounded-xl p-6 text-white">
-					<h3 className="text-xl font-bold mb-4 text-green-300">
-						Technical Assessment Questions
-					</h3>
-					<ol className="list-decimal list-inside space-y-6">
-						{questions.map((q, idx) => (
-							<li key={idx}>
-								<div className="mb-2 font-semibold">{q}</div>
-								<div className="ml-4">
-									{options[idx] &&
-										Array.isArray(options[idx]) &&
-										options[idx].map((opt, oidx) => (
-											<div key={oidx} className="mb-1">
-												{String.fromCharCode(65 + oidx)}. {opt}
-											</div>
-										))}
-								</div>
-								<div className="mt-1 text-green-400 text-sm">
-									Answer: {answers[idx]}
-								</div>
-							</li>
-						))}
-					</ol>
-				</div>
-			)}
-			<div className="mt-12 text-gray-500 text-sm">
-				(Assessment functionality coming soon!)
+				</motion.div>
 			</div>
 		</div>
 	);

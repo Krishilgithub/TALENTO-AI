@@ -36,28 +36,22 @@ parser = StrOutputParser()
 
 # Prompt template for communication assessment
 communication_assessment_template = """
-You are an expert communication skills assessor. Generate {num_questions} communication assessment questions for {job_role} position.
+You are an expert communication skills assessor. Generate {num_questions} communication scenarios for {job_role} position.
 
-Cover these areas:
+Cover these communication skills:
 1. Written communication
 2. Verbal communication
 3. Presentation skills
-4. Interpersonal skills
-5. Conflict resolution
-6. Professional etiquette
-7. Email writing
-8. Meeting facilitation
+4. Conflict resolution
+5. Team collaboration
+6. Client communication
 
-Format each question as:
-Q{number}. [Question text]
-A) [Option A]
-B) [Option B]
-C) [Option C]
-D) [Option D]
-Correct Answer: [A/B/C/D]
-Explanation: [Brief explanation]
+Format each scenario as:
+Scenario {{number}}: [Real-world communication scenario]
+Skill: [Specific communication skill being tested]
+Question: [What would you do in this situation?]
 
-Make questions relevant to {job_role} and varying difficulty levels.
+Make scenarios relevant to {job_role} and realistic workplace situations.
 """
 
 communication_assessment_prompt = PromptTemplate(
@@ -81,33 +75,40 @@ def generate_communication_test(job_role: str = "Software Engineer", num_questio
                 "status": "success"
             }
         else:
-            # Fallback response when model is not available
+            # Fallback response with structured data
+            fallback_questions = [
+                {
+                    "question": "You need to explain a complex technical concept to a non-technical client. How would you approach this communication?",
+                    "skill": "Technical Communication"
+                },
+                {
+                    "question": "A team member disagrees with your approach to a project. How would you handle this conflict professionally?",
+                    "skill": "Conflict Resolution"
+                },
+                {
+                    "question": "You need to present your project findings to senior management. How would you structure your presentation?",
+                    "skill": "Presentation Skills"
+                },
+                {
+                    "question": "A client is frustrated with a delayed delivery. How would you communicate this situation to them?",
+                    "skill": "Client Communication"
+                },
+                {
+                    "question": "You need to write a detailed technical report for stakeholders. What key elements would you include?",
+                    "skill": "Written Communication"
+                }
+            ]
+            
+            # Return only the requested number of questions
             return {
-                "questions": f"""
-**Communication Assessment for {job_role}**
-
-**Note**: Full AI-powered assessment not available due to missing HuggingFace API token.
-
-**Sample Questions** (Generated without AI):
-1. When writing a professional email, which is the best approach?
-   A) Use informal language B) Be concise and clear C) Include personal details D) Use all caps
-   Correct Answer: B
-   Explanation: Professional emails should be concise, clear, and respectful.
-
-2. In a team meeting, what should you do if you disagree with a colleague?
-   A) Interrupt them immediately B) Listen first, then respectfully share your view C) Stay silent D) Leave the meeting
-   Correct Answer: B
-   Explanation: Professional communication involves active listening and respectful disagreement.
-
-Please add HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP environment variable for full AI-generated assessment.
-                """,
+                "questions": fallback_questions[:min(num_questions, len(fallback_questions))],
                 "job_role": job_role,
-                "total_questions": num_questions,
+                "total_questions": min(num_questions, len(fallback_questions)),
                 "status": "fallback"
             }
     except Exception as e:
         return {
-            "error": f"Error generating communication assessment: {str(e)}",
+            "error": f"Error generating communication questions: {str(e)}",
             "status": "error"
         }
 
