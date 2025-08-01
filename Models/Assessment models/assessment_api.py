@@ -13,6 +13,8 @@ from ats_score import process_resume_file, extract_resume_text
 from communication_test import generate_communication_test
 from domain_questions import generate_domain_questions
 from general_aptitude import generate_aptitude_mcqs
+from linkedin_post_generator import generate_linkedin_post
+from personality_assessment import generate_personality_assessment
 
 app = FastAPI()
 
@@ -110,6 +112,30 @@ async def domain_questions(file: UploadFile = File(...), job_role: str = Form("S
         return JSONResponse(status_code=500, content={"error": str(e)})
     finally:
         os.remove(tmp_path)
+
+@app.post("/api/assessment/linkedin_post/")
+async def linkedin_post_generator(
+    post_type: str = Form("Professional Insight"), 
+    topic: str = Form("Career Development"),
+    post_description: str = Form("Share insights about career growth and professional development")
+):
+    try:
+        result = generate_linkedin_post(post_type=post_type, topic=topic, post_description=post_description)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.post("/api/assessment/personality_assessment/")
+async def personality_assessment(
+    num_questions: int = Form(10),
+    assessment_focus: str = Form("Work Style"),
+    job_role: str = Form("Professional")
+):
+    try:
+        result = generate_personality_assessment(num_questions=num_questions, assessment_focus=assessment_focus, job_role=job_role)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

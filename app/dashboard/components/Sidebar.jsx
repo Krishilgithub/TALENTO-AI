@@ -1,15 +1,23 @@
 "use client";
 
-import { ChevronLeftIcon, ClipboardDocumentListIcon, AcademicCapIcon, CreditCardIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+	ChevronLeftIcon,
+	ClipboardDocumentListIcon,
+	AcademicCapIcon,
+	CreditCardIcon,
+	Bars3Icon,
+	XMarkIcon,
+	DocumentTextIcon,
+} from "@heroicons/react/24/outline";
 import { getInitialFromName } from "../../../utils/getInitialFromName";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function Sidebar({ 
-	user, 
-	sidebarOpen, 
-	setSidebarOpen, 
-	activeTab, 
+export default function Sidebar({
+	user,
+	sidebarOpen,
+	setSidebarOpen,
+	activeTab,
 	setActiveTab,
 	ChartBarIcon,
 	ChatBubbleLeftRightIcon,
@@ -17,28 +25,43 @@ export default function Sidebar({
 	BriefcaseIcon,
 	ArrowTrendingUpIcon,
 	onProfileClick,
-	onLogout
+	onLogout,
 }) {
 	const router = useRouter();
 
 	const navTabs = [
 		{ id: "overview", name: "Overview", icon: ChartBarIcon },
-		{ id: "assessment", name: "Take Assessment", icon: ClipboardDocumentListIcon },
+		{
+			id: "assessment",
+			name: "Take Assessment",
+			icon: ClipboardDocumentListIcon,
+		},
 		{ id: "practice", name: "Practice Sessions", icon: PlayCircleIcon },
 		{ id: "progress", name: "Progress", icon: ArrowTrendingUpIcon },
 		{ id: "jobsearch", name: "Job Search", icon: BriefcaseIcon },
-		{ id: "linkedin-optimizer", name: "LinkedIn Optimizer", icon: ChatBubbleLeftRightIcon },
+		{
+			id: "linkedin-optimizer",
+			name: "LinkedIn Optimizer",
+			icon: ChatBubbleLeftRightIcon,
+		},
+		{
+			id: "linkedin-post-generator",
+			name: "LinkedIn Post Generator",
+			icon: DocumentTextIcon,
+		},
 	];
 
 	return (
 		<aside
 			className={`fixed left-0 top-0 h-full bg-gradient-to-b from-[#18191b] via-[#181b22] to-[#101113] border-r border-gray-800 flex flex-col shadow-xl transition-all duration-300 ease-in-out z-50
-			${sidebarOpen ? 'w-72 px-5 py-8' : 'w-16 px-0 py-4'}`}
+			${sidebarOpen ? "w-72 px-5 py-8" : "w-16 px-0 py-4"}`}
 		>
 			{/* Hamburger Menu Button (always visible) */}
 			<button
 				onClick={() => setSidebarOpen(!sidebarOpen)}
-				className={`absolute top-4 ${sidebarOpen ? 'right-4' : 'left-1/2 -translate-x-1/2'} p-2 rounded-full bg-[#23272f] border border-gray-700 hover:bg-cyan-900 transition-all duration-200 hover:scale-110 z-10`}
+				className={`absolute top-4 ${
+					sidebarOpen ? "right-4" : "left-1/2 -translate-x-1/2"
+				} p-2 rounded-full bg-[#23272f] border border-gray-700 hover:bg-cyan-900 transition-all duration-200 hover:scale-110 z-10`}
 				title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
 			>
 				{sidebarOpen ? (
@@ -85,7 +108,7 @@ export default function Sidebar({
 						<button className="flex-1 bg-gradient-to-r from-cyan-700 to-blue-700 border border-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-all duration-200 flex items-center justify-center shadow-md hover:scale-105">
 							Referral
 						</button>
-						<button 
+						<button
 							onClick={() => setActiveTab("subscription")}
 							className="flex-1 bg-gradient-to-r from-cyan-700 to-blue-700 border border-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-all duration-200 flex items-center justify-center shadow-md hover:scale-105"
 						>
@@ -96,24 +119,40 @@ export default function Sidebar({
 			)}
 
 			{/* Navigation (always visible, centered vertically when closed) */}
-			<div className={`flex-1 flex ${sidebarOpen ? 'flex-col' : 'flex-col justify-center'} items-center w-full`}> 
+			<div
+				className={`flex-1 flex ${
+					sidebarOpen ? "flex-col" : "flex-col justify-center"
+				} items-center w-full`}
+			>
 				<nav className="w-full">
-					<ul className={`space-y-2 ${sidebarOpen ? '' : 'flex flex-col items-center justify-center space-y-6'}`}>
+					<ul
+						className={`space-y-2 ${
+							sidebarOpen
+								? ""
+								: "flex flex-col items-center justify-center space-y-6"
+						}`}
+					>
 						{navTabs.map((tab) => (
 							<li key={tab.id} className="w-full">
 								<button
 									onClick={() => setActiveTab(tab.id)}
-									className={`flex items-center ${sidebarOpen ? 'px-4 py-3' : 'justify-center py-3'} w-full rounded-lg text-left font-medium transition-all duration-200 shadow-sm hover:scale-105
-									${activeTab === tab.id
-										? "bg-gradient-to-r from-cyan-900 to-blue-900 text-cyan-400 shadow-lg border border-cyan-700"
-										: "text-gray-300 hover:bg-[#23272f] hover:text-cyan-300 hover:shadow-md"}
+									className={`flex items-center ${
+										sidebarOpen ? "px-4 py-3" : "justify-center py-3"
+									} w-full rounded-lg text-left font-medium transition-all duration-200 shadow-sm hover:scale-105
+									${
+										activeTab === tab.id
+											? "bg-gradient-to-r from-cyan-900 to-blue-900 text-cyan-400 shadow-lg border border-cyan-700"
+											: "text-gray-300 hover:bg-[#23272f] hover:text-cyan-300 hover:shadow-md"
+									}
 								`}
 									title={tab.name}
 								>
 									<tab.icon
 										className={`w-5 h-5 transition-all duration-200 ${
-											activeTab === tab.id ? "text-cyan-400 scale-110" : "text-gray-400"
-										} ${sidebarOpen ? 'mr-3' : ''}`}
+											activeTab === tab.id
+												? "text-cyan-400 scale-110"
+												: "text-gray-400"
+										} ${sidebarOpen ? "mr-3" : ""}`}
 									/>
 									{sidebarOpen && tab.name}
 								</button>
@@ -124,4 +163,4 @@ export default function Sidebar({
 			</div>
 		</aside>
 	);
-} 
+}

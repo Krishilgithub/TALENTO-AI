@@ -23,6 +23,7 @@ import ProfilePage from "./components/ProfilePage";
 import SubscriptionTab from "./components/SubscriptionTab";
 import AssessmentTab from "./components/AssessmentTab";
 import LinkedInOptimizerTab from "./components/LinkedInOptimizerTab";
+import LinkedInPostGeneratorTab from "./components/LinkedInPostGeneratorTab";
 
 export default function DashboardPage() {
 	const [user, setUser] = useState(null);
@@ -40,7 +41,10 @@ export default function DashboardPage() {
 			const { data, error } = await supabase.auth.getUser();
 			if (data?.user) {
 				const userObj = {
-					name: data.user.user_metadata?.name || data.user.user_metadata?.firstName || data.user.email.split('@')[0],
+					name:
+						data.user.user_metadata?.name ||
+						data.user.user_metadata?.firstName ||
+						data.user.email.split("@")[0],
 					email: data.user.email,
 					role: data.user.user_metadata?.role || "user",
 					avatar: data.user.user_metadata?.avatar_url || "/avatar1.jpg",
@@ -49,16 +53,18 @@ export default function DashboardPage() {
 					router.push("/admin");
 					return;
 				}
-                // OTP verification check
-                if (!data.user.email_confirmed_at) {
-                  router.push(`/verify-otp?email=${encodeURIComponent(data.user.email)}`);
-                  return;
-                }
-                // Onboarding check
-                if (!data.user.user_metadata?.onboarded) {
-                  router.push("/onboarding");
-                  return;
-                }
+				// OTP verification check
+				if (!data.user.email_confirmed_at) {
+					router.push(
+						`/verify-otp?email=${encodeURIComponent(data.user.email)}`
+					);
+					return;
+				}
+				// Onboarding check
+				if (!data.user.user_metadata?.onboarded) {
+					router.push("/onboarding");
+					return;
+				}
 				setUser(userObj);
 				setIsLoading(false);
 			} else {
@@ -91,12 +97,12 @@ export default function DashboardPage() {
 		const userId = authData?.user?.id;
 		if (!userId) return;
 		const { data, error } = await supabase
-			.from('user_onboarding')
-			.select('*')
-			.eq('user_id', userId)
+			.from("user_onboarding")
+			.select("*")
+			.eq("user_id", userId)
 			.single();
 		if (error) {
-			alert('Error fetching onboarding data: ' + error.message);
+			alert("Error fetching onboarding data: " + error.message);
 			return;
 		}
 		setOnboardingData(data);
@@ -138,14 +144,18 @@ export default function DashboardPage() {
 			/>
 
 			{/* Main Content Area */}
-			<div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${
-				sidebarOpen ? 'ml-72' : 'ml-16'
-			}`}>
+			<div
+				className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${
+					sidebarOpen ? "ml-72" : "ml-16"
+				}`}
+			>
 				{/* Main Card Content */}
 				<div className="flex-1 flex flex-col items-center justify-start py-10 px-4 bg-[#101113] w-full">
-					<div className={`w-full max-w-5xl bg-[#18191b] rounded-2xl shadow-lg border border-gray-800 p-8 transition-all duration-300 ${
-						sidebarOpen ? 'ml-0' : 'mx-auto max-w-4xl'
-					}`}>
+					<div
+						className={`w-full max-w-5xl bg-[#18191b] rounded-2xl shadow-lg border border-gray-800 p-8 transition-all duration-300 ${
+							sidebarOpen ? "ml-0" : "mx-auto max-w-4xl"
+						}`}
+					>
 						{/* Onboarding Data Modal */}
 						{showOnboardingModal && onboardingData && (
 							<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
@@ -156,12 +166,23 @@ export default function DashboardPage() {
 									>
 										&times;
 									</button>
-									<h2 className="text-2xl font-bold text-cyan-400 mb-4">My Onboarding Details</h2>
+									<h2 className="text-2xl font-bold text-cyan-400 mb-4">
+										My Onboarding Details
+									</h2>
 									<div className="space-y-2 text-gray-200 max-h-96 overflow-y-auto">
 										{Object.entries(onboardingData).map(([key, value]) => (
 											<div key={key} className="flex flex-col">
-												<span className="font-semibold text-cyan-300">{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span>
-												<span className="ml-2 break-words">{Array.isArray(value) ? value.join(', ') : value?.toString()}</span>
+												<span className="font-semibold text-cyan-300">
+													{key
+														.replace(/_/g, " ")
+														.replace(/\b\w/g, (l) => l.toUpperCase())}
+													:
+												</span>
+												<span className="ml-2 break-words">
+													{Array.isArray(value)
+														? value.join(", ")
+														: value?.toString()}
+												</span>
 											</div>
 										))}
 									</div>
@@ -181,6 +202,9 @@ export default function DashboardPage() {
 								{activeTab === "progress" && <ProgressTab />}
 								{activeTab === "jobsearch" && <JobSearchTab />}
 								{activeTab === "linkedin-optimizer" && <LinkedInOptimizerTab />}
+								{activeTab === "linkedin-post-generator" && (
+									<LinkedInPostGeneratorTab />
+								)}
 							</>
 						)}
 					</div>

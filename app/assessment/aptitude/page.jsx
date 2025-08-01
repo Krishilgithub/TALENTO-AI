@@ -55,24 +55,40 @@ export default function AptitudeAssessmentPage() {
 			let questionsArr = [];
 			if (data.questions && Array.isArray(data.questions)) {
 				// If questions is already an array of objects
-				questionsArr = data.questions;
-			} else if (data.questions && typeof data.questions === 'string') {
+				console.log("Using structured questions array:", data.questions);
+				questionsArr = validateQuestionStructure(data.questions);
+			} else if (data.questions && typeof data.questions === "string") {
 				// If questions is a string (AI response), parse it
-				console.log("Parsing string response:", data.questions);
+				console.log(
+					"Parsing string response from data.questions:",
+					data.questions
+				);
 				questionsArr = parseQuestionsFromString(data.questions);
 			} else if (Array.isArray(data)) {
-				questionsArr = data;
+				// If the entire response is an array
+				console.log("Using response as questions array:", data);
+				questionsArr = validateQuestionStructure(data);
 			} else if (typeof data === "string") {
 				// If the entire response is a string
 				console.log("Parsing string response:", data);
 				questionsArr = parseQuestionsFromString(data);
 			} else {
 				// Fallback to sample questions
+				console.log("Using fallback questions");
 				questionsArr = [
 					{
-						question: "Sample Aptitude Question",
-						options: ["Option A", "Option B", "Option C", "Option D"],
-						correct_answer: "Option A",
+						question:
+							"If a train travels 120 km in 2 hours, what is its speed in km/h?",
+						options: ["40", "60", "80", "100"],
+						correct_answer: "60",
+						explanation: "Speed = Distance/Time = 120/2 = 60 km/h",
+					},
+					{
+						question: "Which number comes next: 2, 4, 8, 16, __?",
+						options: ["24", "32", "30", "28"],
+						correct_answer: "32",
+						explanation:
+							"Each number is multiplied by 2: 2×2=4, 4×2=8, 8×2=16, 16×2=32",
 					},
 				];
 			}
@@ -98,85 +114,124 @@ export default function AptitudeAssessmentPage() {
 		try {
 			console.log("Parsing text:", text);
 			const questions = [];
-			const lines = text.split('\n');
+			const lines = text.split("\n");
 			let currentQuestion = null;
 			let questionNumber = 1;
-			
+
 			for (let i = 0; i < lines.length; i++) {
 				const line = lines[i].trim();
-				
+
 				// Look for question patterns like "Q1.", "Q2.", etc.
 				if (line.match(/^Q\d+\./)) {
 					if (currentQuestion) {
 						questions.push(currentQuestion);
 					}
+					// Extract the question text after "Q1." or "Q1. (Category)"
+					const questionText = line.replace(/^Q\d+\.\s*(\([^)]+\))?\s*/, "");
 					currentQuestion = {
-						question: line.replace(/^Q\d+\.\s*/, ''),
+						question: questionText,
 						options: [],
-						correct_answer: '',
-						explanation: ''
+						correct_answer: "",
+						explanation: "",
 					};
 				}
 				// Look for option patterns like "A)", "B)", etc.
 				else if (line.match(/^[A-D]\)/)) {
 					if (currentQuestion) {
-						const option = line.replace(/^[A-D]\)\s*/, '');
+						const option = line.replace(/^[A-D]\)\s*/, "");
 						currentQuestion.options.push(option);
 					}
 				}
 				// Look for correct answer
-				else if (line.toLowerCase().includes('correct answer:')) {
+				else if (line.toLowerCase().includes("correct answer:")) {
 					if (currentQuestion) {
-						const answer = line.replace(/.*correct answer:\s*/i, '').trim();
+						const answer = line.replace(/.*correct answer:\s*/i, "").trim();
 						currentQuestion.correct_answer = answer;
 					}
 				}
 				// Look for explanation
-				else if (line.toLowerCase().includes('explanation:')) {
+				else if (line.toLowerCase().includes("explanation:")) {
 					if (currentQuestion) {
-						const explanation = line.replace(/.*explanation:\s*/i, '').trim();
+						const explanation = line.replace(/.*explanation:\s*/i, "").trim();
 						currentQuestion.explanation = explanation;
 					}
 				}
+				// If we have a current question and this line doesn't match any pattern,
+				// it might be part of the question text (multi-line questions)
+				else if (
+					currentQuestion &&
+					line &&
+					!line.match(/^[A-D]\)/) &&
+					!line.toLowerCase().includes("correct answer:") &&
+					!line.toLowerCase().includes("explanation:")
+				) {
+					// Append to the current question if it's not empty
+					if (currentQuestion.question && currentQuestion.question !== line) {
+						currentQuestion.question += " " + line;
+					}
+				}
 			}
-			
+
 			// Add the last question
 			if (currentQuestion) {
 				questions.push(currentQuestion);
 			}
-			
+
 			console.log("Parsed questions:", questions);
-			
+
 			// If parsing failed, return fallback questions
 			if (questions.length === 0) {
 				return [
 					{
-						question: "If a train travels 120 km in 2 hours, what is its speed in km/h?",
+						question:
+							"If a train travels 120 km in 2 hours, what is its speed in km/h?",
 						options: ["40", "60", "80", "100"],
 						correct_answer: "60",
-						explanation: "Speed = Distance/Time = 120/2 = 60 km/h"
+						explanation: "Speed = Distance/Time = 120/2 = 60 km/h",
 					},
 					{
 						question: "Which number comes next: 2, 4, 8, 16, __?",
 						options: ["24", "32", "30", "28"],
 						correct_answer: "32",
-						explanation: "Each number is multiplied by 2: 2×2=4, 4×2=8, 8×2=16, 16×2=32"
-					}
+						explanation:
+							"Each number is multiplied by 2: 2×2=4, 4×2=8, 8×2=16, 16×2=32",
+					},
 				];
 			}
-			
+
 			return questions;
 		} catch (error) {
 			console.error("Error parsing questions:", error);
 			return [
 				{
-					question: "If a train travels 120 km in 2 hours, what is its speed in km/h?",
+					question:
+						"If a train travels 120 km in 2 hours, what is its speed in km/h?",
 					options: ["40", "60", "80", "100"],
 					correct_answer: "60",
-					explanation: "Speed = Distance/Time = 120/2 = 60 km/h"
-				}
+					explanation: "Speed = Distance/Time = 120/2 = 60 km/h",
+				},
 			];
 		}
+	};
+
+	// Function to validate and fix question structure
+	const validateQuestionStructure = (questions) => {
+		return questions.map((q) => {
+			// Ensure all required fields exist
+			if (!q.question) {
+				q.question = "Sample question";
+			}
+			if (!q.options || !Array.isArray(q.options)) {
+				q.options = ["Option A", "Option B", "Option C", "Option D"];
+			}
+			if (!q.correct_answer) {
+				q.correct_answer = q.options[0] || "Option A";
+			}
+			if (!q.explanation) {
+				q.explanation = "Explanation not provided";
+			}
+			return q;
+		});
 	};
 
 	const handleSelect = (qIdx, oIdx) => {

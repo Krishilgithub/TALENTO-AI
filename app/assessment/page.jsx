@@ -1,65 +1,54 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React from "react";
 import { motion } from "framer-motion";
 import {
-	CpuChipIcon,
-	CodeBracketIcon,
+	BrainIcon,
 	ChatBubbleLeftRightIcon,
-	UserGroupIcon,
-	ArrowRightIcon,
+	CpuChipIcon,
+	UserIcon,
 } from "@heroicons/react/24/outline";
-
-const ASSESSMENTS = [
-	{
-		key: "aptitude",
-		name: "General Aptitude Test",
-		description:
-			"Evaluate your logical, quantitative, and verbal reasoning skills with comprehensive aptitude questions.",
-		icon: CpuChipIcon,
-		color: "from-green-500 to-emerald-500",
-		bgColor: "bg-green-900/20",
-		borderColor: "border-green-500/30",
-		textColor: "text-green-400",
-	},
-	{
-		key: "technical",
-		name: "Technical Assessment",
-		description:
-			"Test your technical knowledge in programming, engineering, and your chosen field with domain-specific questions.",
-		icon: CodeBracketIcon,
-		color: "from-blue-500 to-cyan-500",
-		bgColor: "bg-blue-900/20",
-		borderColor: "border-blue-500/30",
-		textColor: "text-blue-400",
-	},
-	{
-		key: "communication",
-		name: "Communication Skills Test",
-		description:
-			"Assess your written and verbal communication abilities with real-world scenarios and practical exercises.",
-		icon: ChatBubbleLeftRightIcon,
-		color: "from-purple-500 to-pink-500",
-		bgColor: "bg-purple-900/20",
-		borderColor: "border-purple-500/30",
-		textColor: "text-purple-400",
-	},
-	{
-		key: "personality",
-		name: "Personality Assessment",
-		description:
-			"Discover your strengths, work style, and ideal career environments through comprehensive personality analysis.",
-		icon: UserGroupIcon,
-		color: "from-orange-500 to-red-500",
-		bgColor: "bg-orange-900/20",
-		borderColor: "border-orange-500/30",
-		textColor: "text-orange-400",
-	},
-];
+import Link from "next/link";
 
 export default function AssessmentPage() {
-	const router = useRouter();
+	const assessments = [
+		{
+			title: "General Aptitude",
+			description: "Test your logical reasoning, problem-solving, and analytical skills",
+			icon: BrainIcon,
+			href: "/assessment/aptitude",
+			color: "text-blue-400",
+			bgColor: "bg-blue-500/10",
+			borderColor: "border-blue-500/20",
+		},
+		{
+			title: "Communication Test",
+			description: "Assess your written and verbal communication abilities",
+			icon: ChatBubbleLeftRightIcon,
+			href: "/assessment/communication",
+			color: "text-green-400",
+			bgColor: "bg-green-500/10",
+			borderColor: "border-green-500/20",
+		},
+		{
+			title: "Technical Assessment",
+			description: "Evaluate your technical knowledge and programming skills",
+			icon: CpuChipIcon,
+			href: "/assessment/technical",
+			color: "text-purple-400",
+			bgColor: "bg-purple-500/10",
+			borderColor: "border-purple-500/20",
+		},
+		{
+			title: "Personality Assessment",
+			description: "Discover your work style, leadership approach, and communication preferences",
+			icon: UserIcon,
+			href: "/assessment/personality",
+			color: "text-orange-400",
+			bgColor: "bg-orange-500/10",
+			borderColor: "border-orange-500/20",
+		},
+	];
 
 	return (
 		<div className="min-h-screen bg-[#101113] py-12 px-4">
@@ -70,113 +59,98 @@ export default function AssessmentPage() {
 					animate={{ opacity: 1, y: 0 }}
 					className="text-center mb-12"
 				>
-					<h1 className="text-4xl font-bold mb-4 text-white">
-						Take Assessment
+					<h1 className="text-4xl font-bold text-white mb-4">
+						Assessment Center
 					</h1>
 					<p className="text-xl text-gray-300 max-w-3xl mx-auto">
-						Ready to evaluate your skills? Choose an assessment below to get
-						started. Your results will help guide your learning and career
-						planning.
+						Choose from our comprehensive range of assessments to evaluate your
+						skills, knowledge, and personality traits.
 					</p>
 				</motion.div>
 
 				{/* Assessment Cards */}
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-					{ASSESSMENTS.map((assessment, index) => (
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+					{assessments.map((assessment, index) => (
 						<motion.div
-							key={assessment.key}
+							key={assessment.title}
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: index * 0.1 }}
-							className={`${assessment.bgColor} ${assessment.borderColor} border rounded-xl p-6 hover:scale-105 transition-all duration-300 cursor-pointer group`}
-							onClick={() => router.push(`/assessment/${assessment.key}`)}
 						>
-							<div className="flex items-start justify-between mb-4">
+							<Link href={assessment.href}>
 								<div
-									className={`p-3 rounded-lg bg-gradient-to-r ${assessment.color}`}
+									className={`p-6 rounded-lg border transition-all duration-300 hover:scale-105 cursor-pointer ${assessment.bgColor} ${assessment.borderColor} hover:border-opacity-40`}
 								>
-									<assessment.icon className="h-6 w-6 text-white" />
+									<div className="flex items-start space-x-4">
+										<div
+											className={`p-3 rounded-lg bg-opacity-20 ${assessment.bgColor}`}
+										>
+											<assessment.icon
+												className={`h-8 w-8 ${assessment.color}`}
+											/>
+										</div>
+										<div className="flex-1">
+											<h3 className="text-xl font-semibold text-white mb-2">
+												{assessment.title}
+											</h3>
+											<p className="text-gray-300 leading-relaxed">
+												{assessment.description}
+											</p>
+										</div>
+									</div>
 								</div>
-								<ArrowRightIcon
-									className={`h-5 w-5 ${assessment.textColor} group-hover:translate-x-1 transition-transform duration-200`}
-								/>
-							</div>
-
-							<h2
-								className={`text-xl font-semibold mb-3 ${assessment.textColor}`}
-							>
-								{assessment.name}
-							</h2>
-
-							<p className="text-gray-300 mb-6 leading-relaxed">
-								{assessment.description}
-							</p>
-
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-gray-400">Click to start</span>
-								<div
-									className={`px-4 py-2 rounded-lg bg-gradient-to-r ${assessment.color} text-white text-sm font-medium`}
-								>
-									Start Test
-								</div>
-							</div>
+							</Link>
 						</motion.div>
 					))}
 				</div>
 
-				{/* Additional Info */}
+				{/* Additional Information */}
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.4 }}
-					className="mt-12 bg-[#18191b] rounded-xl border border-gray-700 p-8"
+					className="mt-12 bg-[#1a1b1c] rounded-lg p-6"
 				>
-					<h3 className="text-2xl font-bold text-white mb-4 text-center">
+					<h2 className="text-2xl font-bold text-white mb-4">
 						Why Take These Assessments?
-					</h3>
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-						<div className="text-center">
-							<div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-								<CpuChipIcon className="h-6 w-6 text-green-400" />
-							</div>
-							<h4 className="text-white font-semibold mb-2">
-								Skill Evaluation
-							</h4>
-							<p className="text-gray-400 text-sm">
-								Get a comprehensive understanding of your current skill levels
-								across different domains.
+					</h2>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-300">
+						<div>
+							<h3 className="text-lg font-semibold text-white mb-2">
+								Skill Development
+							</h3>
+							<p>
+								Identify your strengths and areas for improvement to focus your
+								learning efforts effectively.
 							</p>
 						</div>
-						<div className="text-center">
-							<div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-								<CodeBracketIcon className="h-6 w-6 text-blue-400" />
-							</div>
-							<h4 className="text-white font-semibold mb-2">Career Guidance</h4>
-							<p className="text-gray-400 text-sm">
-								Identify your strengths and areas for improvement to make
+						<div>
+							<h3 className="text-lg font-semibold text-white mb-2">
+								Career Planning
+							</h3>
+							<p>
+								Understand your personality traits and work preferences to make
 								informed career decisions.
 							</p>
 						</div>
-						<div className="text-center">
-							<div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-								<ChatBubbleLeftRightIcon className="h-6 w-6 text-purple-400" />
-							</div>
-							<h4 className="text-white font-semibold mb-2">Personal Growth</h4>
-							<p className="text-gray-400 text-sm">
-								Track your progress over time and set meaningful goals for your
-								professional development.
+						<div>
+							<h3 className="text-lg font-semibold text-white mb-2">
+								Interview Preparation
+							</h3>
+							<p>
+								Practice common assessment types you might encounter during job
+								interviews and applications.
 							</p>
 						</div>
-					</div>
-
-					{/* Test Navigation Button */}
-					<div className="mt-8 text-center">
-						<button
-							onClick={() => router.push("/assessment/test")}
-							className="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-400"
-						>
-							Test Navigation
-						</button>
+						<div>
+							<h3 className="text-lg font-semibold text-white mb-2">
+								Self-Awareness
+							</h3>
+							<p>
+								Gain insights into your communication style, problem-solving
+								approach, and leadership potential.
+							</p>
+						</div>
 					</div>
 				</motion.div>
 			</div>
