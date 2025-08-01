@@ -16,10 +16,15 @@ from general_aptitude import generate_aptitude_mcqs
 
 app = FastAPI()
 
-# Allow CORS for local frontend development
+# Allow CORS for frontend development and production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://your-frontend-domain.vercel.app",  # Replace with your actual frontend URL
+        "https://your-frontend-domain.railway.app",  # Replace with your actual frontend URL
+        "https://your-frontend-domain.onrender.com",  # Replace with your actual frontend URL
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
