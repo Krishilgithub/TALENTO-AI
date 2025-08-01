@@ -48,15 +48,54 @@ export default function ProgressTab() {
 		],
 	};
 
-	// TODO: Replace with actual quiz score data from Supabase
-	const quizScoreData = {
-		labels: ['Quiz 1', 'Quiz 2', 'Quiz 3', 'Quiz 4', 'Quiz 5', 'Quiz 6', 'Quiz 7'],
+	// TODO: Replace with actual assessment score data from Supabase
+	const generalAptitudeData = {
+		labels: ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5', 'Test 6'],
 		datasets: [
 			{
-				label: 'Quiz Scores',
-				data: [65, 72, 78, 85, 82, 88, 92],
+				label: 'General Aptitude Scores',
+				data: [68, 75, 82, 79, 86, 90],
 				borderColor: 'rgb(34, 197, 214)',
 				backgroundColor: 'rgba(34, 197, 214, 0.2)',
+				tension: 0.1,
+			},
+		],
+	};
+
+	const technicalAssessmentData = {
+		labels: ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5', 'Test 6'],
+		datasets: [
+			{
+				label: 'Technical Assessment Scores',
+				data: [70, 78, 85, 88, 92, 95],
+				borderColor: 'rgb(168, 85, 247)',
+				backgroundColor: 'rgba(168, 85, 247, 0.2)',
+				tension: 0.1,
+			},
+		],
+	};
+
+	const personalityAssessmentData = {
+		labels: ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5', 'Test 6'],
+		datasets: [
+			{
+				label: 'Personality Assessment Scores',
+				data: [72, 74, 76, 80, 83, 87],
+				borderColor: 'rgb(34, 197, 94)',
+				backgroundColor: 'rgba(34, 197, 94, 0.2)',
+				tension: 0.1,
+			},
+		],
+	};
+
+	const communicationSkillData = {
+		labels: ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5', 'Test 6'],
+		datasets: [
+			{
+				label: 'Communication Skill Scores',
+				data: [65, 71, 77, 81, 84, 89],
+				borderColor: 'rgb(251, 191, 36)',
+				backgroundColor: 'rgba(251, 191, 36, 0.2)',
 				tension: 0.1,
 			},
 		],
@@ -105,31 +144,6 @@ export default function ProgressTab() {
 					'rgba(34, 197, 94, 1)',
 					'rgba(239, 68, 68, 1)',
 					'rgba(249, 115, 22, 1)',
-				],
-				borderWidth: 2,
-			},
-		],
-	};
-
-	// TODO: Replace with actual time spent data from Supabase
-	const timeSpentData = {
-		labels: ['Practice Sessions', 'Mock Interviews', 'Skill Building', 'Reading', 'Video Learning'],
-		datasets: [
-			{
-				data: [35, 22, 18, 15, 10], // Random values representing time spent percentage
-				backgroundColor: [
-					'rgba(99, 102, 241, 0.8)',
-					'rgba(236, 72, 153, 0.8)',
-					'rgba(34, 197, 94, 0.8)',
-					'rgba(251, 191, 36, 0.8)',
-					'rgba(239, 68, 68, 0.8)',
-				],
-				borderColor: [
-					'rgba(99, 102, 241, 1)',
-					'rgba(236, 72, 153, 1)',
-					'rgba(34, 197, 94, 1)',
-					'rgba(251, 191, 36, 1)',
-					'rgba(239, 68, 68, 1)',
 				],
 				borderWidth: 2,
 			},
@@ -213,13 +227,43 @@ export default function ProgressTab() {
 				</p>
 			</div>
 
-			{/* Quiz Score Progression Graph */}
+			{/* General Aptitude Test Progression */}
 			<div className="bg-[#232323] rounded-lg p-6">
 				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
-					Quiz Score Progression
+					General Aptitude Test Progression
 				</h3>
 				<div className="h-64">
-					<Line data={quizScoreData} options={chartOptions} />
+					<Line data={generalAptitudeData} options={chartOptions} />
+				</div>
+			</div>
+
+			{/* Technical Assessment Progression */}
+			<div className="bg-[#232323] rounded-lg p-6">
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+					Technical Assessment Progression
+				</h3>
+				<div className="h-64">
+					<Line data={technicalAssessmentData} options={chartOptions} />
+				</div>
+			</div>
+
+			{/* Personality Assessment Progression */}
+			<div className="bg-[#232323] rounded-lg p-6">
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+					Personality Assessment Progression
+				</h3>
+				<div className="h-64">
+					<Line data={personalityAssessmentData} options={chartOptions} />
+				</div>
+			</div>
+
+			{/* Communication Skill Test Progression */}
+			<div className="bg-[#232323] rounded-lg p-6">
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+					Communication Skill Test Progression
+				</h3>
+				<div className="h-64">
+					<Line data={communicationSkillData} options={chartOptions} />
 				</div>
 			</div>
 
@@ -234,144 +278,75 @@ export default function ProgressTab() {
 			</div>
 
 			{/* Skills Distribution Chart */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<div className="bg-[#232323] rounded-lg p-6">
-					<h3 className="text-lg font-semibold text-white mb-4 font-sans">
-						Skills Distribution
-					</h3>
-					<div className="h-64 flex justify-center">
-						<Doughnut 
-							data={skillsDistributionData} 
-							plugins={[doughnutLabelPlugin]}
-							options={{
-								responsive: true,
-								maintainAspectRatio: false,
-								interaction: {
-									intersect: false,
-								},
-								onHover: (event, activeElements) => {
-									event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
-								},
-								onClick: () => {}, // Disable click functionality
-								plugins: {
-									legend: {
-										position: 'bottom',
-										onClick: () => {}, // Disable legend click
-										labels: {
-											color: 'white',
-											padding: 15,
-											font: {
-												size: 11,
-												family: 'Arial',
-											},
-											usePointStyle: true,
-											generateLabels: function(chart) {
-												const data = chart.data;
-												const dataset = data.datasets[0];
-												const total = dataset.data.reduce((a, b) => a + b, 0);
-												
-												return data.labels.map((label, index) => {
-													const percentage = ((dataset.data[index] / total) * 100).toFixed(1);
-													return {
-														text: `${label} (${percentage}%)`,
-														fillStyle: dataset.backgroundColor[index],
-														strokeStyle: dataset.borderColor[index],
-														lineWidth: dataset.borderWidth,
-														hidden: false,
-														index: index,
-														fontColor: 'white' // Explicitly set font color to white
-													};
-												});
-											}
+			<div className="bg-[#232323] rounded-lg p-6">
+				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+					Skills Distribution
+				</h3>
+				<div className="h-64 flex justify-center">
+					<Doughnut 
+						data={skillsDistributionData} 
+						plugins={[doughnutLabelPlugin]}
+						options={{
+							responsive: true,
+							maintainAspectRatio: false,
+							interaction: {
+								intersect: false,
+							},
+							onHover: (event, activeElements) => {
+								event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+							},
+							onClick: () => {}, // Disable click functionality
+							plugins: {
+								legend: {
+									position: 'bottom',
+									onClick: () => {}, // Disable legend click
+									labels: {
+										color: 'white',
+										padding: 15,
+										font: {
+											size: 11,
+											family: 'Arial',
 										},
+										usePointStyle: true,
+										generateLabels: function(chart) {
+											const data = chart.data;
+											const dataset = data.datasets[0];
+											const total = dataset.data.reduce((a, b) => a + b, 0);
+											
+											return data.labels.map((label, index) => {
+												const percentage = ((dataset.data[index] / total) * 100).toFixed(1);
+												return {
+													text: `${label} (${percentage}%)`,
+													fillStyle: dataset.backgroundColor[index],
+													strokeStyle: dataset.borderColor[index],
+													lineWidth: dataset.borderWidth,
+													hidden: false,
+													index: index,
+													fontColor: 'white' // Explicitly set font color to white
+												};
+											});
+										}
 									},
-									tooltip: {
-										callbacks: {
-											label: function(context) {
-												const label = context.label || '';
-												const value = context.parsed;
-												const total = context.dataset.data.reduce((a, b) => a + b, 0);
-												const percentage = ((value / total) * 100).toFixed(1);
-												return `${label}: ${value} (${percentage}%)`;
-											}
+								},
+								tooltip: {
+									callbacks: {
+										label: function(context) {
+											const label = context.label || '';
+											const value = context.parsed;
+											const total = context.dataset.data.reduce((a, b) => a + b, 0);
+											const percentage = ((value / total) * 100).toFixed(1);
+											return `${label}: ${value} (${percentage}%)`;
 										}
 									}
-								},
-							}} 
-						/>
-					</div>
-				</div>
-
-				<div className="bg-[#232323] rounded-lg p-6">
-					<h3 className="text-lg font-semibold text-white mb-4 font-sans">
-						Time Spent Distribution
-					</h3>
-					<div className="h-64 flex justify-center">
-						<Doughnut 
-							data={timeSpentData} 
-							plugins={[doughnutLabelPlugin]}
-							options={{
-								responsive: true,
-								maintainAspectRatio: false,
-								interaction: {
-									intersect: false,
-								},
-								onHover: (event, activeElements) => {
-									event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
-								},
-								onClick: () => {}, // Disable click functionality
-								plugins: {
-									legend: {
-										position: 'bottom',
-										onClick: () => {}, // Disable legend click
-										labels: {
-											color: 'white',
-											padding: 15,
-											font: {
-												size: 11,
-												family: 'Arial',
-											},
-											usePointStyle: true,
-											generateLabels: function(chart) {
-												const data = chart.data;
-												const dataset = data.datasets[0];
-												const total = dataset.data.reduce((a, b) => a + b, 0);
-												
-												return data.labels.map((label, index) => {
-													const percentage = ((dataset.data[index] / total) * 100).toFixed(1);
-													return {
-														text: `${label} (${percentage}%)`,
-														fillStyle: dataset.backgroundColor[index],
-														strokeStyle: dataset.borderColor[index],
-														lineWidth: dataset.borderWidth,
-														hidden: false,
-														index: index,
-														fontColor: 'white' // Explicitly set font color to white
-													};
-												});
-											}
-										},
-									},
-									tooltip: {
-										callbacks: {
-											label: function(context) {
-												const label = context.label || '';
-												const value = context.parsed;
-												const total = context.dataset.data.reduce((a, b) => a + b, 0);
-												const percentage = ((value / total) * 100).toFixed(1);
-												return `${label}: ${percentage}% of time`;
-											}
-										}
-									}
-								},
-							}} 
-						/>
-					</div>
+								}
+							},
+						}} 
+					/>
 				</div>
 			</div>
 
 			{/* Skills Progress */}
-			<div>
+			{/* <div>
 				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
 					Skills Development
 				</h3>
@@ -401,10 +376,10 @@ export default function ProgressTab() {
 						</motion.div>
 					))}
 				</div>
-			</div>
+			</div> */}
 
 			{/* Goals Progress */}
-			<div>
+			{/* <div>
 				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
 					Goals Progress
 				</h3>
@@ -435,7 +410,7 @@ export default function ProgressTab() {
 						</motion.div>
 					))}
 				</div>
-			</div>
+			</div> */}
 
 			{/* Achievements */}
 			{/* <div>
