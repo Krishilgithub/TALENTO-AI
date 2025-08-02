@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -9,7 +9,7 @@ import {
 	ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 
-export default function LinkedInCallback() {
+function LinkedInCallbackContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [status, setStatus] = useState("processing"); // processing, success, error
@@ -134,5 +134,23 @@ export default function LinkedInCallback() {
 				</div>
 			</motion.div>
 		</div>
+	);
+}
+
+export default function LinkedInCallback() {
+	return (
+		<Suspense fallback={
+			<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+				<div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+					<ArrowPathIcon className="h-12 w-12 text-blue-500 animate-spin mx-auto mb-4" />
+					<h2 className="text-xl font-semibold text-gray-900 mb-2">
+						Loading...
+					</h2>
+					<p className="text-gray-600">Processing LinkedIn authorization...</p>
+				</div>
+			</div>
+		}>
+			<LinkedInCallbackContent />
+		</Suspense>
 	);
 }
