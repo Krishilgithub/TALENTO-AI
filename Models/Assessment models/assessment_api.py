@@ -16,7 +16,11 @@ from general_aptitude import generate_aptitude_mcqs
 from linkedin_post_generator import generate_linkedin_post, get_linkedin_auth_url, exchange_code_for_token, generate_and_post_to_linkedin
 from personality_assessment import generate_personality_assessment
 
-app = FastAPI()
+app = FastAPI(
+    title="Talento AI API",
+    description="AI-powered career assessment and LinkedIn posting API",
+    version="1.0.0"
+)
 
 # Allow CORS for frontend development and production
 app.add_middleware(
@@ -31,6 +35,30 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+async def root():
+    """Root endpoint for healthcheck"""
+    return {
+        "message": "Talento AI API is running!",
+        "status": "healthy",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "assessments": "/api/assessment/*",
+            "linkedin": "/api/linkedin/*"
+        }
+    }
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "message": "Service is running",
+        "timestamp": "2024-01-01T00:00:00Z"
+    }
 
 @app.post("/api/assessment/upload_resume/")
 async def upload_resume(file: UploadFile = File(...), num_questions: int = Form(20)):
