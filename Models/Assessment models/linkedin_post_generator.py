@@ -1,164 +1,255 @@
 import os
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, ChatHuggingFace
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from typing import TypedDict, Literal
-from pydantic import BaseModel
-from langchain_core.runnables import RunnableSequence
+import requests
+from typing import Optional, Dict, Any
+from langchain_huggingface import HuggingFaceEndpoint
+from langchain.prompts import PromptTemplate
+from langchain.schema.runnable import RunnableSequence
+from langchain.schema.output_parser import StrOutputParser
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# Set up Hugging Face API key
-hf_api_key = os.getenv("HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP")
+# LinkedIn API Configuration
+LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
+LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
+LINKEDIN_REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI", "http://localhost:3000/auth/linkedin/callback")
 
-# Initialize model with fallback
-model = None
-if hf_api_key:
+def get_linkedin_auth_url():
+    """Generate LinkedIn OAuth authorization URL"""
+    if not LINKEDIN_CLIENT_ID:
+        return {"error": "LinkedIn Client ID not configured"}
+    
+    auth_url = (
+        f"https://www.linkedin.com/oauth/v2/authorization?"
+        f"response_type=code&"
+        f"client_id={LINKEDIN_CLIENT_ID}&"
+        f"redirect_uri={LINKEDIN_REDIRECT_URI}&"
+        f"scope=r_liteprofile%20w_member_social&"
+        f"state=random_state_string"
+    )
+    return {"auth_url": auth_url}
+
+def exchange_code_for_token(authorization_code: str) -> Dict[str, Any]:
+    """Exchange authorization code for access token"""
+    if not LINKEDIN_CLIENT_ID or not LINKEDIN_CLIENT_SECRET:
+        return {"error": "LinkedIn credentials not configured"}
+    
+    token_url = "https://www.linkedin.com/oauth/v2/accessToken"
+    data = {
+        "grant_type": "authorization_code",
+        "code": authorization_code,
+        "client_id": LINKEDIN_CLIENT_ID,
+        "client_secret": LINKEDIN_CLIENT_SECRET,
+        "redirect_uri": LINKEDIN_REDIRECT_URI
+    }
+    
     try:
-        # Initialize Hugging Face Endpoint for conversational task
-        llm = HuggingFaceEndpoint(
-            model="mistralai/Mistral-7B-Instruct-v0.2",
-            huggingfacehub_api_token=hf_api_key,
-            temperature=0.7,
-            max_new_tokens=1000,
+        response = requests.post(token_url, data=data)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Failed to exchange code for token: {str(e)}"}
+
+def get_user_profile(access_token: str) -> Dict[str, Any]:
+    """Get user's LinkedIn profile information"""
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        response = requests.get(
+            "https://api.linkedin.com/v2/me",
+            headers=headers
         )
-        model = ChatHuggingFace(llm=llm)
-    except Exception as e:
-        print(f"Warning: Failed to initialize Hugging Face Endpoint: {str(e)}")
-        model = None
-else:
-    print("Warning: HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP not found. Using fallback mode.")
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Failed to get profile: {str(e)}"}
 
-# Output parser
-parser = StrOutputParser()
-
-# Prompt template for LinkedIn post generation
-linkedin_post_template = """
-You are an expert LinkedIn content creator. Generate a professional LinkedIn post based on the user's description.
-
-Post Type: {post_type}
-Topic: {topic}
-User Description: {post_description}
-
-Requirements:
-1. Make it engaging and professional based on the user's description
-2. Include relevant hashtags (3-5 hashtags)
-3. Add a call-to-action
-4. Keep it under 1300 characters
-5. Use bullet points or emojis where appropriate
-6. Follow the user's description and style preferences
-7. Make it authentic and shareable
-
-Format the post as:
-[Post content with proper formatting]
-
-Hashtags: #[relevant hashtag] #[relevant hashtag] #[relevant hashtag]
-
-Make it valuable and engaging based on the user's specific requirements.
-"""
-
-linkedin_post_prompt = PromptTemplate(
-    input_variables=["post_type", "topic", "post_description"],
-    template=linkedin_post_template
-)
-
-# Create RunnableSequence only if model is available
-linkedin_post_chain = None
-if model:
-    linkedin_post_chain = RunnableSequence(linkedin_post_prompt | model | parser)
-
-def generate_linkedin_post(post_type: str = "Professional Insight", topic: str = "Career Development", post_description: str = "Share insights about career growth and professional development") -> dict:
+def post_to_linkedin(access_token: str, post_content: str) -> Dict[str, Any]:
+    """Post content directly to LinkedIn"""
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+        "X-Restli-Protocol-Version": "2.0.0"
+    }
+    
+    # Get user's profile ID first
+    profile_response = get_user_profile(access_token)
+    if "error" in profile_response:
+        return profile_response
+    
+    profile_id = profile_response.get("id")
+    
+    # Create the post
+    post_data = {
+        "author": f"urn:li:person:{profile_id}",
+        "lifecycleState": "PUBLISHED",
+        "specificContent": {
+            "com.linkedin.ugc.ShareContent": {
+                "shareCommentary": {
+                    "text": post_content
+                },
+                "shareMediaCategory": "NONE"
+            }
+        },
+        "visibility": {
+            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+        }
+    }
+    
     try:
-        if linkedin_post_chain:
-            result = linkedin_post_chain.invoke({
-                "post_type": post_type, 
+        response = requests.post(
+            "https://api.linkedin.com/v2/ugcPosts",
+            headers=headers,
+            json=post_data
+        )
+        response.raise_for_status()
+        return {"success": True, "post_id": response.json().get("id")}
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Failed to post to LinkedIn: {str(e)}"}
+
+def generate_linkedin_post(
+    post_type: str = "Professional Insight",
+    topic: str = "Career Development", 
+    post_description: str = "Share insights about career growth and professional development"
+) -> Dict[str, Any]:
+    """
+    Generate a LinkedIn post using AI
+    """
+    try:
+        # Check if HuggingFace token is available
+        huggingface_token = os.getenv("HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP")
+        
+        if huggingface_token:
+            # Use AI model to generate post
+            llm = HuggingFaceEndpoint(
+                repo_id="microsoft/DialoGPT-medium",
+                task="text-generation",
+                token=huggingface_token
+            )
+            
+            prompt_template = PromptTemplate(
+                input_variables=["post_type", "topic", "post_description"],
+                template="""
+                Create a professional LinkedIn post based on the following requirements:
+                
+                Post Type: {post_type}
+                Topic: {topic}
+                Description: {post_description}
+                
+                Requirements:
+                - Make it engaging and professional
+                - Include relevant hashtags
+                - Keep it under 1300 characters
+                - Add a call-to-action
+                - Use proper LinkedIn formatting
+                
+                Generate the post:
+                """
+            )
+            
+            chain = RunnableSequence(
+                prompt_template,
+                llm,
+                StrOutputParser()
+            )
+            
+            result = chain.invoke({
+                "post_type": post_type,
                 "topic": topic,
                 "post_description": post_description
             })
-            return {
-                "post": result,
-                "post_type": post_type,
-                "topic": topic,
-                "post_description": post_description,
-                "status": "success"
-            }
+            
+            return {"post": result.strip()}
+            
         else:
-            # Fallback response with sample posts
+            # Fallback posts when AI model is not available
             fallback_posts = {
-                "Career Development": {
-                    "post": """🚀 **Career Growth Tip**
+                "Professional Insight": f"""🚀 {topic}: {post_description}
 
-Just wrapped up an amazing project that taught me a valuable lesson: **continuous learning is non-negotiable** in tech.
+💡 Key insights to consider:
+• Stay updated with industry trends
+• Network actively with professionals
+• Continuously develop your skills
+• Share your knowledge with others
 
-Here's what I learned:
-• Always stay curious about new technologies
-• Build side projects to expand your skills
-• Network with other professionals
-• Share your knowledge with the community
+#ProfessionalDevelopment #CareerGrowth #Networking #SkillsDevelopment #LinkedInLearning
 
-The professional landscape evolves rapidly, and the best professionals are those who adapt and grow continuously.
+What's your biggest career lesson learned? Share below! 👇""",
+                
+                "Industry Update": f"""📊 {topic} Update: {post_description}
 
-What's your approach to staying current in your field?
+🔍 What's happening:
+• Industry trends and developments
+• New technologies emerging
+• Market shifts and opportunities
+• Future predictions
 
-#CareerGrowth #ProfessionalDevelopment #ContinuousLearning #Networking #SkillDevelopment""",
-                    "hashtags": ["#CareerGrowth", "#ProfessionalDevelopment", "#ContinuousLearning", "#Networking", "#SkillDevelopment"]
-                },
-                "Industry Trends": {
-                    "post": """📊 **Latest Industry Trends**
+#IndustryUpdate #MarketTrends #Technology #Innovation #ProfessionalInsights
 
-The industry is moving at lightning speed! Here are the key trends I'm seeing:
+How is this affecting your industry? Let's discuss! 💬""",
+                
+                "Career Advice": f"""💼 {topic}: {post_description}
 
-🔥 **AI/ML Integration**: Every company wants AI capabilities
-🌐 **Cloud-Native Development**: Kubernetes and microservices are everywhere
-🔒 **Security-First Approach**: DevSecOps is becoming standard
-⚡ **Low-Code/No-Code**: Empowering non-developers to build solutions
+🎯 Pro tips for success:
+• Set clear career goals
+• Build a strong personal brand
+• Develop transferable skills
+• Maintain work-life balance
+• Stay curious and keep learning
 
-Staying ahead means embracing these changes while maintaining core fundamentals.
+#CareerAdvice #ProfessionalGrowth #PersonalBrand #WorkLifeBalance #ContinuousLearning
 
-What trends are you most excited about?
+What career advice would you give to someone starting out? 🤔""",
+                
+                "Networking": f"""🤝 {topic}: {post_description}
 
-#IndustryTrends #Innovation #Technology #FutureOfWork #DigitalTransformation""",
-                    "hashtags": ["#IndustryTrends", "#Innovation", "#Technology", "#FutureOfWork", "#DigitalTransformation"]
-                },
-                "Professional Achievement": {
-                    "post": """🎉 **Excited to Share a Major Milestone!**
+🌟 Building meaningful connections:
+• Attend industry events
+• Engage on professional platforms
+• Offer value to others
+• Follow up consistently
+• Be authentic in interactions
 
-Just completed a challenging project that pushed my limits and expanded my skills significantly.
+#Networking #ProfessionalConnections #RelationshipBuilding #CareerNetworking #AuthenticConnections
 
-**What we accomplished:**
-✅ Delivered a scalable architecture
-✅ Reduced system response time by 60%
-✅ Implemented comprehensive testing strategy
-✅ Mentored team members
-
-The best part? Working with an incredible team that made every challenge feel like an opportunity to grow.
-
-Grateful for the learning experience and excited for what's next!
-
-#ProfessionalAchievement #ProjectSuccess #TeamWork #Growth #Milestone""",
-                    "hashtags": ["#ProfessionalAchievement", "#ProjectSuccess", "#TeamWork", "#Growth", "#Milestone"]
-                }
+Who has been your most valuable professional connection? Tag them below! 👇"""
             }
             
-            # Get the appropriate fallback post based on topic
-            fallback_post = fallback_posts.get(topic, fallback_posts["Career Development"])
+            post_type_key = post_type if post_type in fallback_posts else "Professional Insight"
+            return {"post": fallback_posts[post_type_key]}
             
-            return {
-                "post": fallback_post["post"],
-                "hashtags": fallback_post["hashtags"],
-                "post_type": post_type,
-                "topic": topic,
-                "post_description": post_description,
-                "status": "fallback"
-            }
     except Exception as e:
-        return {
-            "error": f"Error generating LinkedIn post: {str(e)}",
-            "status": "error"
-        }
+        return {"error": f"Error generating LinkedIn post: {str(e)}"}
 
-if __name__ == "__main__":
-    result = generate_linkedin_post("Professional Insight", "Career Development", "Share insights about career growth and professional development")
-    print(result) 
+def generate_and_post_to_linkedin(
+    access_token: str,
+    post_type: str = "Professional Insight",
+    topic: str = "Career Development",
+    post_description: str = "Share insights about career growth and professional development"
+) -> Dict[str, Any]:
+    """
+    Generate a LinkedIn post and post it directly to the user's profile
+    """
+    # First generate the post content
+    post_result = generate_linkedin_post(post_type, topic, post_description)
+    
+    if "error" in post_result:
+        return post_result
+    
+    post_content = post_result["post"]
+    
+    # Then post it to LinkedIn
+    post_result = post_to_linkedin(access_token, post_content)
+    
+    if "error" in post_result:
+        return post_result
+    
+    return {
+        "success": True,
+        "post_content": post_content,
+        "post_id": post_result.get("post_id"),
+        "message": "Post successfully published to LinkedIn!"
+    } 

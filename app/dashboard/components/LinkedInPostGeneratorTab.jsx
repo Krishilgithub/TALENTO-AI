@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
 	GlobeAltIcon,
@@ -6,6 +6,9 @@ import {
 	SparklesIcon,
 	ClipboardDocumentIcon,
 	CheckCircleIcon,
+	ArrowPathIcon,
+	LinkIcon,
+	XCircleIcon,
 } from "@heroicons/react/24/outline";
 
 export default function LinkedInPostGeneratorTab() {
@@ -14,112 +17,202 @@ export default function LinkedInPostGeneratorTab() {
 	const [postDescription, setPostDescription] = useState("");
 	const [generatedPost, setGeneratedPost] = useState("");
 	const [isGenerating, setIsGenerating] = useState(false);
+	const [isPosting, setIsPosting] = useState(false);
+	const [isConnected, setIsConnected] = useState(false);
+	const [accessToken, setAccessToken] = useState("");
+	const [showSuccess, setShowSuccess] = useState(false);
 	const [error, setError] = useState("");
-	const [copied, setCopied] = useState(false);
 
-	const postTypes = [
-		"Professional Insight",
-		"Industry Trends",
-		"Professional Achievement",
-		"Career Advice",
-		"Project Showcase",
-		"Learning Experience",
-	];
-
-	const topics = [
-		"Career Development",
-		"Industry Trends",
-		"Professional Achievement",
-		"Skill Development",
-		"Networking",
-		"Leadership",
-		"Innovation",
-		"Work-Life Balance",
-	];
+	useEffect(() => {
+		// Check if user is already connected to LinkedIn
+		const token = localStorage.getItem("linkedin_access_token");
+		if (token) {
+			setAccessToken(token);
+			setIsConnected(true);
+		}
+	}, []);
 
 	const handleGeneratePost = async () => {
+		if (!postDescription.trim()) {
+			setError("Please enter a post description");
+			return;
+		}
+
 		setIsGenerating(true);
 		setError("");
-		setGeneratedPost("");
-		setCopied(false);
 
 		try {
 			const formData = new FormData();
 			formData.append("post_type", postType);
 			formData.append("topic", topic);
-			formData.append("post_description", postDescription || "Share insights about career growth and professional development");
+			formData.append("post_description", postDescription);
 
-			const response = await fetch("/api/assessment/linkedin_post/", {
+			const response = await fetch("/api/assessment/linkedin_post", {
 				method: "POST",
 				body: formData,
 			});
 
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.error || "Failed to generate LinkedIn post");
-			}
-
 			const data = await response.json();
-			console.log("Generated post data:", data);
-			
-			if (data.post) {
+
+			if (data.error) {
+				setError(data.error);
+			} else if (data.post) {
 				setGeneratedPost(data.post);
 			} else {
-				throw new Error("No post content received from the server");
+				setError("No post was generated. Please try again.");
 			}
-		} catch (err) {
-			console.error("Post generation error:", err);
-			setError(err.message || "Something went wrong");
+		} catch (error) {
+			console.error("Error generating post:", error);
+			setError("Failed to generate post. Please try again.");
 		} finally {
 			setIsGenerating(false);
 		}
 	};
 
-	const handleCopyToClipboard = async () => {
+	const handleConnectLinkedIn = async () => {
 		try {
-			await navigator.clipboard.writeText(generatedPost);
-			setCopied(true);
-			setTimeout(() => setCopied(false), 2000);
-		} catch (err) {
-			console.error("Failed to copy to clipboard:", err);
+			const response = await fetch("/api/linkedin/auth-url");
+			const data = await response.json();
+
+			if (data.error) {
+				setError(data.error);
+			} else if (data.auth_url) {
+				// Redirect to LinkedIn OAuth
+				window.location.href = data.auth_url;
+			} else {
+				setError("Failed to get LinkedIn authorization URL");
+			}
+		} catch (error) {
+			console.error("Error connecting to LinkedIn:", error);
+			setError("Failed to connect to LinkedIn. Please try again.");
 		}
 	};
 
+	const handlePostToLinkedIn = async () => {
+		if (!accessToken) {
+			setError("Please connect to LinkedIn first");
+			return;
+		}
+
+		if (!generatedPost.trim()) {
+			setError("Please generate a post first");
+			return;
+		}
+
+		setIsPosting(true);
+		setError("");
+
+		try {
+			const formData = new FormData();
+			formData.append("access_token", accessToken);
+			formData.append("post_type", postType);
+			formData.append("topic", topic);
+			formData.append("post_description", postDescription);
+
+			const response = await fetch("/api/linkedin/post-direct", {
+				method: "POST",
+				body: formData,
+			});
+
+			const data = await response.json();
+
+			if (data.error) {
+				setError(data.error);
+			} else if (data.success) {
+				setShowSuccess(true);
+				setTimeout(() => setShowSuccess(false), 5000);
+			} else {
+				setError("Failed to post to LinkedIn. Please try again.");
+			}
+		} catch (error) {
+			console.error("Error posting to LinkedIn:", error);
+			setError("Failed to post to LinkedIn. Please try again.");
+		} finally {
+			setIsPosting(false);
+		}
+	};
+
+	const handleCopyToClipboard = () => {
+		navigator.clipboard.writeText(generatedPost);
+		// You could add a toast notification here
+	};
+
+	const postTypes = [
+		"Professional Insight",
+		"Industry Update",
+		"Career Advice",
+		"Networking",
+	];
+
 	return (
-		<motion.div
-			initial={{ opacity: 0, y: 20 }}
-			animate={{ opacity: 1, y: 0 }}
-			className="space-y-6"
-		>
+		<div className="space-y-6">
 			{/* Header */}
-			<div className="flex items-center space-x-3 mb-6">
-				<GlobeAltIcon className="h-8 w-8 text-blue-500" />
+			<div className="flex items-center space-x-3">
+				<GlobeAltIcon className="h-8 w-8 text-blue-600" />
 				<div>
-					<h2 className="text-2xl font-bold text-white">
+					<h2 className="text-2xl font-bold text-gray-900">
 						LinkedIn Post Generator
 					</h2>
-					<p className="text-gray-400">
-						Generate professional LinkedIn posts tailored to your industry
+					<p className="text-gray-600">
+						Generate and post professional content directly to your LinkedIn
+						profile
 					</p>
 				</div>
 			</div>
 
-			{/* Configuration Section */}
-			<div className="bg-[#1a1b1c] rounded-lg p-6 space-y-4">
-				<h3 className="text-lg font-semibold text-white mb-4">
+			{/* LinkedIn Connection Status */}
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4"
+			>
+				<div className="flex items-center justify-between">
+					<div className="flex items-center space-x-3">
+						<LinkIcon className="h-6 w-6 text-blue-600" />
+						<div>
+							<h3 className="font-semibold text-gray-900">
+								LinkedIn Connection
+							</h3>
+							<p className="text-sm text-gray-600">
+								{isConnected
+									? "Connected to LinkedIn - You can post directly to your profile"
+									: "Connect your LinkedIn account to post directly"}
+							</p>
+						</div>
+					</div>
+					<button
+						onClick={handleConnectLinkedIn}
+						disabled={isConnected}
+						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+							isConnected
+								? "bg-green-100 text-green-700 cursor-not-allowed"
+								: "bg-blue-600 text-white hover:bg-blue-700"
+						}`}
+					>
+						{isConnected ? "Connected" : "Connect LinkedIn"}
+					</button>
+				</div>
+			</motion.div>
+
+			{/* Post Configuration */}
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				className="bg-white rounded-xl border border-gray-200 p-6"
+			>
+				<h3 className="text-lg font-semibold text-gray-900 mb-4">
 					Post Configuration
 				</h3>
 
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					{/* Post Type */}
 					<div>
-						<label className="block text-sm font-medium text-gray-300 mb-2">
+						<label className="block text-sm font-medium text-gray-700 mb-2">
 							Post Type
 						</label>
 						<select
 							value={postType}
 							onChange={(e) => setPostType(e.target.value)}
-							className="w-full px-3 py-2 bg-[#2a2b2c] border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 						>
 							{postTypes.map((type) => (
 								<option key={type} value={type}>
@@ -129,155 +222,126 @@ export default function LinkedInPostGeneratorTab() {
 						</select>
 					</div>
 
-					{/* Topic */}
 					<div>
-						<label className="block text-sm font-medium text-gray-300 mb-2">
+						<label className="block text-sm font-medium text-gray-700 mb-2">
 							Topic
 						</label>
-						<select
+						<input
+							type="text"
 							value={topic}
 							onChange={(e) => setTopic(e.target.value)}
-							className="w-full px-3 py-2 bg-[#2a2b2c] border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-						>
-							{topics.map((t) => (
-								<option key={t} value={t}>
-									{t}
-								</option>
-							))}
-						</select>
+							placeholder="e.g., Career Development"
+							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+						/>
 					</div>
 				</div>
 
-				{/* Post Description */}
-				<div>
-					<label className="block text-sm font-medium text-gray-300 mb-2">
-						Post Description (Optional)
+				<div className="mt-4">
+					<label className="block text-sm font-medium text-gray-700 mb-2">
+						Post Description
 					</label>
 					<textarea
 						value={postDescription}
 						onChange={(e) => setPostDescription(e.target.value)}
-						placeholder="e.g., Share your thoughts on career growth, industry trends, or professional development. Describe what kind of post you want to generate."
-						className="w-full px-3 py-2 bg-[#2a2b2c] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						rows="3"
+						placeholder="Describe what you want to post about..."
+						rows={4}
+						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 					/>
 				</div>
 
-				{/* Generate Button */}
-				<button
-					onClick={handleGeneratePost}
-					disabled={isGenerating}
-					className="w-full md:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-medium rounded-lg flex items-center justify-center space-x-2 transition-colors"
-				>
-					{isGenerating ? (
-						<>
-							<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-							<span>Generating...</span>
-						</>
-					) : (
-						<>
+				<div className="mt-6 flex space-x-3">
+					<button
+						onClick={handleGeneratePost}
+						disabled={isGenerating || !postDescription.trim()}
+						className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+					>
+						{isGenerating ? (
+							<ArrowPathIcon className="h-5 w-5 animate-spin" />
+						) : (
 							<SparklesIcon className="h-5 w-5" />
-							<span>Generate Post</span>
-						</>
+						)}
+						<span>{isGenerating ? "Generating..." : "Generate Post"}</span>
+					</button>
+
+					{isConnected && (
+						<button
+							onClick={handlePostToLinkedIn}
+							disabled={isPosting || !generatedPost.trim()}
+							className="flex items-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						>
+							{isPosting ? (
+								<ArrowPathIcon className="h-5 w-5 animate-spin" />
+							) : (
+								<DocumentTextIcon className="h-5 w-5" />
+							)}
+							<span>{isPosting ? "Posting..." : "Post to LinkedIn"}</span>
+						</button>
 					)}
-				</button>
-			</div>
+				</div>
+			</motion.div>
 
-			{/* Error Display */}
-			{error && (
-				<motion.div
-					initial={{ opacity: 0, y: -10 }}
-					animate={{ opacity: 1, y: 0 }}
-					className="bg-red-900/20 border border-red-500/50 rounded-lg p-4"
-				>
-					<p className="text-red-400">{error}</p>
-				</motion.div>
-			)}
-
-			{/* Generated Post Display */}
+			{/* Generated Post */}
 			{generatedPost && (
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
-					className="bg-[#1a1b1c] rounded-lg p-6"
+					className="bg-white rounded-xl border border-gray-200 p-6"
 				>
 					<div className="flex items-center justify-between mb-4">
-						<h3 className="text-lg font-semibold text-white flex items-center space-x-2">
-							<DocumentTextIcon className="h-5 w-5 text-blue-400" />
-							<span>Generated LinkedIn Post</span>
+						<h3 className="text-lg font-semibold text-gray-900">
+							Generated Post
 						</h3>
 						<button
 							onClick={handleCopyToClipboard}
-							className="flex items-center space-x-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors"
+							className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
 						>
-							{copied ? (
-								<>
-									<CheckCircleIcon className="h-4 w-4 text-green-400" />
-									<span className="text-sm">Copied!</span>
-								</>
-							) : (
-								<>
-									<ClipboardDocumentIcon className="h-4 w-4" />
-									<span className="text-sm">Copy</span>
-								</>
-							)}
+							<ClipboardDocumentIcon className="h-4 w-4" />
+							<span>Copy</span>
 						</button>
 					</div>
-
-					<div className="bg-[#2a2b2c] rounded-lg p-4 border border-gray-600">
-						<pre className="text-white whitespace-pre-wrap font-sans text-sm leading-relaxed">
-							{generatedPost}
-						</pre>
-					</div>
-
-					<div className="mt-4 text-sm text-gray-400">
-						<p>
-							💡 <strong>Tip:</strong> Customize the generated post to match
-							your personal style and add your own experiences before posting.
-						</p>
+					<div className="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap text-gray-800">
+						{generatedPost}
 					</div>
 				</motion.div>
 			)}
 
-			{/* Tips Section */}
-			<div className="bg-[#1a1b1c] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-white mb-4">
-					💡 Tips for Great LinkedIn Posts
-				</h3>
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
-					<div className="space-y-2">
-						<p>
-							• <strong>Be authentic</strong> - Add your personal experiences
-						</p>
-						<p>
-							• <strong>Use hashtags</strong> - But don't overdo it (3-5 is
-							ideal)
-						</p>
-						<p>
-							• <strong>Include visuals</strong> - Images increase engagement
-						</p>
-						<p>
-							• <strong>Ask questions</strong> - Encourage comments and
-							discussion
-						</p>
+			{/* Success Message */}
+			{showSuccess && (
+				<motion.div
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					className="bg-green-50 border border-green-200 rounded-xl p-4"
+				>
+					<div className="flex items-center space-x-3">
+						<CheckCircleIcon className="h-6 w-6 text-green-600" />
+						<div>
+							<h3 className="font-semibold text-green-900">
+								Posted Successfully!
+							</h3>
+							<p className="text-green-700">
+								Your post has been published to your LinkedIn profile.
+							</p>
+						</div>
 					</div>
-					<div className="space-y-2">
-						<p>
-							• <strong>Keep it concise</strong> - LinkedIn posts work best
-							under 1300 characters
-						</p>
-						<p>
-							• <strong>Use bullet points</strong> - Makes content scannable
-						</p>
-						<p>
-							• <strong>Add value</strong> - Share insights that help others
-						</p>
-						<p>
-							• <strong>Engage with comments</strong> - Respond to build
-							relationships
-						</p>
+				</motion.div>
+			)}
+
+			{/* Error Message */}
+			{error && (
+				<motion.div
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					className="bg-red-50 border border-red-200 rounded-xl p-4"
+				>
+					<div className="flex items-center space-x-3">
+						<XCircleIcon className="h-6 w-6 text-red-600" />
+						<div>
+							<h3 className="font-semibold text-red-900">Error</h3>
+							<p className="text-red-700">{error}</p>
+						</div>
 					</div>
-				</div>
-			</div>
-		</motion.div>
+				</motion.div>
+			)}
+		</div>
 	);
 }

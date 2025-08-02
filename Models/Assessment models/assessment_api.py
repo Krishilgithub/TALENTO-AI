@@ -13,7 +13,7 @@ from ats_score import process_resume_file, extract_resume_text
 from communication_test import generate_communication_test
 from domain_questions import generate_domain_questions
 from general_aptitude import generate_aptitude_mcqs
-from linkedin_post_generator import generate_linkedin_post
+from linkedin_post_generator import generate_linkedin_post, get_linkedin_auth_url, exchange_code_for_token, generate_and_post_to_linkedin
 from personality_assessment import generate_personality_assessment
 
 app = FastAPI()
@@ -121,6 +121,43 @@ async def linkedin_post_generator(
 ):
     try:
         result = generate_linkedin_post(post_type=post_type, topic=topic, post_description=post_description)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.get("/api/linkedin/auth-url/")
+async def get_linkedin_auth_url_endpoint():
+    """Get LinkedIn OAuth authorization URL"""
+    try:
+        result = get_linkedin_auth_url()
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.post("/api/linkedin/exchange-code/")
+async def exchange_linkedin_code(authorization_code: str = Form(...)):
+    """Exchange authorization code for access token"""
+    try:
+        result = exchange_code_for_token(authorization_code)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.post("/api/linkedin/post-direct/")
+async def post_direct_to_linkedin(
+    access_token: str = Form(...),
+    post_type: str = Form("Professional Insight"),
+    topic: str = Form("Career Development"),
+    post_description: str = Form("Share insights about career growth and professional development")
+):
+    """Generate and post directly to LinkedIn"""
+    try:
+        result = generate_and_post_to_linkedin(
+            access_token=access_token,
+            post_type=post_type,
+            topic=topic,
+            post_description=post_description
+        )
         return JSONResponse(content=result)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
