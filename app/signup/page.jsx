@@ -84,7 +84,15 @@ export default function SignupPage() {
 		setIsLoading(true);
 
 		try {
+			// Debug: Log environment variables (remove in production)
+			console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+			console.log("Supabase ANON KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
 			const supabase = createClientForBrowser();
+
+			// Debug: Log before signup
+			console.log("Attempting signup with:", formData.email);
+
 			const { data, error } = await supabase.auth.signUp({
 				email: formData.email,
 				password: formData.password,
@@ -96,6 +104,9 @@ export default function SignupPage() {
 					},
 				},
 			});
+
+			// Debug: Log response
+			console.log("Signup response:", { data, error });
 
 			let alreadyExists = false;
 			if (error) {
@@ -126,7 +137,9 @@ export default function SignupPage() {
 				router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
 			}
 		} catch (error) {
-			setErrors({ general: 'Signup failed. Please try again.' });
+			// Improved error feedback
+			setErrors({ general: 'Signup failed. Please check your network connection and try again.' });
+			console.error("Signup error:", error);
 		} finally {
 			setIsLoading(false);
 		}
