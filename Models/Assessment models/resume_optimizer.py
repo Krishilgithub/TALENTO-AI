@@ -2,13 +2,12 @@ import os
 from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, ChatHuggingFace
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from typing import TypedDict, Literal
+from typing import TypedDict, Literal, Optional
 from pydantic import BaseModel
 from langchain_core.runnables import RunnableSequence
 from dotenv import load_dotenv
-import pdfplumber
-import docx
-from typing import Optional
+import pdfplumber   #type: ignore
+import docx #type: ignore
 
 # Load environment variables
 load_dotenv()
@@ -99,6 +98,7 @@ Format the output as follows:
 - [Suggestion 1]
 - [Suggestion 2]
 """
+
 resume_analysis_prompt = PromptTemplate(
     input_variables=["resume_text", "job_role"],
     template=resume_analysis_template
