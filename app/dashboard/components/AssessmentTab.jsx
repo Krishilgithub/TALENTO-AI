@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import createClientForBrowser from '@/utils/supabase/client';
 
 const ASSESSMENTS = [
 	{
@@ -30,6 +31,21 @@ const ASSESSMENTS = [
 		icon: "💬"
 	},
 ];
+
+// Helper to store assessment result
+async function storeAssessmentResult({ userId, assessmentType, score, level, numQuestions }) {
+  const supabase = createClientForBrowser();
+  await supabase.from('assessment_results').insert([
+    {
+      user_id: userId,
+      assessment_type: assessmentType,
+      score,
+      level,
+      number_of_questions: numQuestions,
+      completed_at: new Date().toISOString(),
+    },
+  ]);
+}
 
 export default function AssessmentTab() {
 	const [selectedAssessment, setSelectedAssessment] = useState(null);

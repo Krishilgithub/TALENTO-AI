@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
 	CloudArrowUpIcon,
 	DocumentTextIcon,
@@ -10,6 +10,7 @@ import {
 	SparklesIcon,
 	ChartBarIcon,
 } from "@heroicons/react/24/outline";
+import createClientForBrowser from '@/utils/supabase/client';
 
 export default function OverviewTab({ user }) {
 	const [isDragOver, setIsDragOver] = useState(false);
@@ -20,6 +21,7 @@ export default function OverviewTab({ user }) {
 	const [optimizationResult, setOptimizationResult] = useState(null);
 	const [atsScoreResult, setAtsScoreResult] = useState(null);
 	const [jobRole, setJobRole] = useState("Software Engineer");
+	const [userResumes, setUserResumes] = useState([]);
 
 	const stats = [
 		{
@@ -98,7 +100,7 @@ export default function OverviewTab({ user }) {
 		}
 	};
 
-	const handleFileUpload = (file) => {
+	const handleFileUpload = async (file) => {
 		if (
 			file.type !== "application/pdf" &&
 			file.type !== "application/msword" &&
@@ -110,17 +112,54 @@ export default function OverviewTab({ user }) {
 		}
 
 		setIsUploading(true);
-
-		// Simulate upload
-		setTimeout(() => {
+		try {
+			const supabase = createClientForBrowser();
+			// Get user ID
+			const { data: userData } = await supabase.auth.getUser();
+			if (!userData?.user) {
+				alert('You must be logged in to upload a resume.');
+				setIsUploading(false);
+				return;
+			}
+			const userId = userData.user.id;
+			// Upload to Supabase Storage
+			const fileExt = file.name.split('.').pop();
+			const filePath = `resumes/${userId}/${Date.now()}.${fileExt}`;
+			const { error: uploadError } = await supabase.storage.from('resumes').upload(filePath, file, { upsert: true });
+			if (uploadError) {
+				alert('Failed to upload file to storage.');
+				setIsUploading(false);
+				return;
+			}
+			// Get public URL
+			const { data: publicUrlData } = supabase.storage.from('resumes').getPublicUrl(filePath);
+			// Store metadata in resumes table
+			const { error: dbError } = await supabase.from('resumes').insert([
+				{
+					user_id: userId,
+					file_url: publicUrlData.publicUrl,
+					file_name: file.name,
+					job_role: jobRole,
+					uploaded_at: new Date().toISOString(),
+				},
+			]);
+			if (dbError) {
+				alert('Failed to save resume metadata.');
+				setIsUploading(false);
+				return;
+			}
 			setUploadedFile({
 				name: file.name,
 				size: file.size,
 				type: file.type,
-				file: file, // Store the actual file for processing
+				file: file,
+				url: publicUrlData.publicUrl,
 			});
+		} catch (err) {
+			alert('Resume upload failed.');
+		} finally {
 			setIsUploading(false);
-		}, 2000);
+		}
 	};
 
 	const removeFile = () => {
@@ -197,6 +236,22 @@ export default function OverviewTab({ user }) {
 		}
 	};
 
+	// Fetch user's uploaded resumes
+	useEffect(() => {
+		async function fetchResumes() {
+			const supabase = createClientForBrowser();
+			const { data: userData } = await supabase.auth.getUser();
+			if (!userData?.user) return;
+			const { data, error } = await supabase
+				.from('resumes')
+				.select('*')
+				.eq('user_id', userData.user.id)
+				.order('uploaded_at', { ascending: false });
+			if (!error && data) setUserResumes(data);
+		}
+		fetchResumes();
+	}, [isUploading, uploadedFile]);
+
 	return (
 		<div className="space-y-6">
 			<div>
@@ -239,8 +294,8 @@ export default function OverviewTab({ user }) {
 			</div>
 
 			{/* Resume Upload Section */}
-			<div className="bg-[#18191b] rounded-lg p-6 border border-gray-700">
-				<h3 className="text-lg font-semibold text-cyan-400 mb-4">
+			<div className="bg-white dark:bg-[#18191b] rounded-lg p-6 border border-gray-300 dark:border-gray-700 transition-colors duration-300">
+				<h3 className="text-lg font-semibold text-cyan-600 dark:text-cyan-400 mb-4">
 					📄 Upload Your Resume below
 				</h3>
 
@@ -251,14 +306,16 @@ export default function OverviewTab({ user }) {
 						onDrop={handleDrop}
 						className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${
 							isDragOver
-								? "border-cyan-400 bg-cyan-900/20"
-								: "border-gray-600 hover:border-cyan-400"
+								? "border-cyan-400 bg-cyan-100 dark:bg-cyan-900/20"
+								: "border-gray-300 dark:border-gray-600 hover:border-cyan-400"
 						}`}
+						onClick={() => document.getElementById('file-upload')?.click()}
+						style={{ cursor: 'pointer' }}
 					>
 						<CloudArrowUpIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-						<div className="text-white mb-2">
+						<div className="text-gray-700 dark:text-white mb-2">
 							<label htmlFor="file-upload" className="cursor-pointer">
-								<span className="font-medium text-cyan-400 hover:text-cyan-300">
+								<span className="font-medium text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300">
 									Click to upload
 								</span>{" "}
 								or drag and drop
@@ -272,18 +329,18 @@ export default function OverviewTab({ user }) {
 								onChange={handleFileSelect}
 							/>
 						</div>
-						<p className="text-xs text-gray-400">
+						<p className="text-xs text-gray-500 dark:text-gray-400">
 							PDF, DOC, or DOCX up to 10MB
 						</p>
 					</div>
 				) : (
-					<div className="bg-[#232323] rounded-lg p-4 border border-gray-600">
+					<div className="bg-gray-100 dark:bg-[#232323] rounded-lg p-4 border border-gray-300 dark:border-gray-600 transition-colors duration-300">
 						<div className="flex items-center justify-between">
 							<div className="flex items-center space-x-3">
-								<DocumentTextIcon className="h-8 w-8 text-cyan-400" />
+								<DocumentTextIcon className="h-8 w-8 text-cyan-600 dark:text-cyan-400" />
 								<div>
-									<p className="text-white font-medium">{uploadedFile.name}</p>
-									<p className="text-sm text-gray-400">
+									<p className="text-gray-900 dark:text-white font-medium">{uploadedFile.name}</p>
+									<p className="text-sm text-gray-500 dark:text-gray-400">
 										{(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
 									</p>
 								</div>
@@ -394,6 +451,32 @@ export default function OverviewTab({ user }) {
 					</div>
 				)}
 			</div>
+
+			{/* Uploaded Resumes List */}
+			{userResumes.length > 0 && (
+				<div className="mt-8">
+					<h4 className="text-md font-semibold text-cyan-600 dark:text-cyan-400 mb-2">Your Uploaded Resumes</h4>
+					<ul className="divide-y divide-gray-300 dark:divide-gray-700">
+						{userResumes.map((resume) => (
+							<li key={resume.id} className="py-2 flex items-center justify-between">
+								<div>
+									<span className="font-medium text-gray-900 dark:text-white">{resume.file_name}</span>
+									<span className="ml-2 text-xs text-gray-500">({resume.job_role})</span>
+									<span className="ml-2 text-xs text-gray-400">{new Date(resume.uploaded_at).toLocaleString()}</span>
+								</div>
+								<a
+									href={resume.file_url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-cyan-500 hover:underline text-sm font-semibold"
+								>
+									View
+								</a>
+							</li>
+						))}
+					</ul>
+				</div>
+			)}
 
 			{/* Quick Actions */}
 			{/* <div className="grid grid-cols-1 md:grid-cols-1 gap-4">

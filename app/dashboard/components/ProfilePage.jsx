@@ -35,6 +35,7 @@ export default function ProfilePage({ user, onBack }) {
 	const [profilePhoto, setProfilePhoto] = useState(null);
 	const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [subscriptionType, setSubscriptionType] = useState('');
 	const router = useRouter();
 
 	// Always fetch profile data from Supabase on mount and on auth state change
@@ -65,6 +66,7 @@ export default function ProfilePage({ user, onBack }) {
 					skills: profileRow.skills || [],
 					interests: profileRow.interests || []
 				});
+				setSubscriptionType(profileRow.subscription_type || 'Free');
 			}
 		};
 		fetchProfile();
@@ -273,6 +275,7 @@ export default function ProfilePage({ user, onBack }) {
 							<h3 className="text-2xl font-bold text-white">{profileData.name}</h3>
 						)}
 						<p className="text-gray-400">{profileData.email}</p>
+						<p className="text-gray-400 mt-2">Subscription: <span className="font-bold text-cyan-400">{subscriptionType}</span></p>
 					</div>
 				</div>
 

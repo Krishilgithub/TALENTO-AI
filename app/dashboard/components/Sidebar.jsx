@@ -53,7 +53,7 @@ export default function Sidebar({
 
 	return (
 		<aside
-			className={`fixed left-0 top-0 h-full bg-gradient-to-b from-[#18191b] via-[#181b22] to-[#101113] border-r border-gray-800 flex flex-col shadow-xl transition-all duration-300 ease-in-out z-50
+			className={`fixed left-0 top-0 h-full overflow-y-auto bg-gradient-to-b from-[#18191b] via-[#181b22] to-[#101113] border-r border-gray-800 flex flex-col shadow-xl transition-all duration-300 ease-in-out z-50
 			${sidebarOpen ? "w-72 px-5 py-8" : "w-16 px-0 py-4"}`}
 		>
 			{/* Hamburger Menu Button (always visible) */}
@@ -71,7 +71,7 @@ export default function Sidebar({
 				)}
 			</button>
 
-			{/* Logo (only when open) */}
+			{/* Sidebar Content (static, scrolls if needed) */}
 			{sidebarOpen && (
 				<div className="flex items-center mb-10 mt-2">
 					<span className="text-2xl font-extrabold text-white tracking-wide">
@@ -79,7 +79,6 @@ export default function Sidebar({
 					</span>
 				</div>
 			)}
-
 			{/* Profile Avatar and Badges (only when open) */}
 			{sidebarOpen && (
 				<>
