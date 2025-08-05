@@ -36,7 +36,7 @@ parser = StrOutputParser()
 
 # Prompt template for communication assessment
 communication_assessment_template = """
-You are an expert communication skills assessor. Generate {num_questions} communication scenarios for {job_role} position.
+You are an expert communication skills assessor. Generate {num_questions} communication scenarios with {difficulty} difficulty level.
 
 Cover these communication skills:
 1. Written communication
@@ -46,16 +46,21 @@ Cover these communication skills:
 5. Team collaboration
 6. Client communication
 
+For {difficulty} difficulty:
+- Easy: Basic communication scenarios, straightforward situations
+- Moderate: Intermediate complexity, some critical thinking required
+- Hard: Complex scenarios, advanced communication skills required
+
 Format each scenario as:
 Scenario {{number}}: [Real-world communication scenario]
 Skill: [Specific communication skill being tested]
 Question: [What would you do in this situation?]
 
-Make scenarios relevant to {job_role} and realistic workplace situations.
+Make scenarios realistic workplace situations with {difficulty} difficulty level.
 """
 
 communication_assessment_prompt = PromptTemplate(
-    input_variables=["job_role", "num_questions"],
+    input_variables=["num_questions", "difficulty"],
     template=communication_assessment_template
 )
 
@@ -64,14 +69,14 @@ communication_assessment_chain = None
 if model:
     communication_assessment_chain = RunnableSequence(communication_assessment_prompt | model | parser)
 
-def generate_communication_test(job_role: str = "Software Engineer", num_questions: int = 10) -> dict:
+def generate_communication_test(num_questions: int = 10, difficulty: str = "moderate") -> dict:
     try:
         if communication_assessment_chain:
-            result = communication_assessment_chain.invoke({"job_role": job_role, "num_questions": num_questions})
+            result = communication_assessment_chain.invoke({"num_questions": num_questions, "difficulty": difficulty})
             return {
                 "questions": result,
-                "job_role": job_role,
                 "total_questions": num_questions,
+                "difficulty": difficulty,
                 "status": "success"
             }
         else:
@@ -102,8 +107,8 @@ def generate_communication_test(job_role: str = "Software Engineer", num_questio
             # Return only the requested number of questions
             return {
                 "questions": fallback_questions[:min(num_questions, len(fallback_questions))],
-                "job_role": job_role,
                 "total_questions": min(num_questions, len(fallback_questions)),
+                "difficulty": difficulty,
                 "status": "fallback"
             }
     except Exception as e:

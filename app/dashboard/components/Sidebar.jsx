@@ -36,7 +36,7 @@ export default function Sidebar({
 			name: "Take Assessment",
 			icon: ClipboardDocumentListIcon,
 		},
-		{ id: "practice", name: "Practice Sessions", icon: PlayCircleIcon },
+		// { id: "practice", name: "Practice Sessions", icon: PlayCircleIcon }, // Commented out practice sessions
 		{ id: "progress", name: "Progress", icon: ArrowTrendingUpIcon },
 		{ id: "jobsearch", name: "Job Search", icon: BriefcaseIcon },
 		{
@@ -53,7 +53,7 @@ export default function Sidebar({
 
 	return (
 		<aside
-			className={`fixed left-0 top-0 h-full overflow-y-auto bg-gradient-to-b from-[#18191b] via-[#181b22] to-[#101113] border-r border-gray-800 flex flex-col shadow-xl transition-all duration-300 ease-in-out z-50
+			className={`fixed left-0 top-0 h-full bg-gradient-to-b from-gray-100 via-gray-200 to-gray-300 dark:from-[#18191b] dark:via-[#181b22] dark:to-[#101113] border-r border-gray-300 dark:border-gray-800 flex flex-col shadow-xl transition-all duration-300 ease-in-out z-50
 			${sidebarOpen ? "w-72 px-5 py-8" : "w-16 px-0 py-4"}`}
 		>
 			{/* Hamburger Menu Button (always visible) */}
@@ -74,7 +74,7 @@ export default function Sidebar({
 			{/* Sidebar Content (static, scrolls if needed) */}
 			{sidebarOpen && (
 				<div className="flex items-center mb-10 mt-2">
-					<span className="text-2xl font-extrabold text-white tracking-wide">
+					<span className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-wide">
 						TALENTO <span className="text-cyan-400">AI</span>
 					</span>
 				</div>
@@ -90,7 +90,7 @@ export default function Sidebar({
 						>
 							{getInitialFromName(user?.name)}
 						</button>
-						<p className="text-white font-semibold text-lg mt-3">{user.name}</p>
+						<p className="text-gray-900 dark:text-white font-semibold text-lg mt-3">{user.name}</p>
 					</div>
 					<div className="mb-8 flex flex-row items-center justify-center space-x-3 w-full">
 						<span className="flex items-center bg-gradient-to-r from-cyan-900 to-blue-900 text-cyan-300 px-3 py-2 rounded-lg font-semibold text-sm border border-cyan-700 shadow-md">
@@ -104,7 +104,10 @@ export default function Sidebar({
 						</span>
 					</div>
 					<div className="flex w-full space-x-2 mt-2 mb-8">
-						<button className="flex-1 bg-gradient-to-r from-cyan-700 to-blue-700 border border-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-all duration-200 flex items-center justify-center shadow-md hover:scale-105">
+						<button 
+							onClick={() => setActiveTab("referral")}
+							className="flex-1 bg-gradient-to-r from-cyan-700 to-blue-700 border border-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-400 hover:text-black transition-all duration-200 flex items-center justify-center shadow-md hover:scale-105"
+						>
 							Referral
 						</button>
 						<button
@@ -141,7 +144,7 @@ export default function Sidebar({
 									${
 										activeTab === tab.id
 											? "bg-gradient-to-r from-cyan-900 to-blue-900 text-cyan-400 shadow-lg border border-cyan-700"
-											: "text-gray-300 hover:bg-[#23272f] hover:text-cyan-300 hover:shadow-md"
+											: "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#23272f] hover:text-cyan-300 hover:shadow-md"
 									}
 								`}
 									title={tab.name}

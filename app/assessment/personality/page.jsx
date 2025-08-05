@@ -9,6 +9,7 @@ import {
 	ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function PersonalityAssessmentPage() {
 	const router = useRouter();
@@ -304,6 +305,21 @@ export default function PersonalityAssessmentPage() {
 	return (
 		<div className="min-h-screen bg-[#101113] py-12 px-4">
 			<div className="max-w-4xl mx-auto">
+				{/* Back Button */}
+				<motion.div
+					initial={{ opacity: 0, y: -20 }}
+					animate={{ opacity: 1, y: 0 }}
+					className="mb-6"
+				>
+					<Link
+						href="/dashboard?tab=assessment"
+						className="inline-flex items-center text-purple-400 hover:text-purple-300 transition-colors bg-purple-900/20 px-4 py-2 rounded-lg border border-purple-400 hover:bg-purple-900/30"
+					>
+						<ArrowLeftIcon className="w-5 h-5 mr-2" />
+						Back
+					</Link>
+				</motion.div>
+
 				{/* Header */}
 				<motion.div
 					initial={{ opacity: 0, y: -20 }}
@@ -560,11 +576,11 @@ export default function PersonalityAssessmentPage() {
 								Take Assessment Again
 							</button>
 							<button
-								onClick={() => router.push("/assessment")}
+								onClick={() => router.push("/dashboard?tab=assessment")}
 								className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
 							>
 								<ArrowLeftIcon className="h-4 w-4" />
-								<span>Back to Assessments</span>
+								<span>Back to Dashboard</span>
 							</button>
 						</div>
 					</motion.div>

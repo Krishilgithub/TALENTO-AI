@@ -36,7 +36,7 @@ parser = StrOutputParser()
 
 # Prompt template for technical assessment
 technical_assessment_template = """
-You are an expert technical interviewer. Generate {num_questions} technical multiple-choice questions for {job_role} position.
+You are an expert technical interviewer. Generate {num_questions} technical multiple-choice questions for {job_role} position with {difficulty} difficulty level.
 
 Cover these technical areas:
 1. Programming fundamentals
@@ -48,6 +48,11 @@ Cover these technical areas:
 7. Problem-solving
 8. Best practices
 
+For {difficulty} difficulty:
+- Easy: Basic concepts, fundamental knowledge
+- Moderate: Intermediate complexity, practical application
+- Hard: Advanced concepts, deep technical knowledge required
+
 Format each question as:
 Q{{number}}. [Technical question]
 A) [Option A]
@@ -57,11 +62,11 @@ D) [Option D]
 Correct Answer: [A/B/C/D]
 Explanation: [Brief technical explanation]
 
-Make questions relevant to {job_role} and varying difficulty levels.
+Make questions relevant to {job_role} and {difficulty} difficulty level.
 """
 
 technical_assessment_prompt = PromptTemplate(
-    input_variables=["job_role", "num_questions"],
+    input_variables=["job_role", "num_questions", "difficulty"],
     template=technical_assessment_template
 )
 
@@ -70,14 +75,15 @@ technical_assessment_chain = None
 if model:
     technical_assessment_chain = RunnableSequence(technical_assessment_prompt | model | parser)
 
-def generate_technical_mcqs(job_role: str = "Software Engineer", num_questions: int = 10) -> dict:
+def generate_technical_mcqs(job_role: str = "Software Engineer", num_questions: int = 10, difficulty: str = "moderate") -> dict:
     try:
         if technical_assessment_chain:
-            result = technical_assessment_chain.invoke({"job_role": job_role, "num_questions": num_questions})
+            result = technical_assessment_chain.invoke({"job_role": job_role, "num_questions": num_questions, "difficulty": difficulty})
             return {
                 "questions": result,
                 "job_role": job_role,
                 "total_questions": num_questions,
+                "difficulty": difficulty,
                 "status": "success"
             }
         else:
@@ -120,6 +126,7 @@ def generate_technical_mcqs(job_role: str = "Software Engineer", num_questions: 
                 "questions": fallback_questions[:min(num_questions, len(fallback_questions))],
                 "job_role": job_role,
                 "total_questions": min(num_questions, len(fallback_questions)),
+                "difficulty": difficulty,
                 "status": "fallback"
             }
     except Exception as e:
