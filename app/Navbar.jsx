@@ -2,6 +2,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import ThemeToggle from "./components/ThemeToggle";
+import { useTheme } from "./context/ThemeContext";
 
 const navLinks = [
 	{ label: "Features", href: "#features" },
@@ -13,12 +15,19 @@ const navLinks = [
 
 export default function Navbar() {
 	const [open, setOpen] = useState(false);
+	const { isDark } = useTheme();
+	
 	return (
-		<nav className="floating-navbar">
+		<nav className={`floating-navbar bg-white/80 dark:bg-[#101113]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors duration-300 ${isDark ? 'dark' : 'light'}`}>
 			<div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3">
 				<div className="flex items-center gap-2">
 					<Link href="/">
-						<Image src="/resume2.png" alt="Logo" width={30} height={30} />
+						<div className="flex items-center space-x-2">
+							<Image src="/logo.svg" alt="Talento AI" width={32} height={32} />
+							<span className="text-xl font-bold text-gray-900 dark:text-white">
+								TALENTO <span className="text-cyan-400">AI</span>
+							</span>
+						</div>
 					</Link>
 				</div>
 
@@ -27,14 +36,15 @@ export default function Navbar() {
 						<a
 							key={link.label}
 							href={link.href}
-							className="px-4 py-2 rounded-full transition font-semibold text-white hover:bg-[#232323]"
+							className="px-4 py-2 rounded-full transition font-semibold text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-[#232323]"
 						>
 							{link.label}
 						</a>
 					))}
+					<ThemeToggle />
 					<Link
 						href="/login"
-						className="text-white px-4 py-2 rounded-full hover:bg-[#232323]"
+						className="text-gray-700 dark:text-white px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#232323]"
 					>
 						Login
 					</Link>
@@ -46,7 +56,7 @@ export default function Navbar() {
 					</Link>
 				</div>
 				<button
-					className="lg:hidden flex items-center text-white focus:outline-none"
+					className="lg:hidden flex items-center text-gray-700 dark:text-white focus:outline-none"
 					onClick={() => setOpen((o) => !o)}
 					aria-label="Open menu"
 				>
@@ -62,12 +72,12 @@ export default function Navbar() {
 			</div>
 			{/* Mobile menu */}
 			{open && (
-				<div className="lg:hidden bg-[#101113] border-t border-gray-800 px-4 pb-4 flex flex-col gap-2 rounded-b-2xl">
+				<div className="lg:hidden bg-white dark:bg-[#101113] border-t border-gray-200 dark:border-gray-800 px-4 pb-4 flex flex-col gap-2 rounded-b-2xl">
 					{navLinks.map((link) => (
 						<a
 							key={link.label}
 							href={link.href}
-							className="block px-4 py-2 rounded-full transition font-semibold text-white hover:bg-[#232323]"
+							className="block px-4 py-2 rounded-full transition font-semibold text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-[#232323]"
 							onClick={() => setOpen(false)}
 						>
 							{link.label}
@@ -75,7 +85,7 @@ export default function Navbar() {
 					))}
 					<Link
 						href="/login"
-						className="text-white px-4 py-2 rounded-full hover:bg-[#232323]"
+						className="text-gray-700 dark:text-white px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#232323]"
 						onClick={() => setOpen(false)}
 					>
 						Login

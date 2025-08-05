@@ -3,12 +3,14 @@
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { CodeBracketIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import { CodeBracketIcon, CheckCircleIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import createClientForBrowser from "@/utils/supabase/client";
+import Link from "next/link";
 
 export default function TechnicalAssessmentPage() {
 	const [jobRole, setJobRole] = useState("Software Engineer");
 	const [numQuestions, setNumQuestions] = useState(10);
+	const [difficulty, setDifficulty] = useState("moderate");
 	const [questions, setQuestions] = useState([]);
 	const [userAnswers, setUserAnswers] = useState([]);
 	const [submitted, setSubmitted] = useState(false);
@@ -31,6 +33,7 @@ export default function TechnicalAssessmentPage() {
 			const formData = new FormData();
 			formData.append("job_role", jobRole);
 			formData.append("num_questions", numQuestions);
+			formData.append("difficulty", difficulty);
 
 			console.log(
 				"Making API call to:",
@@ -243,6 +246,21 @@ export default function TechnicalAssessmentPage() {
 	return (
 		<div className="min-h-screen bg-[#101113] py-12 px-4">
 			<div className="max-w-4xl mx-auto">
+				{/* Back Button */}
+				<motion.div
+					initial={{ opacity: 0, y: -20 }}
+					animate={{ opacity: 1, y: 0 }}
+					className="mb-6"
+				>
+					<Link
+						href="/dashboard?tab=assessment"
+						className="inline-flex items-center text-green-400 hover:text-green-300 transition-colors bg-green-900/20 px-4 py-2 rounded-lg border border-green-400 hover:bg-green-900/30"
+					>
+						<ArrowLeftIcon className="w-5 h-5 mr-2" />
+						Back
+					</Link>
+				</motion.div>
+
 				{/* Header */}
 				<motion.div
 					initial={{ opacity: 0, y: -20 }}
@@ -268,7 +286,7 @@ export default function TechnicalAssessmentPage() {
 						animate={{ opacity: 1, y: 0 }}
 						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mb-8"
 					>
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 							<div>
 								<label className="block text-green-400 font-semibold mb-2">
 									Job Role
@@ -293,6 +311,20 @@ export default function TechnicalAssessmentPage() {
 									onChange={(e) => setNumQuestions(Number(e.target.value))}
 									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
 								/>
+							</div>
+							<div>
+								<label className="block text-green-400 font-semibold mb-2">
+									Difficulty Level
+								</label>
+								<select
+									value={difficulty}
+									onChange={(e) => setDifficulty(e.target.value)}
+									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+								>
+									<option value="easy">Easy</option>
+									<option value="moderate">Moderate</option>
+									<option value="hard">Hard</option>
+								</select>
 							</div>
 						</div>
 						<button

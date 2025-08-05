@@ -36,7 +36,7 @@ parser = StrOutputParser()
 
 # Prompt template for aptitude assessment
 aptitude_assessment_template = """
-You are an expert aptitude test creator. Generate {num_questions} multiple-choice aptitude questions for {job_role} position.
+You are an expert aptitude test creator. Generate {num_questions} multiple-choice aptitude questions for {job_role} position with {difficulty} difficulty level.
 
 Cover these areas:
 1. Logical reasoning
@@ -45,6 +45,11 @@ Cover these areas:
 4. Abstract thinking
 5. Problem-solving
 6. Critical thinking
+
+For {difficulty} difficulty:
+- Easy: Basic concepts, straightforward questions
+- Moderate: Intermediate complexity, some analytical thinking required
+- Hard: Advanced concepts, complex problem-solving required
 
 Format each question as:
 Q{{number}}. [Question text]
@@ -55,11 +60,11 @@ D) [Option D]
 Correct Answer: [A/B/C/D]
 Explanation: [Brief explanation]
 
-Make questions relevant to {job_role} and varying difficulty levels.
+Make questions relevant to {job_role} and {difficulty} difficulty level.
 """
 
 aptitude_assessment_prompt = PromptTemplate(
-    input_variables=["job_role", "num_questions"],
+    input_variables=["job_role", "num_questions", "difficulty"],
     template=aptitude_assessment_template
 )
 
@@ -68,14 +73,15 @@ aptitude_assessment_chain = None
 if model:
     aptitude_assessment_chain = RunnableSequence(aptitude_assessment_prompt | model | parser)
 
-def generate_aptitude_mcqs(job_role: str = "Software Engineer", num_questions: int = 10) -> dict:
+def generate_aptitude_mcqs(job_role: str = "Software Engineer", num_questions: int = 10, difficulty: str = "moderate") -> dict:
     try:
         if aptitude_assessment_chain:
-            result = aptitude_assessment_chain.invoke({"job_role": job_role, "num_questions": num_questions})
+            result = aptitude_assessment_chain.invoke({"job_role": job_role, "num_questions": num_questions, "difficulty": difficulty})
             return {
                 "questions": result,
                 "job_role": job_role,
                 "total_questions": num_questions,
+                "difficulty": difficulty,
                 "status": "success"
             }
         else:
@@ -118,6 +124,7 @@ def generate_aptitude_mcqs(job_role: str = "Software Engineer", num_questions: i
                 "questions": fallback_questions[:min(num_questions, len(fallback_questions))],
                 "job_role": job_role,
                 "total_questions": min(num_questions, len(fallback_questions)),
+                "difficulty": difficulty,
                 "status": "fallback"
             }
     except Exception as e:
