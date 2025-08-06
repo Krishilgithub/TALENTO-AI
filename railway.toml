@@ -3,11 +3,12 @@
 
 [build]
 builder = "nixpacks"
+buildCommand = "cd 'Models/Assessment models' && python deploy_test.py"
 
 [deploy]
-startCommand = "uvicorn test_app:app --host 0.0.0.0 --port $PORT"
+startCommand = "cd 'Models/Assessment models' && python start.py"
 healthcheckPath = "/"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
 
