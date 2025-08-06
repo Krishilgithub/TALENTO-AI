@@ -5,7 +5,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "cd 'Models/Assessment models' && python start.py"
+startCommand = "python deploy_railway.py"
 healthcheckPath = "/"
 healthcheckTimeout = 60
 restartPolicyType = "on_failure"
