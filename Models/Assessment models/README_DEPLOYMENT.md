@@ -1,56 +1,95 @@
-# Railway Deployment - FIXED VERSION
+# Railway Deployment Guide for Talento AI
 
-## What I Fixed
+## Issues Fixed
 
-The deployment was failing because of complex imports and dependencies. I've created a **minimal working version** that will definitely deploy successfully.
+### 1. **Missing Dependencies**
 
-## Key Changes
+- **Problem**: `requirements.txt` only had Flask, but the app uses FastAPI
+- **Solution**: Updated to include `fastapi`, `uvicorn[standard]`, and `python-multipart`
 
-1. **Created `app.py`** - A simple FastAPI app with only essential endpoints
-2. **Minimal `requirements.txt`** - Only 3 essential dependencies
-3. **Updated `Procfile`** - Uses the simple app.py
-4. **Updated `railway.json`** - Uses the simple app.py
+### 2. **Wrong Working Directory**
 
-## Files Changed
+- **Problem**: Railway was trying to run from root directory instead of the Assessment models directory
+- **Solution**: Updated `railway.toml` to `cd` into the correct directory
 
-- ✅ `app.py` - NEW simple FastAPI app
-- ✅ `Procfile` - Updated to use app.py
-- ✅ `railway.json` - Updated to use app.py
-- ✅ `requirements.txt` - Minimal dependencies only
-- ✅ `test_deployment.py` - Test script to verify setup
+### 3. **Health Check Timeout**
+
+- **Problem**: 30-second timeout was too short for initial startup
+- **Solution**: Increased to 60 seconds
+
+### 4. **Missing Error Handling**
+
+- **Problem**: No proper logging or error handling for debugging
+- **Solution**: Added comprehensive logging and startup script
+
+## Files Updated
+
+1. **`requirements.txt`** - Added FastAPI dependencies
+2. **`railway.toml`** - Fixed working directory and timeout
+3. **`test_app.py`** - Added logging and better error handling
+4. **`start.py`** - New startup script with dependency checking
+5. **`deploy_test.py`** - New deployment test script
+6. **`Procfile`** - Updated to use startup script
+7. **`runtime.txt`** - Specified Python version
 
 ## Deployment Steps
 
-1. **Push these changes to your repository**
-2. **Deploy to Railway** - Should work immediately
-3. **Test the endpoints** after deployment
+1. **Push to Railway**: The deployment should now work automatically
+2. **Monitor Logs**: Check Railway logs for any startup issues
+3. **Test Endpoints**: Verify `/`, `/health`, and `/test` endpoints work
 
-## What This Will Do
+## Troubleshooting
 
-- ✅ **Start in under 30 seconds**
-- ✅ **Pass all health checks**
-- ✅ **Provide basic API endpoints**
-- ✅ **No complex dependencies**
+### If deployment still fails:
 
-## Test Endpoints
+1. **Check Railway Logs**:
 
-After deployment, test:
+   ```bash
+   railway logs
+   ```
 
-- `GET /` - Health check
-- `GET /health` - Health check
-- `GET /test` - Test endpoint
-- `POST /api/assessment/technical_assessment/` - Sample assessment
+2. **Test Locally**:
 
-## Next Steps
+   ```bash
+   cd "Models/Assessment models"
+   python deploy_test.py
+   python start.py
+   ```
 
-Once this basic version is working, we can gradually add back the AI features one by one.
+3. **Verify Dependencies**:
 
-## Why This Will Work
+   ```bash
+   pip install -r requirements.txt
+   python -c "import fastapi, uvicorn; print('Dependencies OK')"
+   ```
 
-- No complex imports that can fail
-- No external API dependencies
-- No heavy ML libraries
-- Simple, proven FastAPI setup
-- Railway-tested configuration
+4. **Check Environment**:
+   - Ensure `PORT` environment variable is set
+   - Verify Python 3.11 is available
 
-**This will definitely deploy successfully!**
+### Common Issues:
+
+1. **"Service Unavailable"**: Usually means the app isn't starting properly
+2. **"Health Check Failed"**: App is running but not responding on the health check path
+3. **"Build Failed"**: Missing dependencies or syntax errors
+
+## Health Check Endpoints
+
+- `/` - Main health check (returns JSON with status)
+- `/health` - Alternative health check
+- `/test` - Test endpoint
+
+All endpoints should return JSON responses indicating the service is running.
+
+## Environment Variables
+
+- `PORT` - Railway sets this automatically
+- `PYTHON_VERSION` - Set to 3.11
+
+## Monitoring
+
+The app now includes comprehensive logging:
+
+- Startup logs show port and environment info
+- Each endpoint call is logged
+- Error messages are detailed for debugging
