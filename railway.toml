@@ -3,10 +3,9 @@
 
 [build]
 builder = "nixpacks"
-buildCommand = "cd 'Models/Assessment models' && python deploy_test.py"
 
 [deploy]
-startCommand = "cd 'Models/Assessment models' && python start.py"
+startCommand = "cd 'Models/Assessment models' && pip install -r requirements.txt && python start.py"
 healthcheckPath = "/"
 healthcheckTimeout = 60
 restartPolicyType = "on_failure"
