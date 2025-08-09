@@ -124,23 +124,23 @@ export default function OverviewTab({ user }) {
 			const userId = userData.user.id;
 			// Upload to Supabase Storage
 			const fileExt = file.name.split('.').pop();
-			const filePath = `resumes/${userId}/${Date.now()}.${fileExt}`;
-			const { error: uploadError } = await supabase.storage.from('resumes').upload(filePath, file, { upsert: true });
+			const filePath = `resume/${userId}/${Date.now()}.${fileExt}`;
+			const { error: uploadError } = await supabase.storage.from('resume').upload(filePath, file, { upsert: true });
 			if (uploadError) {
-				alert('Failed to upload file to storage.');
+				alert('Failed to upload file to storage. ' + uploadError.message);
 				setIsUploading(false);
 				return;
 			}
 			// Get public URL
-			const { data: publicUrlData } = supabase.storage.from('resumes').getPublicUrl(filePath);
-			// Store metadata in resumes table
-			const { error: dbError } = await supabase.from('resumes').insert([
+			const { data: publicUrlData } = supabase.storage.from('resume').getPublicUrl(filePath);
+			// Store metadata in user_resume table
+			const { error: dbError } = await supabase.from('user_resume').insert([
 				{
 					user_id: userId,
 					file_url: publicUrlData.publicUrl,
-					file_name: file.name,
-					job_role: jobRole,
 					uploaded_at: new Date().toISOString(),
+					is_active: true,
+					analysis_output: null, // or remove if not needed
 				},
 			]);
 			if (dbError) {
@@ -243,7 +243,7 @@ export default function OverviewTab({ user }) {
 			const { data: userData } = await supabase.auth.getUser();
 			if (!userData?.user) return;
 			const { data, error } = await supabase
-				.from('resumes')
+				.from('user_resume')
 				.select('*')
 				.eq('user_id', userData.user.id)
 				.order('uploaded_at', { ascending: false });
