@@ -53,9 +53,7 @@ export const middleware = async request => {
 
     if (isProtectedRoute) {
       if (session.error) {
-        const loginUrl = new URL('/login', request.url)
-        loginUrl.searchParams.set('next', pathname)
-        return NextResponse.redirect(loginUrl)
+        return NextResponse.redirect(new URL('/warning', request.url))
       }
       // Onboarding check for protected routes
       if (!session.data?.user?.user_metadata?.onboarded && pathname !== '/onboarding') {

@@ -55,7 +55,7 @@ export default function LoginPage() {
 		if (!validateForm()) return;
 
 		setIsLoading(true);
-        const result = await signinWithEmailPassword(formData);
+		const result = await signinWithEmailPassword(formData);
 
 		if (result.error) {
 			setErrors({ general: result.error });
@@ -74,14 +74,12 @@ export default function LoginPage() {
               setIsLoading(false);
               return;
             }
-            const params = new URLSearchParams(window.location.search);
-            const nextParam = params.get('next') || '/dashboard';
-            router.push(nextParam);
+			router.push('/dashboard');
 		}
 		setIsLoading(false);
 	};
 
-    const handleSocialSignIn = async (provider) => {
+	const handleSocialSignIn = async (provider) => {
 		setIsLoading(true);
 		const handler = {
 			google: signinWithGoogle,
@@ -90,10 +88,7 @@ export default function LoginPage() {
 
 		if (handler) {
 			try {
-                // Preserve intended next path if present in query (?next=...)
-                const params = new URLSearchParams(window.location.search);
-                const nextParam = params.get('next') || '/dashboard';
-                const { url, error } = await handler(nextParam);
+				const { url, error } = await handler();
 				if (error) {
 					setErrors({ general: `${provider} login failed.` });
 				} else {

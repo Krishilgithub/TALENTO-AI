@@ -23,11 +23,7 @@ export async function GET(request) {
       const forwardedHost = request.headers.get('x-forwarded-host');
       const isLocalEnv = process.env.NODE_ENV === 'development';
       let redirectUrl;
-      // If a safe "next" path is provided, honor it to control post-login redirect
-      const safeNext = typeof next === 'string' && next.startsWith('/') ? next : null;
-      if (safeNext) {
-        redirectUrl = safeNext;
-      } else if (emailConfirmedAt) {
+      if (emailConfirmedAt) {
         // Social login or already verified user
         redirectUrl = onboarded ? '/dashboard' : '/onboarding';
       } else {
