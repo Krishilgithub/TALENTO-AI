@@ -11,11 +11,11 @@ const getSiteUrl = () => {
     return 'http://localhost:3000';
 };
 
-const signInWith = (provider) => async () => {
+const signInWith = (provider) => async (nextPath = '/dashboard') => {
     const supabase = await createClientForServer();
 
     const siteUrl = getSiteUrl();
-    const auth_callback_url = `${siteUrl}/auth/callback?next=/dashboard`;
+    const auth_callback_url = `${siteUrl}/auth/callback?next=${encodeURIComponent(nextPath)}`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider,

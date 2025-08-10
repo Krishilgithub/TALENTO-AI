@@ -146,7 +146,7 @@ export default function SignupPage() {
 	};
 
 	// Replace the handleSocialSignIn function with the unified version
-	const handleSocialSignIn = async (provider) => {
+    const handleSocialSignIn = async (provider) => {
 		setIsLoading(true);
 		const handler = {
 			google: signinWithGoogle,
@@ -155,7 +155,9 @@ export default function SignupPage() {
 
 		if (handler) {
 			try {
-				const { url, error } = await handler();
+                const params = new URLSearchParams(window.location.search);
+                const nextParam = params.get('next') || '/dashboard';
+                const { url, error } = await handler(nextParam);
 				if (error) {
 					setErrors({ general: `${provider} sign-in failed.` });
 				} else {
