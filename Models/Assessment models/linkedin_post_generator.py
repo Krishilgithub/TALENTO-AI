@@ -1,13 +1,15 @@
 import os
 import requests
 from typing import Optional, Dict, Any
-from langchain_huggingface import HuggingFaceEndpoint
-from langchain.prompts import PromptTemplate
-from langchain.schema.runnable import RunnableSequence
-from langchain.schema.output_parser import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
+from llm_provider import get_chat_model
 
 load_dotenv()
+
+# Initialize model using OpenRouter
+model = get_chat_model()
 
 # LinkedIn API Configuration
 LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
@@ -118,18 +120,11 @@ def generate_linkedin_post(
     """
     Generate a LinkedIn post using AI
     """
+    print(f"🔄 Generating LinkedIn post: {post_type} about {topic}")
+    
     try:
-        # Check if HuggingFace token is available
-        huggingface_token = os.getenv("HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP")
-        
-        if huggingface_token:
-            # Use AI model to generate post
-            llm = HuggingFaceEndpoint(
-                repo_id="microsoft/DialoGPT-medium",
-                task="text-generation",
-                token=huggingface_token
-            )
-            
+        if model:
+            # Use OpenRouter AI model to generate post
             prompt_template = PromptTemplate(
                 input_variables=["post_type", "topic", "post_description"],
                 template="""
@@ -150,24 +145,32 @@ def generate_linkedin_post(
                 """
             )
             
-            chain = RunnableSequence(
-                prompt_template,
-                llm,
-                StrOutputParser()
-            )
-            
-            result = chain.invoke({
-                "post_type": post_type,
-                "topic": topic,
-                "post_description": post_description
-            })
-            
-            return {"post": result.strip()}
-            
+            try:
+                prompt = prompt_template.format(
+                    post_type=post_type,
+                    topic=topic,
+                    post_description=post_description
+                )
+                result = model.invoke(prompt)
+                
+                print("✅ AI LinkedIn post generated successfully!")
+                
+                return {
+                    "post_content": result.content,
+                    "source": "openrouter_ai",
+                    "post_type": post_type,
+                    "topic": topic,
+                    "status": "success"
+                }
+            except Exception as ai_error:
+                print(f"❌ AI generation failed: {ai_error}")
+                print("🔄 Falling back to template post...")
         else:
-            # Fallback posts when AI model is not available
-            fallback_posts = {
-                "Professional Insight": f"""🚀 {topic}: {post_description}
+            print("⚠️ No model available, using template post...")
+        
+        # Fallback template post
+        fallback_posts = {
+            "Professional Insight": f"""🚀 {topic}: {post_description}
 
 💡 Key insights to consider:
 • Stay updated with industry trends
@@ -218,8 +221,8 @@ What career advice would you give to someone starting out? 🤔""",
 Who has been your most valuable professional connection? Tag them below! 👇"""
             }
             
-            post_type_key = post_type if post_type in fallback_posts else "Professional Insight"
-            return {"post": fallback_posts[post_type_key]}
+        post_type_key = post_type if post_type in fallback_posts else "Professional Insight"
+        return {"post_content": fallback_posts[post_type_key], "source": "template", "status": "fallback"}
             
     except Exception as e:
         return {"error": f"Error generating LinkedIn post: {str(e)}"}

@@ -191,9 +191,9 @@ if IMPORTS_SUCCESSFUL:
             return JSONResponse(status_code=500, content={"error": str(e)})
 
     @app.post("/api/assessment/general_aptitude/")
-    async def general_aptitude(job_role: str = Form("Software Engineer"), num_questions: int = Form(10)):
+    async def general_aptitude(job_role: str = Form("Software Engineer"), num_questions: int = Form(10), difficulty: str = Form("moderate")):
         try:
-            result = generate_aptitude_mcqs(job_role, num_questions)
+            result = generate_aptitude_mcqs(job_role, num_questions, difficulty)
             return JSONResponse(content=result)
         except Exception as e:
             logger.error(f"Error in general_aptitude: {e}")

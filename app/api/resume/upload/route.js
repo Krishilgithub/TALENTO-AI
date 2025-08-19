@@ -6,16 +6,68 @@ export async function POST(req) {
     try {
         const formData = await req.formData();
         const file = formData.get("file");
+        const analysisType = formData.get("analysisType") || "resume_optimize";
+        const jobRole = formData.get("jobRole") || "Software Engineer";
+
         if (!file) {
             return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
         }
 
+        // Primary Method: Use FastAPI Backend for processing
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            
+            const fastApiFormData = new FormData();
+            fastApiFormData.append('file', file);
+            fastApiFormData.append('job_role', jobRole);
+
+            const endpoints = {
+                'resume_optimize': `${apiUrl}/api/assessment/resume_optimize/`,
+                'ats_score': `${apiUrl}/api/assessment/ats_score/`,
+                'domain_questions': `${apiUrl}/api/assessment/domain_questions/`
+            };
+
+            const endpoint = endpoints[analysisType] || endpoints['resume_optimize'];
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                body: fastApiFormData,
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                
+                return NextResponse.json({
+                    success: true,
+                    method: 'FastAPI',
+                    analysisType: analysisType,
+                    jobRole: jobRole,
+                    fileName: file.name,
+                    fileSize: file.size,
+                    fileType: file.type,
+                    result: result,
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                console.warn('FastAPI backend failed, falling back to Supabase storage...');
+            }
+        } catch (fastApiError) {
+            console.warn('FastAPI backend unavailable, falling back to Supabase storage:', fastApiError.message);
+        }
+
+        // Fallback Method: Use Supabase Storage (original code)
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
 
-        if (!supabaseUrl || !anonKey || !serviceRoleKey) {
-            return NextResponse.json({ error: "Supabase environment variables are not configured" }, { status: 500 });
+        if (!supabaseUrl || !anonKey) {
+            return NextResponse.json({ error: "Supabase configuration missing and FastAPI backend unavailable" }, { status: 500 });
+        }
+
+        if (!serviceRoleKey) {
+            return NextResponse.json({ 
+                error: "Service role key missing. Please configure SUPABASE_SERVICE_ROLE_KEY in environment variables or ensure FastAPI backend is running on port 8000" 
+            }, { status: 500 });
         }
 
         // Get the authenticated user from cookies using anon client
@@ -91,14 +143,23 @@ export async function POST(req) {
         }
 
         return NextResponse.json({
+            success: true,
+            method: 'Supabase',
             url: publicUrlData.publicUrl,
             path: filePath,
-            name: file.name,
-            size: file.size,
-            type: file.type,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            analysisType: analysisType,
+            jobRole: jobRole,
+            timestamp: new Date().toISOString()
         });
     } catch (error) {
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        console.error('Resume upload error:', error);
+        return NextResponse.json({ 
+            error: "Internal server error", 
+            details: error.message 
+        }, { status: 500 });
     }
 }
 

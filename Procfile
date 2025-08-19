@@ -1,1 +1,0 @@
-web: cd "Models/Assessment models" && python start.py 
