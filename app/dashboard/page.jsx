@@ -17,7 +17,6 @@ import Sidebar from "./components/Sidebar";
 import OverviewTab from "./components/OverviewTab";
 import InterviewPrepTab from "./components/InterviewPrepTab";
 import PracticeSessionsTab from "./components/PracticeSessionsTab";
-import ProgressTab from "./components/ProgressTab";
 import JobSearchTab from "./components/JobSearchTab";
 import ProfilePage from "./components/ProfilePage";
 import SubscriptionTab from "./components/SubscriptionTab";
@@ -214,7 +213,7 @@ export default function DashboardPage() {
 								{activeTab === "referral" && <ReferralTab />}
 								{/* {activeTab === "interviews" && <InterviewPrepTab />} */}
 								{/* {activeTab === "practice" && <PracticeSessionsTab />} */}
-								{activeTab === "progress" && <ProgressTab />}
+								{/* Progress tab removed; progress is now inside Assessment tab */}
 								{activeTab === "jobsearch" && <JobSearchTab />}
 								{activeTab === "linkedin-optimizer" && <LinkedInOptimizerTab />}
 								{activeTab === "linkedin-post-generator" && (

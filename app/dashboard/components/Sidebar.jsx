@@ -37,7 +37,6 @@ export default function Sidebar({
 			icon: ClipboardDocumentListIcon,
 		},
 		// { id: "practice", name: "Practice Sessions", icon: PlayCircleIcon }, // Commented out practice sessions
-		{ id: "progress", name: "Progress", icon: ArrowTrendingUpIcon },
 		{ id: "jobsearch", name: "Job Search", icon: BriefcaseIcon },
 		{
 			id: "linkedin-optimizer",

@@ -37,7 +37,7 @@ export async function POST(req) {
         }
 
         const extension = (file.name?.split(".").pop() || "").toLowerCase();
-        const filePath = `resume/${user.id}/${Date.now()}.${extension || "bin"}`;
+        const filePath = `${user.id}/${Date.now()}.${extension || "bin"}`;
 
         // Use service role client to bypass RLS for storage and DB insert
         const serviceClient = createServerClient(supabaseUrl, serviceRoleKey, {
@@ -46,6 +46,16 @@ export async function POST(req) {
                 setAll() { /* no-op */ },
             },
         });
+
+        // Ensure bucket exists (create if missing)
+        try {
+            const { data: bucketData, error: bucketError } = await serviceClient.storage.getBucket("resume");
+            if (bucketError || !bucketData) {
+                await serviceClient.storage.createBucket("resume", { public: true });
+            }
+        } catch (_) {
+            // ignore if bucket already exists or creation fails due to race; subsequent upload will surface errors
+        }
 
         const arrayBuffer = await file.arrayBuffer();
         const fileBuffer = Buffer.from(arrayBuffer);
@@ -82,6 +92,7 @@ export async function POST(req) {
 
         return NextResponse.json({
             url: publicUrlData.publicUrl,
+            path: filePath,
             name: file.name,
             size: file.size,
             type: file.type,
