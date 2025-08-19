@@ -35,6 +35,12 @@ export default function ProfilePage({ user, onBack }) {
 	const [profilePhoto, setProfilePhoto] = useState(null);
 	const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [showChangePassword, setShowChangePassword] = useState(false);
+	const [newPassword, setNewPassword] = useState('');
+	const [confirmPassword, setConfirmPassword] = useState('');
+	const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
+	const [passwordError, setPasswordError] = useState('');
+	const [passwordSuccess, setPasswordSuccess] = useState('');
 	const [subscriptionType, setSubscriptionType] = useState('');
 	const router = useRouter();
 
@@ -109,30 +115,73 @@ export default function ProfilePage({ user, onBack }) {
 		}
 	};
 
-	const handlePhotoUpload = (e) => {
-		const file = e.target.files[0];
-		if (file) {
-			if (file.size > 5 * 1024 * 1024) { // 5MB limit
-				alert("File size must be less than 5MB");
+	const handlePhotoUpload = async (e) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		if (file.size > 5 * 1024 * 1024) { // 5MB limit
+			alert('File size must be less than 5MB');
+			return;
+		}
+		if (!file.type.startsWith('image/')) {
+			alert('Please upload an image file');
+			return;
+		}
+		setIsPhotoUploading(true);
+		try {
+			const supabase = createClientForBrowser();
+			const { data: userData } = await supabase.auth.getUser();
+			if (!userData?.user) {
+				alert('Not authenticated');
+				setIsPhotoUploading(false);
 				return;
 			}
-			
-			if (!file.type.startsWith('image/')) {
-				alert("Please upload an image file");
+			const userId = userData.user.id;
+			const fileExt = file.name.split('.').pop();
+			const filePath = `avatars/${userId}/${Date.now()}.${fileExt}`;
+			const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
+			if (uploadError) {
+				alert('Upload failed: ' + uploadError.message);
+				setIsPhotoUploading(false);
 				return;
 			}
+			const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+			setProfilePhoto(publicUrlData.publicUrl);
+			// Update auth metadata and try to persist on users table as well
+			await supabase.auth.updateUser({ data: { avatar_url: publicUrlData.publicUrl } });
+			await supabase.from('users').update({ avatar_url: publicUrlData.publicUrl }).eq('id', userId);
+		} catch (err) {
+			alert('Unexpected error uploading avatar');
+		} finally {
+			setIsPhotoUploading(false);
+		}
+	};
 
-			setIsPhotoUploading(true);
-			
-			// Simulate photo upload
-			setTimeout(() => {
-				const reader = new FileReader();
-				reader.onload = (e) => {
-					setProfilePhoto(e.target.result);
-					setIsPhotoUploading(false);
-				};
-				reader.readAsDataURL(file);
-			}, 1500);
+	const handleChangePassword = async () => {
+		setPasswordError('');
+		setPasswordSuccess('');
+		if (!newPassword || !confirmPassword) {
+			setPasswordError('Please fill in both password fields.');
+			return;
+		}
+		if (newPassword !== confirmPassword) {
+			setPasswordError('Passwords do not match.');
+			return;
+		}
+		setIsPasswordUpdating(true);
+		try {
+			const supabase = createClientForBrowser();
+			const { error } = await supabase.auth.updateUser({ password: newPassword });
+			if (error) {
+				setPasswordError(error.message);
+			} else {
+				setPasswordSuccess('Password updated successfully.');
+				setNewPassword('');
+				setConfirmPassword('');
+			}
+		} catch (e) {
+			setPasswordError('Failed to update password.');
+		} finally {
+			setIsPasswordUpdating(false);
 		}
 	};
 
@@ -382,9 +431,28 @@ export default function ProfilePage({ user, onBack }) {
 			<div className="bg-[#232323] rounded-xl p-6 border border-gray-700">
 				<h4 className="text-lg font-semibold text-cyan-400 mb-4">Account Actions</h4>
 				<div className="space-y-3">
-					<button className="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-all duration-200 text-white">
-						Change Password
+					<button onClick={() => setShowChangePassword(v => !v)} className="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-all duration-200 text-white">
+						{showChangePassword ? 'Hide Change Password' : 'Change Password'}
 					</button>
+					{showChangePassword && (
+						<div className="rounded-lg border border-gray-700 p-4 bg-[#1d1f22] space-y-4">
+							<div>
+								<label htmlFor="new-password" className="block text-sm text-gray-300 mb-1">New Password</label>
+								<input id="new-password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-3 py-2 bg-[#121316] text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent" />
+							</div>
+							<div>
+								<label htmlFor="confirm-password" className="block text-sm text-gray-300 mb-1">Confirm Password</label>
+								<input id="confirm-password" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-3 py-2 bg-[#121316] text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent" />
+							</div>
+							<div className="flex items-center gap-3">
+								<button onClick={handleChangePassword} disabled={isPasswordUpdating} className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white font-medium transition disabled:opacity-50">
+									{isPasswordUpdating ? 'Updating...' : 'Update Password'}
+								</button>
+								{passwordError && <span className="text-sm text-red-400">{passwordError}</span>}
+								{passwordSuccess && <span className="text-sm text-cyan-400">{passwordSuccess}</span>}
+							</div>
+						</div>
+					)}
 					<button className="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-all duration-200 text-white">
 						Privacy Settings
 					</button>

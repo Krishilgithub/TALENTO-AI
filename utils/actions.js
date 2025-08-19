@@ -2,6 +2,7 @@
 
 import { createClientForServer } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
+import nodemailer from 'nodemailer';
 
 const getSiteUrl = () => {
     const explicitSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -85,19 +86,72 @@ const signinWithEmailPassword = async (formData) => {
 
 const sendResetPasswordEmail = async (prev, formData) => {
     const supabase = await createClientForServer();
-
+    const email = formData.get('email');
     const siteUrl = getSiteUrl();
-    const { error } = await supabase.auth.resetPasswordForEmail(
-        formData.get('email'),
-        { redirectTo: `${siteUrl}/reset/update-password` }
-    );
+    const redirectTo = `${siteUrl}/reset/update-password`;
 
-    if (error) {
-        console.log('error', error);
-        return { success: '', error: error.message };
+    // If SMTP is configured, generate a recovery link and send it via Nodemailer
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpFrom = process.env.SMTP_FROM;
+
+    try {
+        if (smtpHost && smtpPort && smtpUser && smtpPass && smtpFrom) {
+            // Generate recovery link with admin privileges
+            const { data, error } = await supabase.auth.admin.generateLink({
+                type: 'recovery',
+                email,
+                options: { redirectTo },
+            });
+            if (error) {
+                console.log('admin.generateLink error', error);
+                return { success: '', error: error.message };
+            }
+
+            const resetUrl = data?.properties?.action_link || data?.action_link;
+            if (!resetUrl) {
+                return { success: '', error: 'Failed to generate reset link' };
+            }
+
+            const transporter = nodemailer.createTransport({
+                host: smtpHost,
+                port: Number(smtpPort),
+                secure: Number(smtpPort) === 465,
+                auth: { user: smtpUser, pass: smtpPass },
+            });
+
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: email,
+                subject: 'Reset your TalentoAI password',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2>Reset your password</h2>
+                        <p>We received a request to reset the password for your account.</p>
+                        <p>
+                            <a href="${resetUrl}" style="display:inline-block;padding:10px 16px;background:#06b6d4;color:#fff;border-radius:8px;text-decoration:none;">Reset Password</a>
+                        </p>
+                        <p>If you didn’t request this, you can safely ignore this email.</p>
+                    </div>
+                `,
+            });
+
+            return { success: 'Reset link sent to your email', error: '' };
+        }
+
+        // Fallback: use Supabase built-in mailer
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+        if (error) {
+            console.log('resetPasswordForEmail error', error);
+            return { success: '', error: error.message };
+        }
+        return { success: 'Please check your email', error: '' };
+    } catch (err) {
+        console.log('sendResetPasswordEmail unexpected error', err);
+        return { success: '', error: 'Failed to send reset email' };
     }
-
-    return { success: 'Please check your email', error: '' };
 };
 
 const updatePassword = async (prev, formData) => {
