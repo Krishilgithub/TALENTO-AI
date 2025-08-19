@@ -113,47 +113,26 @@ export default function OverviewTab({ user }) {
 
 		setIsUploading(true);
 		try {
-			const supabase = createClientForBrowser();
-			// Get user ID
-			const { data: userData } = await supabase.auth.getUser();
-			if (!userData?.user) {
-				alert('You must be logged in to upload a resume.');
-				setIsUploading(false);
+			const formData = new FormData();
+			formData.append('file', file);
+
+			const response = await fetch('/api/resume/upload', {
+				method: 'POST',
+				body: formData,
+			});
+
+			const result = await response.json();
+			if (!response.ok) {
+				alert(result.error || 'Resume upload failed.');
 				return;
 			}
-			const userId = userData.user.id;
-			// Upload to Supabase Storage
-			const fileExt = file.name.split('.').pop();
-			const filePath = `resume/${userId}/${Date.now()}.${fileExt}`;
-			const { error: uploadError } = await supabase.storage.from('resume').upload(filePath, file, { upsert: true });
-			if (uploadError) {
-				alert('Failed to upload file to storage. ' + uploadError.message);
-				setIsUploading(false);
-				return;
-			}
-			// Get public URL
-			const { data: publicUrlData } = supabase.storage.from('resume').getPublicUrl(filePath);
-			// Store metadata in user_resume table
-			const { error: dbError } = await supabase.from('user_resume').insert([
-				{
-					user_id: userId,
-					file_url: publicUrlData.publicUrl,
-					uploaded_at: new Date().toISOString(),
-					is_active: true,
-					analysis_output: null, // or remove if not needed
-				},
-			]);
-			if (dbError) {
-				alert('Failed to save resume metadata.');
-				setIsUploading(false);
-				return;
-			}
+
 			setUploadedFile({
-				name: file.name,
-				size: file.size,
-				type: file.type,
+				name: result.name || file.name,
+				size: result.size || file.size,
+				type: result.type || file.type,
 				file: file,
-				url: publicUrlData.publicUrl,
+				url: result.url,
 			});
 		} catch (err) {
 			alert('Resume upload failed.');
@@ -309,7 +288,6 @@ export default function OverviewTab({ user }) {
 								? "border-cyan-400 bg-cyan-100 dark:bg-cyan-900/20"
 								: "border-gray-300 dark:border-gray-600 hover:border-cyan-400"
 						}`}
-						onClick={() => document.getElementById('file-upload')?.click()}
 						style={{ cursor: 'pointer' }}
 					>
 						<CloudArrowUpIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
