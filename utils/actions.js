@@ -15,18 +15,28 @@ const signInWith = (provider) => async () => {
     const supabase = await createClientForServer();
 
     const siteUrl = getSiteUrl();
+    // Ensure the callback URL is properly formatted with the next parameter
     const auth_callback_url = `${siteUrl}/auth/callback?next=/dashboard`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
             redirectTo: auth_callback_url,
+            queryParams: {
+                access_type: 'offline',
+                prompt: 'consent',
+            },
         },
     });
 
     if (error) {
-        console.log(error);
+        console.log('OAuth error:', error);
         return { error: error.message };
+    }
+
+    if (!data?.url) {
+        console.log('No OAuth URL returned');
+        return { error: 'Failed to get authentication URL' };
     }
 
     return { url: data.url };
@@ -59,7 +69,7 @@ const signupWithEmailPassword = async (prev, formData) => {
 const signinWithEmailPassword = async (formData) => {
     const supabase = await createClientForServer();
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
     });
@@ -69,7 +79,8 @@ const signinWithEmailPassword = async (formData) => {
         return { error: error.message };
     }
 
-    return { success: true };
+    // Return user to allow client to decide next route (verify-otp / onboarding / dashboard)
+    return { success: true, user: data?.user ?? null };
 };
 
 const sendResetPasswordEmail = async (prev, formData) => {

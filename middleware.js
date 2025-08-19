@@ -14,10 +14,30 @@ const protectedRoutes = [
   // Add more protected routes as needed
 ];
 
+// Routes that should be skipped by middleware to avoid redirect loops
+const skipMiddlewareRoutes = [
+  '/auth/',
+  '/login',
+  '/signup',
+  '/verify-otp',
+  '/reset/',
+  '/forgot-password',
+  '/warning',
+  '/_next/',
+  '/api/',
+];
+
 /**
  * @param {import('next/server').NextRequest} request
  * */
 export const middleware = async request => {
+    const pathname = request.nextUrl.pathname
+    
+    // Skip middleware for auth-related routes and API routes
+    if (skipMiddlewareRoutes.some(route => pathname.startsWith(route))) {
+        return NextResponse.next();
+    }
+
     let supabaseResponse = NextResponse.next({
         request,
     })
@@ -45,20 +65,27 @@ export const middleware = async request => {
         },
     )
 
-    const pathname = request.nextUrl.pathname
-
     const isProtectedRoute = protectedRoutes.includes(pathname)
 
-    const session = await supabase.auth.getUser()
+    // Get user session
+    const { data: { user }, error } = await supabase.auth.getUser()
 
     if (isProtectedRoute) {
-      if (session.error) {
-        return NextResponse.redirect(new URL('/warning', request.url))
-      }
-      // Onboarding check for protected routes
-      if (!session.data?.user?.user_metadata?.onboarded && pathname !== '/onboarding') {
-        return NextResponse.redirect(new URL('/onboarding', request.url))
-      }
+        if (error || !user) {
+            // User is not authenticated, redirect to warning page
+            return NextResponse.redirect(new URL('/warning', request.url))
+        }
+        
+        // Check if user needs onboarding
+        if (!user.user_metadata?.onboarded && pathname !== '/onboarding') {
+            return NextResponse.redirect(new URL('/onboarding', request.url))
+        }
+    }
+
+    // If user is authenticated and trying to access public routes like homepage,
+    // redirect them to dashboard if they're already onboarded
+    if (user && user.user_metadata?.onboarded && pathname === '/') {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     return supabaseResponse

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import createClientForBrowser from '@/utils/supabase/client';
-import { signinWithGoogle, signinWithGithub } from '@/utils/actions';
 
 export default function SignupPage() {
 	const [formData, setFormData] = useState({
@@ -148,24 +147,25 @@ export default function SignupPage() {
 	// Replace the handleSocialSignIn function with the unified version
 	const handleSocialSignIn = async (provider) => {
 		setIsLoading(true);
-		const handler = {
-			google: signinWithGoogle,
-			github: signinWithGithub,
-		}[provider];
+		try {
+			const supabase = createClientForBrowser();
+			const { data, error } = await supabase.auth.signInWithOAuth({
+				provider,
+				options: {
+					redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+				},
+			});
 
-		if (handler) {
-			try {
-				const { url, error } = await handler();
-				if (error) {
-					setErrors({ general: `${provider} sign-in failed.` });
-				} else {
-					window.location.href = url;
-				}
-			} catch (err) {
-				setErrors({ general: `${provider} sign-in failed.` });
+			if (error) {
+				setErrors({ general: `${provider} sign-in failed: ${error.message}` });
+			} else if (data.url) {
+				window.location.href = data.url;
 			}
+		} catch (err) {
+			setErrors({ general: `${provider} sign-in failed. Please try again.` });
+		} finally {
+			setIsLoading(false);
 		}
-		setIsLoading(false);
 	};
 
 	return (
@@ -432,7 +432,8 @@ export default function SignupPage() {
 							<button
 								type="button"
 								onClick={() => handleSocialSignIn('google')}
-								className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold bg-white text-black border border-gray-300 shadow hover:bg-gray-100 transition min-w-[140px] justify-center"
+								disabled={isLoading}
+								className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold bg-white text-black border border-gray-300 shadow hover:bg-gray-100 transition min-w-[140px] justify-center disabled:opacity-50"
 								style={{ minWidth: 120 }}
 							>
 								<svg className="w-5 h-5" viewBox="0 0 48 48">
@@ -444,18 +445,19 @@ export default function SignupPage() {
 										<path fill="none" d="M1 1h46v46H1z"/>
 									</g>
 								</svg>
-								Google
+								{isLoading ? 'Processing...' : 'Google'}
 							</button>
 							<button
 								type="button"
 								onClick={() => handleSocialSignIn('github')}
-								className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold bg-[#18191b] text-white border border-gray-700 shadow hover:bg-gray-900 transition min-w-[140px] justify-center"
+								disabled={isLoading}
+								className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold bg-[#18191b] text-white border border-gray-700 shadow hover:bg-gray-900 transition min-w-[140px] justify-center disabled:opacity-50"
 								style={{ minWidth: 120 }}
 							>
 								<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-									<path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.157-1.11-1.465-1.11-1.465-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.091-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.378.202 2.397.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.847-2.339 4.695-4.566 4.944.359.309.678.919.678 1.852 0 1.336-.012 2.417-.012 2.747 0 .268.18.579.688.481C19.138 20.2 22 16.448 22 12.021 22 6.484 17.523 2 12 2z" />
+									<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
 								</svg>
-								GitHub
+								{isLoading ? 'Processing...' : 'GitHub'}
 							</button>
 						</div>
 					</div>
