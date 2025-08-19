@@ -128,20 +128,34 @@ def generate_linkedin_post(
             prompt_template = PromptTemplate(
                 input_variables=["post_type", "topic", "post_description"],
                 template="""
-                Create a professional LinkedIn post based on the following requirements:
+                You are a LinkedIn content expert specializing in creating viral, engaging professional posts. Create a compelling LinkedIn post with the following specifications:
+
+                POST TYPE: {post_type}
+                TOPIC: {topic}
+                CONTEXT: {post_description}
+
+                CONTENT GUIDELINES:
+                🎯 HOOK: Start with an attention-grabbing opening line that makes people want to read more
+                📖 STORY: Include a brief personal anecdote, industry insight, or thought-provoking question
+                💡 VALUE: Provide actionable advice, key insights, or valuable takeaways
+                🤝 ENGAGEMENT: End with a compelling call-to-action that encourages comments and shares
                 
-                Post Type: {post_type}
-                Topic: {topic}
-                Description: {post_description}
-                
-                Requirements:
-                - Make it engaging and professional
-                - Include relevant hashtags
-                - Keep it under 1300 characters
-                - Add a call-to-action
-                - Use proper LinkedIn formatting
-                
-                Generate the post:
+                FORMATTING REQUIREMENTS:
+                • Use emojis strategically for visual appeal (2-4 total)
+                • Include 3-5 relevant hashtags at the end
+                • Keep under 1300 characters
+                • Use short paragraphs (2-3 lines max)
+                • Add line breaks for readability
+                • Include numbers or bullets for key points
+
+                TONE & STYLE:
+                ✅ Professional yet conversational
+                ✅ Authentic and relatable  
+                ✅ Actionable and valuable
+                ✅ Optimized for LinkedIn algorithm
+                ✅ Encourages engagement
+
+                Create a post that would get high engagement (likes, comments, shares) on LinkedIn:
                 """
             )
             
@@ -168,57 +182,79 @@ def generate_linkedin_post(
         else:
             print("⚠️ No model available, using template post...")
         
-        # Fallback template post
+        # Enhanced fallback template posts
         fallback_posts = {
-            "Professional Insight": f"""🚀 {topic}: {post_description}
+            "Professional Insight": f"""� Here's what nobody tells you about {topic}...
 
-💡 Key insights to consider:
-• Stay updated with industry trends
-• Network actively with professionals
-• Continuously develop your skills
-• Share your knowledge with others
+{post_description}
 
-#ProfessionalDevelopment #CareerGrowth #Networking #SkillsDevelopment #LinkedInLearning
+After years in the industry, I've learned that success isn't just about what you know—it's about how you apply it.
 
-What's your biggest career lesson learned? Share below! 👇""",
+💡 3 game-changing strategies:
+→ Master the fundamentals, then innovate
+→ Build relationships before you need them  
+→ Document your wins (and failures)
+
+The professionals who thrive don't just work harder—they work smarter.
+
+#ProfessionalGrowth #CareerStrategy #LinkedInTips #SuccessMindset #ProfessionalDevelopment
+
+What's the best professional advice you've ever received? 👇""",
                 
-                "Industry Update": f"""📊 {topic} Update: {post_description}
+            "Industry Update": f"""� {topic}: The landscape is shifting faster than ever
 
-🔍 What's happening:
-• Industry trends and developments
-• New technologies emerging
-• Market shifts and opportunities
-• Future predictions
+{post_description}
 
-#IndustryUpdate #MarketTrends #Technology #Innovation #ProfessionalInsights
+What I'm seeing in the market right now:
 
-How is this affecting your industry? Let's discuss! 💬""",
+📈 Rising trends:
+• Automation reshaping workflows
+• Remote-first becoming the norm
+• Sustainability driving innovation
+• AI augmenting human creativity
+
+⚠️ What this means for you:
+The skills that got you here won't get you there. Continuous learning isn't optional—it's survival.
+
+#IndustryInsights #{topic.replace(' ', '')} #FutureOfWork #MarketTrends #Innovation
+
+How is your industry evolving? Share your insights below �""",
                 
-                "Career Advice": f"""💼 {topic}: {post_description}
+            "Career Advice": f"""� The uncomfortable truth about {topic}
 
-🎯 Pro tips for success:
-• Set clear career goals
-• Build a strong personal brand
-• Develop transferable skills
-• Maintain work-life balance
-• Stay curious and keep learning
+{post_description}
 
-#CareerAdvice #ProfessionalGrowth #PersonalBrand #WorkLifeBalance #ContinuousLearning
+Early in my career, I thought success meant saying yes to everything. I was wrong.
 
-What career advice would you give to someone starting out? 🤔""",
+🎯 What actually moves the needle:
+• Say no to good opportunities to make room for great ones
+• Invest in relationships over transactions  
+• Focus on outcomes, not just outputs
+• Learn to communicate your value clearly
+
+Your career isn't a sprint—it's a strategic game of chess.
+
+#CareerTips #ProfessionalSuccess #CareerStrategy #LeadershipLessons #WorkWisdom
+
+What's one career mistake you wish you could undo? Let's learn together 👇""",
                 
-                "Networking": f"""🤝 {topic}: {post_description}
+            "Networking": f"""🤝 Stop "networking"—start building genuine relationships
 
-🌟 Building meaningful connections:
-• Attend industry events
-• Engage on professional platforms
-• Offer value to others
-• Follow up consistently
-• Be authentic in interactions
+{post_description}
 
-#Networking #ProfessionalConnections #RelationshipBuilding #CareerNetworking #AuthenticConnections
+The best opportunities come from people who know, like, and trust you.
 
-Who has been your most valuable professional connection? Tag them below! 👇"""
+🌟 My relationship-building playbook:
+→ Give value before asking for anything
+→ Remember personal details (birthdays, challenges, wins)
+→ Follow up consistently, not just when you need something
+→ Celebrate others' successes publicly
+
+Authentic connections > transactional exchanges. Every. Single. Time.
+
+#Networking #RelationshipBuilding #ProfessionalConnections #CommunityBuilding #AuthenticLeadership
+
+Tag someone who's been instrumental in your professional journey 🙌"""
             }
             
         post_type_key = post_type if post_type in fallback_posts else "Professional Insight"
@@ -242,7 +278,7 @@ def generate_and_post_to_linkedin(
     if "error" in post_result:
         return post_result
     
-    post_content = post_result["post"]
+    post_content = post_result["post_content"]
     
     # Then post it to LinkedIn
     post_result = post_to_linkedin(access_token, post_content)
