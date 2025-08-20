@@ -71,36 +71,101 @@ def generate_communication_test(num_questions: int = 10, difficulty: str = "mode
             print("⚠️ No model available, using fallback scenarios...")
         
         # Fallback response with structured data
-            fallback_questions = [
-                {
-                    "question": "You need to explain a complex technical concept to a non-technical client. How would you approach this communication?",
-                    "skill": "Technical Communication"
-                },
-                {
-                    "question": "A team member disagrees with your approach to a project. How would you handle this conflict professionally?",
-                    "skill": "Conflict Resolution"
-                },
-                {
-                    "question": "You need to present your project findings to senior management. How would you structure your presentation?",
-                    "skill": "Presentation Skills"
-                },
-                {
-                    "question": "A client is frustrated with a delayed delivery. How would you communicate this situation to them?",
-                    "skill": "Client Communication"
-                },
-                {
-                    "question": "You need to write a detailed technical report for stakeholders. What key elements would you include?",
-                    "skill": "Written Communication"
-                }
-            ]
-            
-            # Return only the requested number of questions
-            return {
-                "questions": fallback_questions[:min(num_questions, len(fallback_questions))],
-                "total_questions": min(num_questions, len(fallback_questions)),
-                "difficulty": difficulty,
-                "status": "fallback"
+        fallback_questions = [
+            {
+                "scenario": "You need to explain a complex technical concept to a non-technical client.",
+                "question": "How would you approach this communication?",
+                "skill": "Technical Communication",
+                "difficulty": "moderate"
+            },
+            {
+                "scenario": "A team member disagrees with your approach to a project.",
+                "question": "How would you handle this conflict professionally?",
+                "skill": "Conflict Resolution",
+                "difficulty": "moderate"
+            },
+            {
+                "scenario": "You need to present your project findings to senior management.",
+                "question": "How would you structure your presentation?",
+                "skill": "Presentation Skills",
+                "difficulty": "moderate"
+            },
+            {
+                "scenario": "A client is frustrated with a delayed delivery.",
+                "question": "How would you communicate this situation to them?",
+                "skill": "Client Communication",
+                "difficulty": "moderate"
+            },
+            {
+                "scenario": "You need to write a detailed technical report for stakeholders.",
+                "question": "What key elements would you include?",
+                "skill": "Written Communication",
+                "difficulty": "moderate"
+            },
+            {
+                "scenario": "You're leading a meeting with team members from different departments.",
+                "question": "How would you ensure effective communication across all participants?",
+                "skill": "Team Collaboration",
+                "difficulty": "moderate"
+            },
+            {
+                "scenario": "A colleague made an error that affected your work timeline.",
+                "question": "How would you address this situation diplomatically?",
+                "skill": "Conflict Resolution",
+                "difficulty": "moderate"
+            },
+            {
+                "scenario": "You need to deliver bad news about budget cuts to your team.",
+                "question": "How would you communicate this sensitively?",
+                "skill": "Verbal Communication",
+                "difficulty": "hard"
+            },
+            {
+                "scenario": "A client wants to change project requirements midway through development.",
+                "question": "How would you manage this conversation?",
+                "skill": "Client Communication",
+                "difficulty": "hard"
+            },
+            {
+                "scenario": "You need to give constructive feedback to a underperforming team member.",
+                "question": "How would you structure this conversation?",
+                "skill": "Team Collaboration",
+                "difficulty": "hard"
+            },
+            {
+                "scenario": "Your team has different opinions on the project direction.",
+                "question": "How would you facilitate consensus building?",
+                "skill": "Conflict Resolution",
+                "difficulty": "hard"
+            },
+            {
+                "scenario": "You need to write an email declining a client's unreasonable request.",
+                "question": "How would you maintain the relationship while setting boundaries?",
+                "skill": "Written Communication",
+                "difficulty": "hard"
             }
+        ]
+        
+        # Filter questions based on difficulty level
+        if difficulty.lower() == "easy":
+            # Use simpler scenarios
+            filtered_questions = [q for q in fallback_questions if q.get("difficulty", "moderate") in ["easy", "moderate"]][:8]
+        elif difficulty.lower() == "hard":
+            # Use complex scenarios
+            filtered_questions = [q for q in fallback_questions if q.get("difficulty", "moderate") in ["moderate", "hard"]]
+        else:  # moderate
+            filtered_questions = fallback_questions
+        
+        # Return only the requested number of questions
+        selected_questions = filtered_questions[:min(num_questions, len(filtered_questions))]
+        
+        return {
+            "questions": selected_questions,
+            "source": "fallback",
+            "total_questions": len(selected_questions),
+            "difficulty": difficulty,
+            "status": "success"
+        }
     except Exception as e:
         return {
             "error": f"Error generating communication questions: {str(e)}",
