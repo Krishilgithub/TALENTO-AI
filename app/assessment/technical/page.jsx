@@ -214,19 +214,27 @@ export default function TechnicalAssessmentPage() {
 	const handleSubmit = () => {
 		let correct = 0;
 		userAnswers.forEach((selectedIdx, idx) => {
-			if (
-				selectedIdx !== null &&
-				questions[idx] &&
-				questions[idx].options &&
-				questions[idx].correct_answer &&
-				questions[idx].options[selectedIdx].toString().trim().toLowerCase() ===
-					questions[idx].correct_answer.toString().trim().toLowerCase()
-			) {
-				correct++;
+			if (selectedIdx !== null && questions[idx]) {
+				const userAnswer = questions[idx].options[selectedIdx];
+				const correctAnswer = questions[idx].correct_answer;
+
+				if (userAnswer && correctAnswer &&
+					userAnswer.toString().trim().toLowerCase() === correctAnswer.toString().trim().toLowerCase()) {
+					correct++;
+				}
 			}
 		});
 		setScore(correct);
 		setSubmitted(true);
+		console.log("Submission Results:", {
+			totalQuestions: questions.length,
+			correctAnswers: correct,
+			userAnswers: userAnswers.map((selectedIdx, idx) => ({
+				question: questions[idx].question,
+				userAnswer: selectedIdx !== null ? questions[idx].options[selectedIdx] : null,
+				correctAnswer: questions[idx].correct_answer
+			}))
+		});
 	};
 
 	const getScoreColor = () => {
@@ -375,9 +383,8 @@ export default function TechnicalAssessmentPage() {
 								<div
 									className="bg-green-400 h-2 rounded-full transition-all duration-300"
 									style={{
-										width: `${
-											((currentQuestion + 1) / questions.length) * 100
-										}%`,
+										width: `${((currentQuestion + 1) / questions.length) * 100
+											}%`,
 									}}
 								></div>
 							</div>
@@ -396,11 +403,10 @@ export default function TechnicalAssessmentPage() {
 										animate={{ opacity: 1, x: 0 }}
 										transition={{ delay: idx * 0.1 }}
 										onClick={() => handleSelect(currentQuestion, idx)}
-										className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
-											userAnswers[currentQuestion] === idx
-												? "border-green-400 bg-green-900/20"
-												: "border-gray-600 hover:border-green-400 hover:bg-green-900/10"
-										}`}
+										className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${userAnswers[currentQuestion] === idx
+											? "border-green-400 bg-green-900/20"
+											: "border-gray-600 hover:border-green-400 hover:bg-green-900/10"
+											}`}
 									>
 										<div className="flex items-center">
 											<span className="text-green-400 font-semibold mr-3">
@@ -462,7 +468,7 @@ export default function TechnicalAssessmentPage() {
 							<div className="text-lg text-gray-300 mb-6">
 								{getScoreMessage()}
 							</div>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 								<div className="bg-green-900/20 p-4 rounded">
 									<h3 className="text-green-400 font-semibold mb-2">
 										Correct Answers
@@ -478,6 +484,67 @@ export default function TechnicalAssessmentPage() {
 									<div className="text-2xl font-bold text-red-400">
 										{questions.length - score}
 									</div>
+								</div>
+							</div>
+							<div className="mt-8">
+								<h3 className="text-xl font-bold text-white mb-4 text-left">Question Review</h3>
+								<div className="space-y-6">
+									{questions.map((q, idx) => {
+										const userIdx = userAnswers[idx];
+										const userAnswer = userIdx !== null && q.options && q.options[userIdx] ? q.options[userIdx] : null;
+										const correctAnswer = q.correct_answer;
+										const isCorrect = userAnswer && correctAnswer &&
+											userAnswer.toString().trim().toLowerCase() === correctAnswer.toString().trim().toLowerCase();
+
+										return (
+											<div key={idx} className={`p-4 rounded border text-left ${isCorrect ? 'border-green-600 bg-green-900/10' : 'border-red-600 bg-red-900/10'}`}>
+												<div className="text-white font-semibold mb-3">
+													<span className="text-gray-400 mr-2">Question {idx + 1}:</span>
+													{q.question}
+												</div>
+
+												<div className="grid gap-2">
+													{q.options.map((option, optionIdx) => (
+														<div
+															key={optionIdx}
+															className={`p-2 rounded ${userIdx === optionIdx
+																	? isCorrect
+																		? 'bg-green-900/20 border border-green-500'
+																		: 'bg-red-900/20 border border-red-500'
+																	: option.toString().trim().toLowerCase() === correctAnswer?.toString().trim().toLowerCase()
+																		? 'bg-green-900/20 border border-green-500'
+																		: 'bg-gray-800/20'
+																}`}
+														>
+															<span className="text-gray-400 mr-2">{String.fromCharCode(65 + optionIdx)}.</span>
+															<span className={`${userIdx === optionIdx
+																	? isCorrect
+																		? 'text-green-400'
+																		: 'text-red-400'
+																	: option.toString().trim().toLowerCase() === correctAnswer?.toString().trim().toLowerCase()
+																		? 'text-green-400'
+																		: 'text-gray-300'
+																}`}>
+																{option}
+															</span>
+															{userIdx === optionIdx && (
+																<span className="ml-2">
+																	{isCorrect ? '✔️' : '❌'}
+																</span>
+															)}
+														</div>
+													))}
+												</div>
+
+												{q.explanation && (
+													<div className="mt-3 text-gray-400 text-sm border-t border-gray-700 pt-2">
+														<span className="font-medium text-gray-300">Explanation: </span>
+														{q.explanation}
+													</div>
+												)}
+											</div>
+										);
+									})}
 								</div>
 							</div>
 						</div>
