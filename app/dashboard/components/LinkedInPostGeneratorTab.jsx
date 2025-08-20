@@ -56,8 +56,8 @@ export default function LinkedInPostGeneratorTab() {
 
 			if (data.error) {
 				setError(data.error);
-			} else if (data.post) {
-				setGeneratedPost(data.post);
+			} else if (data.post_content) {
+				setGeneratedPost(data.post_content);
 			} else {
 				setError("No post was generated. Please try again.");
 			}
@@ -170,9 +170,7 @@ export default function LinkedInPostGeneratorTab() {
 					<div className="flex items-center space-x-3">
 						<LinkIcon className="h-6 w-6 text-cyan-400" />
 						<div>
-							<h3 className="font-semibold text-white">
-								LinkedIn Connection
-							</h3>
+							<h3 className="font-semibold text-white">LinkedIn Connection</h3>
 							<p className="text-sm text-gray-300">
 								{isConnected
 									? "Connected to LinkedIn - You can post directly to your profile"
@@ -288,9 +286,7 @@ export default function LinkedInPostGeneratorTab() {
 					className="bg-[#18191b] rounded-xl border border-gray-700 p-6"
 				>
 					<div className="flex items-center justify-between mb-4">
-						<h3 className="text-lg font-semibold text-white">
-							Generated Post
-						</h3>
+						<h3 className="text-lg font-semibold text-white">Generated Post</h3>
 						<button
 							onClick={handleCopyToClipboard}
 							className="flex items-center space-x-2 px-3 py-2 text-sm bg-[#23272f] text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
