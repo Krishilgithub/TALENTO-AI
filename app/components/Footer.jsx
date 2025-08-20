@@ -3,18 +3,23 @@ import Link from "next/link"; // ✅ Importing Link
 
 export default function Footer() {
 	return (
-		<footer className="w-full bg-[#18191b] border-t border-gray-800 pt-10 pb-4 mt-0">
+		<footer className="w-full bg-gray-100 dark:bg-[#18191b] border-t border-gray-300 dark:border-gray-800 pt-10 pb-4 mt-0 transition-colors duration-300">
 			<div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 text-gray-400 text-sm">
 				<div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
 					<div className="flex items-center gap-2 mb-2 md:mb-0">
 						<Link href="/">
-							<Image src="/resume2.png" alt="Logo" width={30} height={30} />
+							<div className="flex items-center space-x-2">
+								<Image src="/logo.svg" alt="Talento AI" width={24} height={24} />
+															<span className="text-lg font-bold text-gray-900 dark:text-white">
+								TALENTO <span className="text-cyan-400">AI</span>
+							</span>
+							</div>
 						</Link>
 						<span>
 							© {new Date().getFullYear()} Talento AI. All rights reserved.
 						</span>
 					</div>
-					<div className="flex flex-col gap-1 text-xs text-gray-300 md:border-l md:pl-4 border-gray-700">
+					<div className="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-300 md:border-l md:pl-4 border-gray-400 dark:border-gray-700">
 						<span>
 							Email:{" "}
 							<a

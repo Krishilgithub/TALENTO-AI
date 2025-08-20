@@ -3,12 +3,14 @@
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { CodeBracketIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import { CodeBracketIcon, CheckCircleIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import createClientForBrowser from "@/utils/supabase/client";
+import Link from "next/link";
 
 export default function TechnicalAssessmentPage() {
 	const [jobRole, setJobRole] = useState("Software Engineer");
 	const [numQuestions, setNumQuestions] = useState(10);
+	const [difficulty, setDifficulty] = useState("moderate");
 	const [questions, setQuestions] = useState([]);
 	const [userAnswers, setUserAnswers] = useState([]);
 	const [submitted, setSubmitted] = useState(false);
@@ -31,29 +33,35 @@ export default function TechnicalAssessmentPage() {
 			const formData = new FormData();
 			formData.append("job_role", jobRole);
 			formData.append("num_questions", numQuestions);
-			
-			console.log("Making API call to:", "/api/assessment/technical_assessment/");
+			formData.append("difficulty", difficulty);
+
+			console.log(
+				"Making API call to:",
+				"/api/assessment/technical_assessment/"
+			);
 			const res = await fetch("/api/assessment/technical_assessment/", {
 				method: "POST",
 				body: formData,
 			});
-			
+
 			console.log("Response status:", res.status);
 			if (!res.ok) {
 				const errorText = await res.text();
 				console.error("API Error:", errorText);
-				throw new Error(`Failed to generate technical questions: ${res.status} ${errorText}`);
+				throw new Error(
+					`Failed to generate technical questions: ${res.status} ${errorText}`
+				);
 			}
-			
+
 			const data = await res.json();
 			console.log("API Response:", data);
-			
+
 			// Handle different response formats
 			let questionsArr = [];
 			if (data.questions && Array.isArray(data.questions)) {
 				// If questions is already an array of objects
 				questionsArr = data.questions;
-			} else if (data.questions && typeof data.questions === 'string') {
+			} else if (data.questions && typeof data.questions === "string") {
 				// If questions is a string (AI response), parse it
 				console.log("Parsing string response:", data.questions);
 				questionsArr = parseQuestionsFromString(data.questions);
@@ -73,9 +81,9 @@ export default function TechnicalAssessmentPage() {
 					},
 				];
 			}
-			
+
 			console.log("Processed questions:", questionsArr);
-			
+
 			if (questionsArr.length > 0) {
 				setQuestions(questionsArr);
 				setUserAnswers(Array(questionsArr.length).fill(null));
@@ -95,55 +103,71 @@ export default function TechnicalAssessmentPage() {
 		try {
 			console.log("Parsing text:", text);
 			const questions = [];
-			const lines = text.split('\n');
+			const lines = text.split("\n");
 			let currentQuestion = null;
 			let questionNumber = 1;
-			
+
 			for (let i = 0; i < lines.length; i++) {
 				const line = lines[i].trim();
-				
+
 				// Look for question patterns like "Q1.", "Q2.", etc.
 				if (line.match(/^Q\d+\./)) {
 					if (currentQuestion) {
 						questions.push(currentQuestion);
 					}
+					// Extract the question text after "Q1." or "Q1. (Category)"
+					const questionText = line.replace(/^Q\d+\.\s*(\([^)]+\))?\s*/, "");
 					currentQuestion = {
-						question: line.replace(/^Q\d+\.\s*/, ''),
+						question: questionText,
 						options: [],
-						correct_answer: '',
-						explanation: ''
+						correct_answer: "",
+						explanation: "",
 					};
 				}
 				// Look for option patterns like "A)", "B)", etc.
 				else if (line.match(/^[A-D]\)/)) {
 					if (currentQuestion) {
-						const option = line.replace(/^[A-D]\)\s*/, '');
+						const option = line.replace(/^[A-D]\)\s*/, "");
 						currentQuestion.options.push(option);
 					}
 				}
 				// Look for correct answer
-				else if (line.toLowerCase().includes('correct answer:')) {
+				else if (line.toLowerCase().includes("correct answer:")) {
 					if (currentQuestion) {
-						const answer = line.replace(/.*correct answer:\s*/i, '').trim();
+						const answer = line.replace(/.*correct answer:\s*/i, "").trim();
 						currentQuestion.correct_answer = answer;
 					}
 				}
 				// Look for explanation
-				else if (line.toLowerCase().includes('explanation:')) {
+				else if (line.toLowerCase().includes("explanation:")) {
 					if (currentQuestion) {
-						const explanation = line.replace(/.*explanation:\s*/i, '').trim();
+						const explanation = line.replace(/.*explanation:\s*/i, "").trim();
 						currentQuestion.explanation = explanation;
 					}
 				}
+				// If we have a current question and this line doesn't match any pattern,
+				// it might be part of the question text (multi-line questions)
+				else if (
+					currentQuestion &&
+					line &&
+					!line.match(/^[A-D]\)/) &&
+					!line.toLowerCase().includes("correct answer:") &&
+					!line.toLowerCase().includes("explanation:")
+				) {
+					// Append to the current question if it's not empty
+					if (currentQuestion.question && currentQuestion.question !== line) {
+						currentQuestion.question += " " + line;
+					}
+				}
 			}
-			
+
 			// Add the last question
 			if (currentQuestion) {
 				questions.push(currentQuestion);
 			}
-			
+
 			console.log("Parsed questions:", questions);
-			
+
 			// If parsing failed, return fallback questions
 			if (questions.length === 0) {
 				return [
@@ -151,17 +175,18 @@ export default function TechnicalAssessmentPage() {
 						question: "What is the time complexity of binary search?",
 						options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
 						correct_answer: "O(log n)",
-						explanation: "Binary search divides the search space in half each iteration."
+						explanation:
+							"Binary search divides the search space in half each iteration.",
 					},
 					{
 						question: "Which data structure is best for implementing a stack?",
 						options: ["Array", "Linked List", "Tree", "Graph"],
 						correct_answer: "Array",
-						explanation: "Arrays provide O(1) push and pop operations."
-					}
+						explanation: "Arrays provide O(1) push and pop operations.",
+					},
 				];
 			}
-			
+
 			return questions;
 		} catch (error) {
 			console.error("Error parsing questions:", error);
@@ -170,8 +195,9 @@ export default function TechnicalAssessmentPage() {
 					question: "What is the time complexity of binary search?",
 					options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
 					correct_answer: "O(log n)",
-					explanation: "Binary search divides the search space in half each iteration."
-				}
+					explanation:
+						"Binary search divides the search space in half each iteration.",
+				},
 			];
 		}
 	};
@@ -220,6 +246,21 @@ export default function TechnicalAssessmentPage() {
 	return (
 		<div className="min-h-screen bg-[#101113] py-12 px-4">
 			<div className="max-w-4xl mx-auto">
+				{/* Back Button */}
+				<motion.div
+					initial={{ opacity: 0, y: -20 }}
+					animate={{ opacity: 1, y: 0 }}
+					className="mb-6"
+				>
+					<Link
+						href="/dashboard?tab=assessment"
+						className="inline-flex items-center text-green-400 hover:text-green-300 transition-colors bg-green-900/20 px-4 py-2 rounded-lg border border-green-400 hover:bg-green-900/30"
+					>
+						<ArrowLeftIcon className="w-5 h-5 mr-2" />
+						Back
+					</Link>
+				</motion.div>
+
 				{/* Header */}
 				<motion.div
 					initial={{ opacity: 0, y: -20 }}
@@ -245,7 +286,7 @@ export default function TechnicalAssessmentPage() {
 						animate={{ opacity: 1, y: 0 }}
 						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mb-8"
 					>
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 							<div>
 								<label className="block text-green-400 font-semibold mb-2">
 									Job Role
@@ -270,6 +311,20 @@ export default function TechnicalAssessmentPage() {
 									onChange={(e) => setNumQuestions(Number(e.target.value))}
 									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
 								/>
+							</div>
+							<div>
+								<label className="block text-green-400 font-semibold mb-2">
+									Difficulty Level
+								</label>
+								<select
+									value={difficulty}
+									onChange={(e) => setDifficulty(e.target.value)}
+									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+								>
+									<option value="easy">Easy</option>
+									<option value="moderate">Moderate</option>
+									<option value="hard">Hard</option>
+								</select>
 							</div>
 						</div>
 						<button

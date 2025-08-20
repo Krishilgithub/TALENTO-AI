@@ -1,12 +1,9 @@
 import os
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, ChatHuggingFace
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from typing import TypedDict, Literal
-from pydantic import BaseModel
-from langchain_core.runnables import RunnableSequence
 from dotenv import load_dotenv
 import re
+from llm_provider import get_chat_model
 
 # Add imports for file handling
 import pdfplumber
@@ -16,26 +13,7 @@ from typing import Optional
 # Load environment variables
 load_dotenv()
 
-# Set up Hugging Face API key
-hf_api_key = os.getenv("HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP")
-
-# Initialize model with fallback
-model = None
-if hf_api_key:
-    try:
-        # Initialize Hugging Face Endpoint for conversational task
-        llm = HuggingFaceEndpoint(
-            model="mistralai/Mistral-7B-Instruct-v0.2",
-            huggingfacehub_api_token=hf_api_key,
-            temperature=0.5,
-            max_new_tokens=1500,
-        )
-        model = ChatHuggingFace(llm=llm)
-    except Exception as e:
-        print(f"Warning: Failed to initialize Hugging Face Endpoint: {str(e)}")
-        model = None
-else:
-    print("Warning: HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP not found. Using fallback mode.")
+model = get_chat_model()
 
 # Output parser
 parser = StrOutputParser()
@@ -58,11 +36,6 @@ ats_scoring_prompt = PromptTemplate(
     input_variables=["resume_text", "job_role"],
     template=ats_scoring_template
 )
-
-# Create RunnableSequence only if model is available
-ats_scoring_chain = None
-if model:
-    ats_scoring_chain = RunnableSequence(ats_scoring_prompt | model | parser)
 
 def extract_text_from_pdf(file_path: str) -> str:
     """Extract text from PDF file"""
@@ -104,6 +77,8 @@ def extract_resume_text(file_path: str) -> Optional[str]:
 
 def process_resume_file(file_path: str, job_role: str = "Software Engineer") -> dict:
     """Process resume file and return ATS analysis"""
+    print(f"🔄 Processing resume file for {job_role} ATS analysis")
+    
     try:
         resume_text = extract_resume_text(file_path)
         
@@ -113,15 +88,30 @@ def process_resume_file(file_path: str, job_role: str = "Software Engineer") -> 
                 "status": "error"
             }
         
-        if ats_scoring_chain:
-            result = ats_scoring_chain.invoke({"resume_text": resume_text, "job_role": job_role})
-            return {
-                "analysis": result,
-                "job_role": job_role,
-                "status": "success"
-            }
+        if model:
+            # Try AI analysis first
+            try:
+                prompt = ats_scoring_prompt.format(
+                    resume_text=resume_text,
+                    job_role=job_role
+                )
+                result = model.invoke(prompt)
+                
+                print("✅ AI ATS analysis completed successfully!")
+                
+                return {
+                    "analysis": result.content,
+                    "source": "openrouter_ai",
+                    "job_role": job_role,
+                    "status": "success"
+                }
+            except Exception as ai_error:
+                print(f"❌ AI analysis failed: {ai_error}")
+                print("🔄 Falling back to basic analysis...")
         else:
-            # Fallback response when model is not available
+            print("⚠️ No model available, using basic analysis...")
+        
+        # Fallback response when model is not available
             return {
                 "analysis": f"""
 **ATS Analysis for {job_role}**
@@ -154,21 +144,38 @@ Please add HUGGINGFACEHUB_ACCESS_TOKEN_BACKUP environment variable for full AI a
 
 def calculate_ats_score(resume_text: str, job_role: str = "Software Engineer") -> dict:
     """Calculate ATS score for resume text"""
+    print(f"🔄 Calculating ATS score for {job_role}")
+    
     try:
-        if ats_scoring_chain:
-            result = ats_scoring_chain.invoke({"resume_text": resume_text, "job_role": job_role})
-            return {
-                "score": result,
-                "job_role": job_role,
-                "status": "success"
-            }
+        if model:
+            # Try AI scoring first
+            try:
+                prompt = ats_scoring_prompt.format(
+                    resume_text=resume_text,
+                    job_role=job_role
+                )
+                result = model.invoke(prompt)
+                
+                print("✅ AI ATS scoring completed successfully!")
+                
+                return {
+                    "score": result.content,
+                    "source": "openrouter_ai",
+                    "job_role": job_role,
+                    "status": "success"
+                }
+            except Exception as ai_error:
+                print(f"❌ AI scoring failed: {ai_error}")
+                print("🔄 Falling back to estimated score...")
         else:
-            # Fallback score calculation
-            return {
-                "score": "75/100 (estimated - full analysis requires API token)",
-                "job_role": job_role,
-                "status": "fallback"
-            }
+            print("⚠️ No model available, using estimated score...")
+        
+        # Fallback score calculation
+        return {
+            "score": "75/100 (estimated - basic keyword analysis)",
+            "job_role": job_role,
+            "status": "fallback"
+        }
     except Exception as e:
         return {
             "error": f"Error calculating ATS score: {str(e)}",

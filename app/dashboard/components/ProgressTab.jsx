@@ -14,6 +14,8 @@ import {
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import createClientForBrowser from '@/utils/supabase/client';
 
 ChartJS.register(
 	CategoryScale,
@@ -28,11 +30,44 @@ ChartJS.register(
 );
 
 export default function ProgressTab() {
-	// TODO: Replace with Supabase data fetch
-	// const { data: progressData } = await supabase.from('user_progress').select('*');
-	// const { data: quizScores } = await supabase.from('quiz_scores').select('*');
-	// const { data: difficultyStats } = await supabase.from('difficulty_stats').select('*');
-	
+	const [assessmentResults, setAssessmentResults] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [userId, setUserId] = useState(null);
+
+	useEffect(() => {
+		async function fetchResults() {
+			const supabase = createClientForBrowser();
+			const { data: userData } = await supabase.auth.getUser();
+			if (!userData?.user) return;
+			setUserId(userData.user.id);
+			const { data, error } = await supabase
+				.from('assessment_results')
+				.select('*')
+				.eq('user_id', userData.user.id)
+				.order('completed_at', { ascending: true });
+			if (!error && data) setAssessmentResults(data);
+			setLoading(false);
+		}
+		fetchResults();
+	}, []);
+
+	// Group and transform data for charts
+	const getChartData = (type) => {
+		const filtered = assessmentResults.filter(r => r.assessment_type === type);
+		return {
+			labels: filtered.map((r, i) => `Attempt ${i + 1}`),
+			datasets: [
+				{
+					label: `${type.charAt(0).toUpperCase() + type.slice(1)} Scores`,
+					data: filtered.map(r => r.score),
+					borderColor: 'rgb(34, 197, 214)',
+					backgroundColor: 'rgba(34, 197, 214, 0.2)',
+					tension: 0.1,
+				},
+			],
+		};
+	};
+
 	const progressData = {
 		skills: [
 			{ name: "Communication", progress: 85 },
@@ -216,6 +251,8 @@ export default function ProgressTab() {
 		}
 	};
 
+	if (loading) return <div className="text-white">Loading progress...</div>;
+
 	return (
 		<div className="space-y-6">
 			<div>
@@ -233,7 +270,7 @@ export default function ProgressTab() {
 					General Aptitude Test Progression
 				</h3>
 				<div className="h-64">
-					<Line data={generalAptitudeData} options={chartOptions} />
+					<Line data={getChartData('aptitude')} options={chartOptions} />
 				</div>
 			</div>
 
@@ -243,7 +280,7 @@ export default function ProgressTab() {
 					Technical Assessment Progression
 				</h3>
 				<div className="h-64">
-					<Line data={technicalAssessmentData} options={chartOptions} />
+					<Line data={getChartData('technical')} options={chartOptions} />
 				</div>
 			</div>
 
@@ -253,7 +290,7 @@ export default function ProgressTab() {
 					Personality Assessment Progression
 				</h3>
 				<div className="h-64">
-					<Line data={personalityAssessmentData} options={chartOptions} />
+					<Line data={getChartData('personality')} options={chartOptions} />
 				</div>
 			</div>
 
@@ -263,7 +300,7 @@ export default function ProgressTab() {
 					Communication Skill Test Progression
 				</h3>
 				<div className="h-64">
-					<Line data={communicationSkillData} options={chartOptions} />
+					<Line data={getChartData('communication')} options={chartOptions} />
 				</div>
 			</div>
 

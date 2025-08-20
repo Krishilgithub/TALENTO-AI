@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
 	try {
 		const formData = await req.formData();
-		const jobRole = formData.get("job_role") || "Software Engineer";
 		const numQuestions = formData.get("num_questions") || 10;
+		const difficulty = formData.get("difficulty") || "moderate";
 
 		// Call your backend API
 		const backendUrl = process.env.BACKEND_API_URL || "http://localhost:8000";
@@ -14,8 +14,8 @@ export async function POST(req) {
 				"Content-Type": "application/x-www-form-urlencoded",
 			},
 			body: new URLSearchParams({
-				job_role: jobRole,
 				num_questions: numQuestions,
+				difficulty: difficulty,
 			}),
 		});
 

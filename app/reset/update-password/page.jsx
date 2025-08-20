@@ -38,13 +38,13 @@ const Page = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#101113] flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#0b0c10] via-[#101113] to-[#0b0c10] flex items-center justify-center px-4 py-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white mb-2">Update Password</h1>
           <h2 className="text-lg text-gray-300 mb-4">Set your new password</h2>
         </div>
-        <div className="bg-[#18191b] rounded-2xl shadow-xl p-8 border border-gray-700">
+        <div className="bg-[#18191b] rounded-2xl shadow-2xl p-8 border border-gray-700">
           <form onSubmit={handleSubmit} className="space-y-6">
             <label className="block text-sm font-medium text-gray-300 mb-2" htmlFor="password">New Password</label>
             <input

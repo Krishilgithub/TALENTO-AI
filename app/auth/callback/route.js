@@ -6,39 +6,91 @@ export async function GET(request) {
   const code = searchParams.get('code');
   const next = searchParams.get('next') ?? '/dashboard';
 
-  if (code) {
-    const supabase = await createClientForServer();
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  console.log('🔐 Auth callback triggered with code:', code ? 'present' : 'missing');
 
-    if (!error) {
-      // Try to get the user's email and email_confirmed_at from the session
-      let email = null;
-      let emailConfirmedAt = null;
-      let onboarded = false;
-      if (data && data.session && data.session.user) {
-        email = data.session.user.email;
-        emailConfirmedAt = data.session.user.email_confirmed_at;
-        onboarded = data.session.user.user_metadata?.onboarded === true;
+  if (code) {
+    try {
+      const supabase = await createClientForServer();
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+      if (error) {
+        console.error('❌ Auth callback error:', error);
+        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${encodeURIComponent(error.message)}`);
       }
-      const forwardedHost = request.headers.get('x-forwarded-host');
-      const isLocalEnv = process.env.NODE_ENV === 'development';
-      let redirectUrl;
-      if (emailConfirmedAt) {
-        // Social login or already verified user
-        redirectUrl = onboarded ? '/dashboard' : '/onboarding';
+
+      if (data?.session) {
+        // Get user information from the session
+        const user = data.session.user;
+        const emailConfirmedAt = user.email_confirmed_at;
+        const onboarded = user.user_metadata?.onboarded === true;
+
+        console.log('✅ User authenticated:', {
+          id: user.id,
+          email: user.email,
+          emailConfirmed: !!emailConfirmedAt,
+          onboarded: onboarded
+        });
+
+        // Determine redirect URL based on user status
+        let redirectUrl;
+        if (emailConfirmedAt) {
+          // Social login or already verified user
+          redirectUrl = onboarded ? '/dashboard' : '/onboarding';
+        } else {
+          // Needs OTP verification
+          redirectUrl = user.email ? `/verify-otp?email=${encodeURIComponent(user.email)}` : '/verify-otp';
+        }
+
+        console.log('🎯 Redirecting to:', redirectUrl);
+
+        // Handle different environments
+        const forwardedHost = request.headers.get('x-forwarded-host');
+        const isLocalEnv = process.env.NODE_ENV === 'development';
+        
+        let finalRedirectUrl;
+        if (isLocalEnv) {
+          finalRedirectUrl = `${origin}${redirectUrl}`;
+        } else if (forwardedHost) {
+          finalRedirectUrl = `https://${forwardedHost}${redirectUrl}`;
+        } else {
+          finalRedirectUrl = `${origin}${redirectUrl}`;
+        }
+
+        // Create response with redirect
+        const response = NextResponse.redirect(finalRedirectUrl);
+        
+        // Ensure Supabase session cookies are properly set
+        if (data.session.access_token) {
+          response.cookies.set('sb-access-token', data.session.access_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/',
+          });
+        }
+        
+        if (data.session.refresh_token) {
+          response.cookies.set('sb-refresh-token', data.session.refresh_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 30, // 30 days
+            path: '/',
+          });
+        }
+
+        return response;
       } else {
-        // Needs OTP verification
-        redirectUrl = email ? `/verify-otp?email=${encodeURIComponent(email)}` : '/verify-otp';
+        console.error('❌ No session data received');
+        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=no_session`);
       }
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${redirectUrl}`);
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${redirectUrl}`);
-      } else {
-        return NextResponse.redirect(`${origin}${redirectUrl}`);
-      }
+    } catch (error) {
+      console.error('❌ Auth callback exception:', error);
+      return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${encodeURIComponent(error.message)}`);
     }
   }
 
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+  console.error('❌ No authorization code received');
+  return NextResponse.redirect(`${origin}/auth/auth-code-error?error=no_code`);
 }

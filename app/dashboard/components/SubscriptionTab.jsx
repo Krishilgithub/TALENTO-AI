@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function SubscriptionTab() {
 	return (
@@ -64,9 +65,11 @@ export default function SubscriptionTab() {
 							<span className="block text-3xl font-bold text-cyan-300 mb-2">
 								&#8377;1399/month
 							</span>
-							<button className="inline-block mt-4 px-6 py-2 rounded-full bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition">
-								Go Pro
-							</button>
+							<Link href="/payment">
+								<button className="inline-block mt-4 px-6 py-2 rounded-full bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition">
+									Go Pro
+								</button>
+							</Link>
 						</div>
 					</motion.div>,
 					<motion.div key="pricing-3"

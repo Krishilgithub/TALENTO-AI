@@ -1,0 +1,17 @@
+John Smith
+Software Engineer
+
+EXPERIENCE:
+- 3 years as Full Stack Developer at Tech Corp
+- Built web applications using React and Node.js
+- Managed databases and deployed applications
+
+EDUCATION:
+- Bachelor's in Computer Science, State University, 2020
+
+SKILLS:
+JavaScript, Python, React, Node.js, SQL, Git
+
+ACHIEVEMENTS:
+- Increased system performance by 30%
+- Led a team of 4 developers on key project

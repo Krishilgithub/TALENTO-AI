@@ -2,22 +2,42 @@
 
 import { createClientForServer } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
+import nodemailer from 'nodemailer';
+
+const getSiteUrl = () => {
+    const explicitSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (explicitSiteUrl && explicitSiteUrl.length > 0) return explicitSiteUrl.replace(/\/$/, '');
+    const vercelUrl = process.env.VERCEL_URL;
+    if (vercelUrl && vercelUrl.length > 0) return `https://${vercelUrl}`;
+    return 'http://localhost:3000';
+};
 
 const signInWith = (provider) => async () => {
     const supabase = await createClientForServer();
 
-    const auth_callback_url = `${process.env.SITE_URL}/auth/callback?next=/dashboard`;
+    const siteUrl = getSiteUrl();
+    // Ensure the callback URL is properly formatted with the next parameter
+    const auth_callback_url = `${siteUrl}/auth/callback?next=/dashboard`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
             redirectTo: auth_callback_url,
+            queryParams: {
+                access_type: 'offline',
+                prompt: 'consent',
+            },
         },
     });
 
     if (error) {
-        console.log(error);
+        console.log('OAuth error:', error);
         return { error: error.message };
+    }
+
+    if (!data?.url) {
+        console.log('No OAuth URL returned');
+        return { error: 'Failed to get authentication URL' };
     }
 
     return { url: data.url };
@@ -50,7 +70,7 @@ const signupWithEmailPassword = async (prev, formData) => {
 const signinWithEmailPassword = async (formData) => {
     const supabase = await createClientForServer();
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
     });
@@ -60,23 +80,78 @@ const signinWithEmailPassword = async (formData) => {
         return { error: error.message };
     }
 
-    return { success: true };
+    // Return user to allow client to decide next route (verify-otp / onboarding / dashboard)
+    return { success: true, user: data?.user ?? null };
 };
 
 const sendResetPasswordEmail = async (prev, formData) => {
     const supabase = await createClientForServer();
+    const email = formData.get('email');
+    const siteUrl = getSiteUrl();
+    const redirectTo = `${siteUrl}/reset/update-password`;
 
-    const { error } = await supabase.auth.resetPasswordForEmail(
-        formData.get('email'),
-        { redirectTo: `${process.env.SITE_URL || 'http://localhost:3000'}/reset/update-password` }
-    );
+    // If SMTP is configured, generate a recovery link and send it via Nodemailer
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpFrom = process.env.SMTP_FROM;
 
-    if (error) {
-        console.log('error', error);
-        return { success: '', error: error.message };
+    try {
+        if (smtpHost && smtpPort && smtpUser && smtpPass && smtpFrom) {
+            // Generate recovery link with admin privileges
+            const { data, error } = await supabase.auth.admin.generateLink({
+                type: 'recovery',
+                email,
+                options: { redirectTo },
+            });
+            if (error) {
+                console.log('admin.generateLink error', error);
+                return { success: '', error: error.message };
+            }
+
+            const resetUrl = data?.properties?.action_link || data?.action_link;
+            if (!resetUrl) {
+                return { success: '', error: 'Failed to generate reset link' };
+            }
+
+            const transporter = nodemailer.createTransport({
+                host: smtpHost,
+                port: Number(smtpPort),
+                secure: Number(smtpPort) === 465,
+                auth: { user: smtpUser, pass: smtpPass },
+            });
+
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: email,
+                subject: 'Reset your TalentoAI password',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2>Reset your password</h2>
+                        <p>We received a request to reset the password for your account.</p>
+                        <p>
+                            <a href="${resetUrl}" style="display:inline-block;padding:10px 16px;background:#06b6d4;color:#fff;border-radius:8px;text-decoration:none;">Reset Password</a>
+                        </p>
+                        <p>If you didn’t request this, you can safely ignore this email.</p>
+                    </div>
+                `,
+            });
+
+            return { success: 'Reset link sent to your email', error: '' };
+        }
+
+        // Fallback: use Supabase built-in mailer
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+        if (error) {
+            console.log('resetPasswordForEmail error', error);
+            return { success: '', error: error.message };
+        }
+        return { success: 'Please check your email', error: '' };
+    } catch (err) {
+        console.log('sendResetPasswordEmail unexpected error', err);
+        return { success: '', error: 'Failed to send reset email' };
     }
-
-    return { success: 'Please check your email', error: '' };
 };
 
 const updatePassword = async (prev, formData) => {
