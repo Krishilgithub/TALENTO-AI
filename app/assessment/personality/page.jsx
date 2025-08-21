@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import createClientForBrowser from "@/utils/supabase/client";
 
 export default function PersonalityAssessmentPage() {
 	const router = useRouter();
@@ -226,11 +227,34 @@ export default function PersonalityAssessmentPage() {
 		});
 	};
 
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		// Calculate personality traits based on answers
 		const traits = calculatePersonalityTraits();
 		setPersonalityTraits(traits);
 		setSubmitted(true);
+		try {
+			const supabase = createClientForBrowser();
+			const { data: userData } = await supabase.auth.getUser();
+			if (userData?.user) {
+				// derive a simple normalized score: highest trait count / total * 100
+				const focusTraits = traits[assessmentFocus.includes("Leadership") ? "Leadership" : (assessmentFocus.includes("Communication") ? "Communication" : "Work Style")] || {};
+				const values = Object.values(focusTraits);
+				const maxVal = values.length ? Math.max(...values) : 0;
+				const percentage = Math.round(((maxVal || 0) / (questions.length || 1)) * 100);
+				await supabase.from("assessment_results").insert([
+					{
+						user_id: userData.user.id,
+						assessment_type: "personality",
+						score: percentage,
+						level: assessmentFocus,
+						number_of_questions: questions.length,
+						completed_at: new Date().toISOString(),
+					},
+				]);
+			}
+		} catch (e) {
+			console.error("Failed to store personality result:", e);
+		}
 	};
 
 	const calculatePersonalityTraits = () => {

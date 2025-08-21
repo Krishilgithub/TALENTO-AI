@@ -65,6 +65,7 @@ export default function AssessmentTab() {
 	const [showProgress, setShowProgress] = useState(false);
 	const [results, setResults] = useState([]);
 	const [fetchingResults, setFetchingResults] = useState(false);
+	const [filterType, setFilterType] = useState('aptitude');
 	const router = useRouter();
 
 	// Register Chart.js components
@@ -91,7 +92,7 @@ export default function AssessmentTab() {
 				},
 			},
 		},
-		elements: { line: { tension: 0.25 }, point: { radius: 3 } },
+		elements: { line: { tension: 0.35 }, point: { radius: 4, hoverRadius: 6 } },
 		scales: {
 			x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
 			y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' }, suggestedMin: 0, suggestedMax: 100 },
@@ -330,7 +331,7 @@ export default function AssessmentTab() {
 			</div>
 
 			{/* Progress Section Trigger */}
-			<div className="mt-12 max-w-4xl mx-auto">
+			<div className="mt-12 max-w-5xl mx-auto">
 				<motion.div
 					initial={{ opacity: 0, y: 40 }}
 					whileInView={{ opacity: 1, y: 0 }}
@@ -338,20 +339,32 @@ export default function AssessmentTab() {
 					transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
 					className="bg-[#18191b] rounded-xl p-6 border border-gray-700"
 				>
-					<div className="flex items-center justify-between">
+					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 						<h3 className="text-xl font-semibold text-cyan-400">Your Progress</h3>
-						<button
-							onClick={async () => { setShowProgress(true); await fetchAssessmentResults(); }}
-							disabled={fetchingResults}
-							className="bg-cyan-400 border border-cyan-700 text-black px-4 py-2 rounded-lg font-medium hover:scale-105 transition-all duration-200 disabled:opacity-50"
-						>
-							{fetchingResults ? 'Loading...' : 'Show Progress'}
-						</button>
+						<div className="flex items-center gap-3">
+							<select
+								value={filterType}
+								onChange={(e) => setFilterType(e.target.value)}
+								className="bg-[#23272f] text-white border border-gray-700 rounded-lg px-3 py-2"
+							>
+								<option value="aptitude">Aptitude</option>
+								<option value="technical">Technical</option>
+								<option value="personality">Personality</option>
+								<option value="communication">Communication</option>
+							</select>
+							<button
+								onClick={async () => { setShowProgress(true); await fetchAssessmentResults(); }}
+								disabled={fetchingResults}
+								className="bg-cyan-400 border border-cyan-700 text-black px-4 py-2 rounded-lg font-medium hover:scale-105 transition-all duration-200 disabled:opacity-50"
+							>
+								{fetchingResults ? 'Loading...' : 'Show Progress'}
+							</button>
+						</div>
 					</div>
 
 					{showProgress && (
 						<div className="mt-6 space-y-6">
-							{['aptitude','technical','personality','communication'].map(type => {
+							{[filterType].map(type => {
 								const grouped = groupByType(type);
 								const hasData = grouped.scores.some(v => typeof v === 'number');
 								const avg = hasData ? (grouped.scores.filter(v => typeof v === 'number').reduce((a,b)=>a+b,0) / grouped.scores.filter(v => typeof v === 'number').length).toFixed(1) : '-';
@@ -363,16 +376,17 @@ export default function AssessmentTab() {
 											label: `${type.charAt(0).toUpperCase() + type.slice(1)} Scores`,
 											data: grouped.scores,
 											borderColor: 'rgb(34, 197, 214)',
-											backgroundColor: 'rgba(34, 197, 214, 0.2)',
+											backgroundColor: 'rgba(34, 197, 214, 0.25)',
+											fill: true,
 											spanGaps: true,
 										},
 									],
 								};
 								return (
 									<div key={type} className="bg-[#232323] rounded-lg p-4 border border-gray-700">
-										<div className="flex items-center justify-between mb-2">
+										<div className="flex items-center justify-between mb-3">
 											<h4 className="text-lg font-semibold text-white capitalize">{type} Analysis</h4>
-											<div className="text-sm text-gray-300">Attempts: {hasData ? grouped.scores.filter(v => typeof v === 'number').length : 0} · Avg: {avg} · Latest: {last}</div>
+											<div className="text-xs sm:text-sm text-gray-300">Attempts: {hasData ? grouped.scores.filter(v => typeof v === 'number').length : 0} · Avg: {avg} · Latest: {last}</div>
 										</div>
 										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 											<div className="h-64 bg-[#1b1b1b] rounded p-3 border border-gray-800">

@@ -211,7 +211,7 @@ export default function TechnicalAssessmentPage() {
 		});
 	};
 
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		let correct = 0;
 		userAnswers.forEach((selectedIdx, idx) => {
 			if (selectedIdx !== null && questions[idx]) {
@@ -224,8 +224,27 @@ export default function TechnicalAssessmentPage() {
 				}
 			}
 		});
+		const percentage = Math.round((correct / (questions.length || 1)) * 100);
 		setScore(correct);
 		setSubmitted(true);
+		try {
+			const supabase = createClientForBrowser();
+			const { data: userData } = await supabase.auth.getUser();
+			if (userData?.user) {
+				await supabase.from("assessment_results").insert([
+					{
+						user_id: userData.user.id,
+						assessment_type: "technical",
+						score: percentage,
+						level: difficulty,
+						number_of_questions: questions.length,
+						completed_at: new Date().toISOString(),
+					},
+				]);
+			}
+		} catch (e) {
+			console.error("Failed to store technical result:", e);
+		}
 		console.log("Submission Results:", {
 			totalQuestions: questions.length,
 			correctAnswers: correct,

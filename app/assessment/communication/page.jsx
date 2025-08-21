@@ -8,6 +8,7 @@ import {
 	ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import createClientForBrowser from "@/utils/supabase/client";
 
 export default function CommunicationAssessmentPage() {
 	const [numQuestions, setNumQuestions] = useState(10);
@@ -175,8 +176,26 @@ export default function CommunicationAssessmentPage() {
 		});
 	};
 
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		setSubmitted(true);
+		try {
+			const supabase = createClientForBrowser();
+			const { data: userData } = await supabase.auth.getUser();
+			if (userData?.user) {
+				await supabase.from("assessment_results").insert([
+					{
+						user_id: userData.user.id,
+						assessment_type: "communication",
+						score: 100, // completion-based scoring for free-form responses
+						level: difficulty,
+						number_of_questions: questions.length,
+						completed_at: new Date().toISOString(),
+					},
+				]);
+			}
+		} catch (e) {
+			console.error("Failed to store communication result:", e);
+		}
 	};
 
 	return (
