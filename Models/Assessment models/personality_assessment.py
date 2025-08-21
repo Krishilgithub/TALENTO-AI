@@ -79,7 +79,7 @@ def generate_personality_assessment(num_questions: int = 10, assessment_focus: s
             print("⚠️ No model available, using fallback questions...")
         
         # Fallback response with sample personality questions
-            fallback_questions = {
+        fallback_questions = {
                 "Work Style": {
                     "questions": """Q1. When working on a project, I prefer to:
 A) Plan everything in detail before starting
@@ -267,18 +267,107 @@ D) Inspire and motivate others""",
                     "traits": ["Communication", "Listening", "Feedback", "Presentation", "Conflict Resolution"]
                 }
             }
-            
-            # Get the appropriate fallback questions based on assessment focus
-            fallback_assessment = fallback_questions.get(assessment_focus, fallback_questions["Work Style"])
-            
-            return {
-                "questions": fallback_assessment["questions"],
-                "traits": fallback_assessment["traits"],
-                "num_questions": num_questions,
-                "assessment_focus": assessment_focus,
-                "job_role": job_role,
-                "status": "fallback"
+        
+        # Create structured fallback questions that can be properly sliced
+        all_questions = [
+            {
+                "id": 1,
+                "text": "When working on a project, I prefer to:",
+                "options": ["Plan everything in detail before starting", "Start immediately and figure things out as I go", "Collaborate with others to brainstorm ideas", "Research best practices and follow established methods"],
+                "trait": "Conscientiousness"
+            },
+            {
+                "id": 2,
+                "text": "In a team meeting, I typically:",
+                "options": ["Take charge and lead the discussion", "Listen carefully and contribute when asked", "Share my ideas enthusiastically", "Focus on practical solutions and next steps"],
+                "trait": "Extraversion"
+            },
+            {
+                "id": 3,
+                "text": "When faced with a challenging problem, I:",
+                "options": ["Analyze it from multiple angles before acting", "Trust my instincts and make quick decisions", "Discuss it with colleagues to get different perspectives", "Look for proven solutions and best practices"],
+                "trait": "Openness"
+            },
+            {
+                "id": 4,
+                "text": "I prefer work environments that are:",
+                "options": ["Structured with clear processes and guidelines", "Flexible and allow for creative freedom", "Collaborative and team-oriented", "Fast-paced with variety and new challenges"],
+                "trait": "Agreeableness"
+            },
+            {
+                "id": 5,
+                "text": "When receiving feedback, I:",
+                "options": ["Appreciate detailed, constructive criticism", "Prefer positive reinforcement and encouragement", "Value honest, direct communication", "Focus on actionable improvements"],
+                "trait": "Neuroticism"
+            },
+            {
+                "id": 6,
+                "text": "In stressful situations, I:",
+                "options": ["Stay calm and focus on problem-solving", "Seek support from others", "Use it as motivation to perform better", "Take time to process before responding"],
+                "trait": "Neuroticism"
+            },
+            {
+                "id": 7,
+                "text": "I learn best when:",
+                "options": ["I can study materials independently", "I can practice hands-on", "I can discuss concepts with others", "I can see real-world applications"],
+                "trait": "Openness"
+            },
+            {
+                "id": 8,
+                "text": "When making decisions, I rely most on:",
+                "options": ["Logical analysis and data", "Intuition and gut feelings", "Input from trusted colleagues", "Past experiences and proven methods"],
+                "trait": "Conscientiousness"
+            },
+            {
+                "id": 9,
+                "text": "I prefer to work:",
+                "options": ["Independently with clear objectives", "In a supportive team environment", "With diverse groups of people", "On challenging, innovative projects"],
+                "trait": "Extraversion"
+            },
+            {
+                "id": 10,
+                "text": "My ideal work schedule would be:",
+                "options": ["Consistent hours with predictable routine", "Flexible hours based on my energy levels", "Collaborative hours with team availability", "Varied hours depending on project needs"],
+                "trait": "Agreeableness"
+            },
+            {
+                "id": 11,
+                "text": "When leading a team, I prefer to:",
+                "options": ["Set clear goals and monitor progress closely", "Empower team members to make decisions", "Build strong relationships and trust", "Encourage innovation and creative thinking"],
+                "trait": "Leadership"
+            },
+            {
+                "id": 12,
+                "text": "When presenting information, I prefer to:",
+                "options": ["Use clear, structured formats with data", "Tell stories and use examples", "Encourage discussion and interaction", "Use visuals and creative elements"],
+                "trait": "Communication"
             }
+        ]
+        
+        # Filter questions based on assessment focus if needed
+        if assessment_focus == "Leadership Style":
+            filtered_questions = [q for q in all_questions if q["trait"] in ["Leadership", "Extraversion", "Conscientiousness", "Agreeableness"]]
+        elif assessment_focus == "Communication Style":
+            filtered_questions = [q for q in all_questions if q["trait"] in ["Communication", "Extraversion", "Agreeableness", "Openness"]]
+        else:  # Work Style or default
+            filtered_questions = all_questions
+        
+        # Select only the requested number of questions
+        selected_questions = filtered_questions[:min(num_questions, len(filtered_questions))]
+        
+        # Format for frontend consumption
+        formatted_questions = []
+        for i, q in enumerate(selected_questions, 1):
+            formatted_questions.append(f"Q{i}. {q['text']}\nA) {q['options'][0]}\nB) {q['options'][1]}\nC) {q['options'][2]}\nD) {q['options'][3]}")
+        
+        return {
+            "questions": "\n\n".join(formatted_questions),
+            "source": "fallback",
+            "num_questions": len(selected_questions),
+            "assessment_focus": assessment_focus,
+            "job_role": job_role,
+            "status": "success"
+        }
     except Exception as e:
         return {
             "error": f"Error generating personality assessment: {str(e)}",

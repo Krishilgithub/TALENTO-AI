@@ -151,7 +151,45 @@ export default function AptitudeAssessmentPage() {
 				else if (line.toLowerCase().includes("correct answer:")) {
 					if (currentQuestion) {
 						const answer = line.replace(/.*correct answer:\s*/i, "").trim();
-						currentQuestion.correct_answer = answer;
+						// Handle formats like "C) 10" or just "C" or just "10"
+						let letterMatch = answer.match(/^([A-D])\)/);
+						if (letterMatch) {
+							// Format: "C) 10"
+							const letter = letterMatch[1].toUpperCase();
+							const letterToIndex = { A: 0, B: 1, C: 2, D: 3 };
+							currentQuestion.correct_answer_index = letterToIndex[letter];
+							// Store the full text after the letter
+							const fullText = answer.replace(/^[A-D]\)\s*/, "").trim();
+							if (
+								fullText &&
+								currentQuestion.options[currentQuestion.correct_answer_index]
+							) {
+								currentQuestion.correct_answer =
+									currentQuestion.options[currentQuestion.correct_answer_index];
+							}
+						} else if (answer.length === 1 && answer.match(/[A-D]/i)) {
+							// Format: just "C"
+							const letterToIndex = { A: 0, B: 1, C: 2, D: 3 };
+							currentQuestion.correct_answer_index =
+								letterToIndex[answer.toUpperCase()];
+							if (
+								currentQuestion.options[currentQuestion.correct_answer_index]
+							) {
+								currentQuestion.correct_answer =
+									currentQuestion.options[currentQuestion.correct_answer_index];
+							}
+						} else {
+							// Format: full text answer
+							currentQuestion.correct_answer = answer;
+							// Find the index of this answer in the options
+							const index = currentQuestion.options.findIndex(
+								(option) =>
+									option.toLowerCase().trim() === answer.toLowerCase().trim()
+							);
+							if (index !== -1) {
+								currentQuestion.correct_answer_index = index;
+							}
+						}
 					}
 				}
 				// Look for explanation
@@ -192,12 +230,14 @@ export default function AptitudeAssessmentPage() {
 							"If a train travels 120 km in 2 hours, what is its speed in km/h?",
 						options: ["40", "60", "80", "100"],
 						correct_answer: "60",
+						correct_answer_index: 1,
 						explanation: "Speed = Distance/Time = 120/2 = 60 km/h",
 					},
 					{
 						question: "Which number comes next: 2, 4, 8, 16, __?",
 						options: ["24", "32", "30", "28"],
 						correct_answer: "32",
+						correct_answer_index: 1,
 						explanation:
 							"Each number is multiplied by 2: 2×2=4, 4×2=8, 8×2=16, 16×2=32",
 					},
@@ -213,6 +253,7 @@ export default function AptitudeAssessmentPage() {
 						"If a train travels 120 km in 2 hours, what is its speed in km/h?",
 					options: ["40", "60", "80", "100"],
 					correct_answer: "60",
+					correct_answer_index: 1,
 					explanation: "Speed = Distance/Time = 120/2 = 60 km/h",
 				},
 			];
@@ -250,16 +291,34 @@ export default function AptitudeAssessmentPage() {
 
 	const handleSubmit = async () => {
 		let correct = 0;
+		const resultDetails = [];
+
 		userAnswers.forEach((selectedIdx, idx) => {
-			if (
-				selectedIdx !== null &&
-				questions[idx] &&
-				questions[idx].options &&
-				questions[idx].correct_answer &&
-				questions[idx].options[selectedIdx].toString().trim().toLowerCase() ===
-					questions[idx].correct_answer.toString().trim().toLowerCase()
-			) {
-				correct++;
+			if (questions[idx]) {
+				const question = questions[idx];
+				const isCorrect =
+					selectedIdx !== null &&
+					// Use correct_answer_index if available (from AI parsing)
+					((question.correct_answer_index !== undefined &&
+						selectedIdx === question.correct_answer_index) ||
+						// Fallback to text comparison (for fallback questions)
+						(selectedIdx !== null &&
+							question.options[selectedIdx] &&
+							question.options[selectedIdx].toString().trim().toLowerCase() ===
+								question.correct_answer.toString().trim().toLowerCase()));
+
+				if (isCorrect) {
+					correct++;
+				}
+
+				resultDetails.push({
+					question: question.question,
+					userAnswer:
+						selectedIdx !== null ? question.options[selectedIdx] : "No answer",
+					correctAnswer: question.correct_answer,
+					isCorrect: isCorrect,
+					explanation: question.explanation || "No explanation available",
+				});
 			}
 		});
 		const percentage = Math.round((correct / (questions.length || 1)) * 100);
@@ -518,7 +577,7 @@ export default function AptitudeAssessmentPage() {
 							<div className="text-lg text-gray-300 mb-6">
 								{getScoreMessage()}
 							</div>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 								<div className="bg-green-900/20 p-4 rounded">
 									<h3 className="text-green-400 font-semibold mb-2">
 										Correct Answers
@@ -534,6 +593,116 @@ export default function AptitudeAssessmentPage() {
 									<div className="text-2xl font-bold text-red-400">
 										{questions.length - score}
 									</div>
+								</div>
+							</div>
+							<div className="mt-8">
+								<h3 className="text-xl font-bold text-white mb-4 text-left">
+									Question Review
+								</h3>
+								<div className="space-y-6">
+									{questions.map((q, idx) => {
+										const userIdx = userAnswers[idx];
+										const userAnswer =
+											userIdx !== null && q.options && q.options[userIdx]
+												? q.options[userIdx]
+												: null;
+										const correctAnswer = q.correct_answer;
+										const correctIdx =
+											q.correct_answer_index !== undefined
+												? q.correct_answer_index
+												: q.options.findIndex(
+														(opt) =>
+															opt.toString().trim().toLowerCase() ===
+															correctAnswer?.toString().trim().toLowerCase()
+												  );
+
+										const isCorrect =
+											userIdx !== null &&
+											((q.correct_answer_index !== undefined &&
+												userIdx === q.correct_answer_index) ||
+												(userAnswer &&
+													correctAnswer &&
+													userAnswer.toString().trim().toLowerCase() ===
+														correctAnswer.toString().trim().toLowerCase()));
+
+										return (
+											<div
+												key={idx}
+												className={`p-4 rounded border text-left ${
+													isCorrect
+														? "border-green-600 bg-green-900/10"
+														: "border-red-600 bg-red-900/10"
+												}`}
+											>
+												<div className="text-white font-semibold mb-3">
+													<span className="text-gray-400 mr-2">
+														Question {idx + 1}:
+													</span>
+													{q.question}
+												</div>
+
+												<div className="grid gap-2">
+													{q.options.map((option, optionIdx) => {
+														const isUserChoice = userIdx === optionIdx;
+														const isCorrectChoice = correctIdx === optionIdx;
+
+														return (
+															<div
+																key={optionIdx}
+																className={`p-2 rounded ${
+																	isUserChoice && isCorrect
+																		? "bg-green-900/20 border border-green-500" // User chose correct
+																		: isUserChoice && !isCorrect
+																		? "bg-red-900/20 border border-red-500" // User chose wrong
+																		: isCorrectChoice
+																		? "bg-green-900/20 border border-green-500" // Show correct answer
+																		: "bg-gray-800/20" // Normal option
+																}`}
+															>
+																<span className="text-gray-400 mr-2">
+																	{String.fromCharCode(65 + optionIdx)}.
+																</span>
+																<span
+																	className={`${
+																		isUserChoice && isCorrect
+																			? "text-green-400" // User chose correct
+																			: isUserChoice && !isCorrect
+																			? "text-red-400" // User chose wrong
+																			: isCorrectChoice
+																			? "text-green-400" // Correct answer
+																			: "text-gray-300" // Normal text
+																	}`}
+																>
+																	{option}
+																</span>
+																{isUserChoice && (
+																	<span className="ml-2 text-sm">
+																		{isCorrect
+																			? "✅ Your Answer"
+																			: "❌ Your Answer"}
+																	</span>
+																)}
+																{isCorrectChoice && !isUserChoice && (
+																	<span className="ml-2 text-sm text-green-400">
+																		✓ Correct Answer
+																	</span>
+																)}
+															</div>
+														);
+													})}
+												</div>
+
+												{q.explanation && (
+													<div className="mt-3 text-gray-400 text-sm border-t border-gray-700 pt-2">
+														<span className="font-medium text-gray-300">
+															💡 Explanation:{" "}
+														</span>
+														{q.explanation}
+													</div>
+												)}
+											</div>
+										);
+									})}
 								</div>
 							</div>
 						</div>

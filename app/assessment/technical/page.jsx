@@ -3,7 +3,11 @@
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { CodeBracketIcon, CheckCircleIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import {
+	CodeBracketIcon,
+	CheckCircleIcon,
+	ArrowLeftIcon,
+} from "@heroicons/react/24/outline";
 import createClientForBrowser from "@/utils/supabase/client";
 import Link from "next/link";
 
@@ -135,7 +139,45 @@ export default function TechnicalAssessmentPage() {
 				else if (line.toLowerCase().includes("correct answer:")) {
 					if (currentQuestion) {
 						const answer = line.replace(/.*correct answer:\s*/i, "").trim();
-						currentQuestion.correct_answer = answer;
+						// Handle formats like "C) 10" or just "C" or just "10"
+						let letterMatch = answer.match(/^([A-D])\)/);
+						if (letterMatch) {
+							// Format: "C) 10"
+							const letter = letterMatch[1].toUpperCase();
+							const letterToIndex = { A: 0, B: 1, C: 2, D: 3 };
+							currentQuestion.correct_answer_index = letterToIndex[letter];
+							// Store the full text after the letter
+							const fullText = answer.replace(/^[A-D]\)\s*/, "").trim();
+							if (
+								fullText &&
+								currentQuestion.options[currentQuestion.correct_answer_index]
+							) {
+								currentQuestion.correct_answer =
+									currentQuestion.options[currentQuestion.correct_answer_index];
+							}
+						} else if (answer.length === 1 && answer.match(/[A-D]/i)) {
+							// Format: just "C"
+							const letterToIndex = { A: 0, B: 1, C: 2, D: 3 };
+							currentQuestion.correct_answer_index =
+								letterToIndex[answer.toUpperCase()];
+							if (
+								currentQuestion.options[currentQuestion.correct_answer_index]
+							) {
+								currentQuestion.correct_answer =
+									currentQuestion.options[currentQuestion.correct_answer_index];
+							}
+						} else {
+							// Format: full text answer
+							currentQuestion.correct_answer = answer;
+							// Find the index of this answer in the options
+							const index = currentQuestion.options.findIndex(
+								(option) =>
+									option.toLowerCase().trim() === answer.toLowerCase().trim()
+							);
+							if (index !== -1) {
+								currentQuestion.correct_answer_index = index;
+							}
+						}
 					}
 				}
 				// Look for explanation
@@ -175,14 +217,17 @@ export default function TechnicalAssessmentPage() {
 						question: "What is the time complexity of binary search?",
 						options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
 						correct_answer: "O(log n)",
+						correct_answer_index: 1,
 						explanation:
-							"Binary search divides the search space in half each iteration.",
+							"Binary search divides the search space in half each iteration, resulting in logarithmic time complexity.",
 					},
 					{
 						question: "Which data structure is best for implementing a stack?",
 						options: ["Array", "Linked List", "Tree", "Graph"],
 						correct_answer: "Array",
-						explanation: "Arrays provide O(1) push and pop operations.",
+						correct_answer_index: 0,
+						explanation:
+							"Arrays provide O(1) push and pop operations, making them ideal for stack implementation.",
 					},
 				];
 			}
@@ -213,15 +258,34 @@ export default function TechnicalAssessmentPage() {
 
 	const handleSubmit = async () => {
 		let correct = 0;
-		userAnswers.forEach((selectedIdx, idx) => {
-			if (selectedIdx !== null && questions[idx]) {
-				const userAnswer = questions[idx].options[selectedIdx];
-				const correctAnswer = questions[idx].correct_answer;
+		const resultDetails = [];
 
-				if (userAnswer && correctAnswer &&
-					userAnswer.toString().trim().toLowerCase() === correctAnswer.toString().trim().toLowerCase()) {
+		userAnswers.forEach((selectedIdx, idx) => {
+			if (questions[idx]) {
+				const question = questions[idx];
+				const isCorrect =
+					selectedIdx !== null &&
+					// Use correct_answer_index if available (from AI parsing)
+					((question.correct_answer_index !== undefined &&
+						selectedIdx === question.correct_answer_index) ||
+						// Fallback to text comparison (for fallback questions)
+						(selectedIdx !== null &&
+							question.options[selectedIdx] &&
+							question.options[selectedIdx].toString().trim().toLowerCase() ===
+								question.correct_answer.toString().trim().toLowerCase()));
+
+				if (isCorrect) {
 					correct++;
 				}
+
+				resultDetails.push({
+					question: question.question,
+					userAnswer:
+						selectedIdx !== null ? question.options[selectedIdx] : "No answer",
+					correctAnswer: question.correct_answer,
+					isCorrect: isCorrect,
+					explanation: question.explanation || "No explanation available",
+				});
 			}
 		});
 		const percentage = Math.round((correct / (questions.length || 1)) * 100);
@@ -248,11 +312,10 @@ export default function TechnicalAssessmentPage() {
 		console.log("Submission Results:", {
 			totalQuestions: questions.length,
 			correctAnswers: correct,
-			userAnswers: userAnswers.map((selectedIdx, idx) => ({
-				question: questions[idx].question,
-				userAnswer: selectedIdx !== null ? questions[idx].options[selectedIdx] : null,
-				correctAnswer: questions[idx].correct_answer
-			}))
+			score: `${correct}/${questions.length} (${Math.round(
+				(correct / questions.length) * 100
+			)}%)`,
+			details: resultDetails,
 		});
 	};
 
@@ -402,8 +465,9 @@ export default function TechnicalAssessmentPage() {
 								<div
 									className="bg-green-400 h-2 rounded-full transition-all duration-300"
 									style={{
-										width: `${((currentQuestion + 1) / questions.length) * 100
-											}%`,
+										width: `${
+											((currentQuestion + 1) / questions.length) * 100
+										}%`,
 									}}
 								></div>
 							</div>
@@ -422,10 +486,11 @@ export default function TechnicalAssessmentPage() {
 										animate={{ opacity: 1, x: 0 }}
 										transition={{ delay: idx * 0.1 }}
 										onClick={() => handleSelect(currentQuestion, idx)}
-										className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${userAnswers[currentQuestion] === idx
-											? "border-green-400 bg-green-900/20"
-											: "border-gray-600 hover:border-green-400 hover:bg-green-900/10"
-											}`}
+										className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+											userAnswers[currentQuestion] === idx
+												? "border-green-400 bg-green-900/20"
+												: "border-gray-600 hover:border-green-400 hover:bg-green-900/10"
+										}`}
 									>
 										<div className="flex items-center">
 											<span className="text-green-400 font-semibold mr-3">
@@ -506,58 +571,107 @@ export default function TechnicalAssessmentPage() {
 								</div>
 							</div>
 							<div className="mt-8">
-								<h3 className="text-xl font-bold text-white mb-4 text-left">Question Review</h3>
+								<h3 className="text-xl font-bold text-white mb-4 text-left">
+									Question Review
+								</h3>
 								<div className="space-y-6">
 									{questions.map((q, idx) => {
 										const userIdx = userAnswers[idx];
-										const userAnswer = userIdx !== null && q.options && q.options[userIdx] ? q.options[userIdx] : null;
+										const userAnswer =
+											userIdx !== null && q.options && q.options[userIdx]
+												? q.options[userIdx]
+												: null;
 										const correctAnswer = q.correct_answer;
-										const isCorrect = userAnswer && correctAnswer &&
-											userAnswer.toString().trim().toLowerCase() === correctAnswer.toString().trim().toLowerCase();
+										const correctIdx =
+											q.correct_answer_index !== undefined
+												? q.correct_answer_index
+												: q.options.findIndex(
+														(opt) =>
+															opt.toString().trim().toLowerCase() ===
+															correctAnswer?.toString().trim().toLowerCase()
+												  );
+
+										const isCorrect =
+											userIdx !== null &&
+											((q.correct_answer_index !== undefined &&
+												userIdx === q.correct_answer_index) ||
+												(userAnswer &&
+													correctAnswer &&
+													userAnswer.toString().trim().toLowerCase() ===
+														correctAnswer.toString().trim().toLowerCase()));
 
 										return (
-											<div key={idx} className={`p-4 rounded border text-left ${isCorrect ? 'border-green-600 bg-green-900/10' : 'border-red-600 bg-red-900/10'}`}>
+											<div
+												key={idx}
+												className={`p-4 rounded border text-left ${
+													isCorrect
+														? "border-green-600 bg-green-900/10"
+														: "border-red-600 bg-red-900/10"
+												}`}
+											>
 												<div className="text-white font-semibold mb-3">
-													<span className="text-gray-400 mr-2">Question {idx + 1}:</span>
+													<span className="text-gray-400 mr-2">
+														Question {idx + 1}:
+													</span>
 													{q.question}
 												</div>
 
 												<div className="grid gap-2">
-													{q.options.map((option, optionIdx) => (
-														<div
-															key={optionIdx}
-															className={`p-2 rounded ${userIdx === optionIdx
-																	? isCorrect
-																		? 'bg-green-900/20 border border-green-500'
-																		: 'bg-red-900/20 border border-red-500'
-																	: option.toString().trim().toLowerCase() === correctAnswer?.toString().trim().toLowerCase()
-																		? 'bg-green-900/20 border border-green-500'
-																		: 'bg-gray-800/20'
+													{q.options.map((option, optionIdx) => {
+														const isUserChoice = userIdx === optionIdx;
+														const isCorrectChoice = correctIdx === optionIdx;
+
+														return (
+															<div
+																key={optionIdx}
+																className={`p-2 rounded ${
+																	isUserChoice && isCorrect
+																		? "bg-green-900/20 border border-green-500" // User chose correct
+																		: isUserChoice && !isCorrect
+																		? "bg-red-900/20 border border-red-500" // User chose wrong
+																		: isCorrectChoice
+																		? "bg-green-900/20 border border-green-500" // Show correct answer
+																		: "bg-gray-800/20" // Normal option
 																}`}
-														>
-															<span className="text-gray-400 mr-2">{String.fromCharCode(65 + optionIdx)}.</span>
-															<span className={`${userIdx === optionIdx
-																	? isCorrect
-																		? 'text-green-400'
-																		: 'text-red-400'
-																	: option.toString().trim().toLowerCase() === correctAnswer?.toString().trim().toLowerCase()
-																		? 'text-green-400'
-																		: 'text-gray-300'
-																}`}>
-																{option}
-															</span>
-															{userIdx === optionIdx && (
-																<span className="ml-2">
-																	{isCorrect ? '✔️' : '❌'}
+															>
+																<span className="text-gray-400 mr-2">
+																	{String.fromCharCode(65 + optionIdx)}.
 																</span>
-															)}
-														</div>
-													))}
+																<span
+																	className={`${
+																		isUserChoice && isCorrect
+																			? "text-green-400" // User chose correct
+																			: isUserChoice && !isCorrect
+																			? "text-red-400" // User chose wrong
+																			: isCorrectChoice
+																			? "text-green-400" // Correct answer
+																			: "text-gray-300" // Normal text
+																	}`}
+																>
+																	{option}
+																</span>
+																{isUserChoice && (
+																	<span className="ml-2 text-sm">
+																		{isCorrect
+																			? "✅ Your Answer"
+																			: "❌ Your Answer"}
+																	</span>
+																)}
+																{isCorrectChoice && !isUserChoice && (
+																	<span className="ml-2 text-sm text-green-400">
+																		✓ Correct Answer
+																	</span>
+																)}
+															</div>
+														);
+													})}
 												</div>
 
 												{q.explanation && (
 													<div className="mt-3 text-gray-400 text-sm border-t border-gray-700 pt-2">
-														<span className="font-medium text-gray-300">Explanation: </span>
+														<span className="font-medium text-gray-300">
+															💡 Explanation:{" "}
+														</span>
 														{q.explanation}
 													</div>
 												)}
