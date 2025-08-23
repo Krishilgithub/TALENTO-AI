@@ -94,9 +94,11 @@ export default function SubscriptionTab() {
 							<span className="block text-3xl font-bold text-cyan-500 mb-2">
 								Contact Us
 							</span>
-							<button className="inline-block mt-4 px-6 py-2 rounded-full bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition">
-								Request Demo
-							</button>
+							<Link href="/demo-request">
+								<button className="inline-block mt-4 px-6 py-2 rounded-full bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition">
+									Request Demo
+								</button>
+							</Link>
 						</div>
 					</motion.div>,
 				])}
