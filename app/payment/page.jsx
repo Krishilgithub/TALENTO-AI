@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
-	CreditCardIcon, 
 	ShieldCheckIcon, 
 	LockClosedIcon,
 	ArrowLeftIcon,
@@ -15,13 +14,107 @@ export default function PaymentPage() {
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [paymentSuccess, setPaymentSuccess] = useState(false);
 
+	useEffect(() => {
+		// Load Razorpay script
+		const script = document.createElement('script');
+		script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+		script.async = true;
+		document.body.appendChild(script);
+
+		return () => {
+			document.body.removeChild(script);
+		};
+	}, []);
+
 	const handlePayment = async () => {
 		setIsProcessing(true);
-		// Simulate payment processing
-		setTimeout(() => {
-			setPaymentSuccess(true);
+		
+		try {
+			// Create order first
+			const orderResponse = await fetch('/api/payment/create-order', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					amount: 139900, // Amount in paise (₹1399.00)
+					currency: 'INR'
+				}),
+			});
+
+			const orderData = await orderResponse.json();
+			
+			if (!orderData.success) {
+				throw new Error('Failed to create order');
+			}
+
+			// Razorpay configuration
+			const options = {
+				key: 'rzp_test_R800nyYb6EHdmN', // Your Razorpay Key ID
+				amount: orderData.amount,
+				currency: orderData.currency,
+				name: 'Talento AI',
+				description: 'Pro Plan Subscription',
+				image: '/logo.svg',
+				order_id: orderData.order_id,
+				handler: async function (response) {
+					// Handle successful payment
+					console.log('Payment successful:', response);
+					
+					try {
+						// Verify the payment
+						const verifyResponse = await fetch('/api/payment/verify', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({
+								razorpay_order_id: response.razorpay_order_id,
+								razorpay_payment_id: response.razorpay_payment_id,
+								razorpay_signature: response.razorpay_signature
+							}),
+						});
+
+						const verifyData = await verifyResponse.json();
+						
+						if (verifyData.success) {
+							setPaymentSuccess(true);
+						} else {
+							console.error('Payment verification failed:', verifyData.error);
+							alert('Payment verification failed. Please contact support.');
+						}
+					} catch (error) {
+						console.error('Verification error:', error);
+						alert('Payment verification failed. Please contact support.');
+					}
+					
+					setIsProcessing(false);
+				},
+				prefill: {
+					name: '',
+					email: '',
+					contact: ''
+				},
+				notes: {
+					address: 'Talento AI Office'
+				},
+				theme: {
+					color: '#0891b2' // Cyan color matching your theme
+				},
+				modal: {
+					ondismiss: function() {
+						setIsProcessing(false);
+					}
+				}
+			};
+
+			// Create Razorpay instance and open checkout
+			const rzp = new window.Razorpay(options);
+			rzp.open();
+		} catch (error) {
+			console.error('Payment error:', error);
 			setIsProcessing(false);
-		}, 3000);
+		}
 	};
 
 	if (paymentSuccess) {
@@ -79,55 +172,26 @@ export default function PaymentPage() {
 						animate={{ opacity: 1, x: 0 }}
 						className="bg-[#18191b] rounded-2xl p-8 border border-gray-700"
 					>
-						<h2 className="text-2xl font-bold text-white mb-6">Payment Details</h2>
+						<h2 className="text-2xl font-bold text-white mb-6">Secure Payment</h2>
 						
-						<div className="space-y-6">
-							<div>
-								<label className="block text-sm font-medium text-gray-300 mb-2">
-									Card Number
-								</label>
-								<div className="relative">
-									<CreditCardIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-									<input
-										type="text"
-										placeholder="1234 5678 9012 3456"
-										className="w-full pl-10 pr-4 py-3 border border-gray-600 rounded-lg bg-[#23272f] text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-									/>
-								</div>
+						<div className="text-center space-y-6">
+							<div className="bg-cyan-900/20 rounded-xl p-6 border border-cyan-700">
+								<h3 className="text-xl font-semibold text-cyan-300 mb-2">Pro Plan Subscription</h3>
+								<p className="text-gray-300 mb-4">
+									Unlock unlimited access to all features and priority support
+								</p>
+								<div className="text-3xl font-bold text-cyan-400 mb-4">₹1,399/month</div>
 							</div>
 
-							<div className="grid grid-cols-2 gap-4">
-								<div>
-									<label className="block text-sm font-medium text-gray-300 mb-2">
-										Expiry Date
-									</label>
-									<input
-										type="text"
-										placeholder="MM/YY"
-										className="w-full px-4 py-3 border border-gray-600 rounded-lg bg-[#23272f] text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-									/>
+							<div className="space-y-4">
+								<div className="flex items-center justify-center space-x-2 text-gray-300">
+									<ShieldCheckIcon className="w-5 h-5 text-green-400" />
+									<span>256-bit SSL encryption</span>
 								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-300 mb-2">
-										CVV
-									</label>
-									<input
-										type="text"
-										placeholder="123"
-										className="w-full px-4 py-3 border border-gray-600 rounded-lg bg-[#23272f] text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-									/>
+								<div className="flex items-center justify-center space-x-2 text-gray-300">
+									<LockClosedIcon className="w-5 h-5 text-green-400" />
+									<span>PCI DSS compliant</span>
 								</div>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-300 mb-2">
-									Cardholder Name
-								</label>
-								<input
-									type="text"
-									placeholder="John Doe"
-									className="w-full px-4 py-3 border border-gray-600 rounded-lg bg-[#23272f] text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-								/>
 							</div>
 
 							<button
@@ -143,10 +207,14 @@ export default function PaymentPage() {
 								) : (
 									<>
 										<LockClosedIcon className="w-5 h-5 mr-2" />
-										Pay ₹1,399
+										Pay ₹1,399 with Razorpay
 									</>
 								)}
 							</button>
+							
+							<p className="text-xs text-gray-500">
+								You will be redirected to Razorpay's secure payment gateway
+							</p>
 						</div>
 					</motion.div>
 
@@ -190,10 +258,10 @@ export default function PaymentPage() {
 						<div className="bg-[#18191b] rounded-2xl p-6 border border-gray-700">
 							<div className="flex items-center space-x-3 mb-4">
 								<ShieldCheckIcon className="w-6 h-6 text-green-400" />
-								<h4 className="text-white font-semibold">Secure Payment</h4>
+								<h4 className="text-white font-semibold">Razorpay Security</h4>
 							</div>
 							<p className="text-gray-300 text-sm">
-								Your payment information is encrypted and secure. We use industry-standard SSL encryption to protect your data.
+								Your payment is processed securely through Razorpay, a PCI DSS compliant payment gateway trusted by millions of businesses worldwide.
 							</p>
 						</div>
 					</motion.div>
