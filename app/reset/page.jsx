@@ -1,6 +1,7 @@
 'use client'
 import { sendResetPasswordEmail } from '@/utils/actions'
 import { useActionState } from 'react'
+import { useRouter } from 'next/navigation'
 
 const Page = () => {
   const [state, formAction, isPending] = useActionState(
@@ -10,11 +11,22 @@ const Page = () => {
       success: '',
     },
   )
+  const router = useRouter()
 
   const { error, success } = state
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0b0c10] via-[#101113] to-[#0b0c10] flex items-center justify-center px-4 py-8">
+      <div className="absolute top-6 left-6">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-400 bg-[#18191b] text-cyan-400 hover:bg-cyan-900 hover:text-white shadow-lg transition-all duration-200 font-semibold"
+          title="Back"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          <span>Back</span>
+        </button>
+      </div>
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white mb-2">Reset Password</h1>
