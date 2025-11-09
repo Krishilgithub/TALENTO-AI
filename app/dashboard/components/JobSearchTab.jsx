@@ -40,6 +40,7 @@ export default function JobSearchTab() {
 	const jobTypeDropdownRef = useRef(null);
 	const [supabaseLoading, setSupabaseLoading] = useState(false);
 	const [supabaseError, setSupabaseError] = useState("");
+	const [supabaseSuccess, setSupabaseSuccess] = useState("");
 
 	// Debounce search query to prevent excessive API calls
 	const debouncedQuery = useDebounce(query, 500);
@@ -71,7 +72,7 @@ export default function JobSearchTab() {
 		localStorage.setItem("savedJobs", JSON.stringify(savedJobs));
 	}, [savedJobs]);
 
-	// Fetch saved jobs from Supabase with caching
+	// Fetch saved jobs from API with caching
 	const fetchSavedJobs = useCallback(async () => {
 		if (!user) {
 			setSupabaseError("You must be logged in to view saved jobs.");
@@ -88,29 +89,27 @@ export default function JobSearchTab() {
 		setSupabaseError("");
 
 		try {
-			const { data, error } = await supabase
-				.from("saved_jobs")
-				.select("*")
-				.eq("user_id", user.id)
-				.order("id", { ascending: false });
+			const response = await fetch('/api/saved-jobs');
+			const result = await response.json();
 
-			if (error) {
-				setSupabaseError("Failed to fetch saved jobs.");
+			if (!response.ok) {
+				setSupabaseError(result.error || "Failed to fetch saved jobs.");
 				return;
 			}
 
-			const jobsData = data || [];
+			const jobsData = result.data || [];
 			setSavedJobs(jobsData);
 			setSavedJobsCache({
 				data: jobsData,
 				timestamp: Date.now()
 			});
 		} catch (error) {
+			console.error("Fetch saved jobs error:", error);
 			setSupabaseError("Failed to fetch saved jobs.");
 		} finally {
 			setSupabaseLoading(false);
 		}
-	}, [user, supabase, savedJobsCache]);
+	}, [user, savedJobsCache]);
 
 	useEffect(() => {
 		if (activeJobTab === "saved") {
@@ -156,6 +155,8 @@ export default function JobSearchTab() {
 		setLoading(true);
 		setError(null);
 		setResults([]);
+		setSupabaseError(""); // Clear any previous save errors
+		setSupabaseSuccess(""); // Clear any previous save success messages
 		addToHistory(q, l, c, t);
 
 		let apiUrl = `/api/jobs?query=${encodeURIComponent(
@@ -202,23 +203,10 @@ export default function JobSearchTab() {
 		}
 
 		setSupabaseError("");
+		setSupabaseSuccess("");
 		setSupabaseLoading(true);
 
 		try {
-			// Check if already saved
-			const { data: existing, error: existError } = await supabase
-				.from("saved_jobs")
-				.select("id")
-				.eq("user_id", user.id)
-				.eq("job_data->>url", job.url)
-				.maybeSingle();
-
-			if (existing) {
-				setSupabaseError("Job already saved.");
-				return;
-			}
-
-			// Save job and search params
 			const searchParams = {
 				query,
 				location,
@@ -226,23 +214,31 @@ export default function JobSearchTab() {
 				jobTypes: selectedJobTypes,
 			};
 
-			const { error } = await supabase.from("saved_jobs").insert([
-				{
-					user_id: user.id,
+			const response = await fetch('/api/saved-jobs', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
 					job_data: job,
 					search_params: searchParams,
-				},
-			]);
+				}),
+			});
 
-			if (error) {
-				setSupabaseError("Failed to save job.");
+			const result = await response.json();
+
+			if (!response.ok) {
+				setSupabaseError(result.error || 'Failed to save job');
 			} else {
 				// Invalidate cache and refresh saved jobs
 				setSavedJobsCache(null);
-				setActiveJobTab("saved");
+				setSupabaseSuccess("Job saved successfully!");
+				// Auto-clear success message after 3 seconds
+				setTimeout(() => setSupabaseSuccess(""), 3000);
 			}
 		} catch (error) {
-			setSupabaseError("Failed to save job.");
+			console.error("Save job error:", error);
+			setSupabaseError(`Failed to save job: ${error.message}`);
 		} finally {
 			setSupabaseLoading(false);
 		}
@@ -258,45 +254,25 @@ export default function JobSearchTab() {
 		setSupabaseLoading(true);
 
 		try {
-			// Find the job by url from cache first, then database
-			let jobToRemove;
+			const response = await fetch('/api/saved-jobs', {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ jobUrl }),
+			});
 
-			if (savedJobsCache) {
-				jobToRemove = savedJobsCache.data.find((j) => j.job_data.url === jobUrl);
-			}
+			const result = await response.json();
 
-			if (!jobToRemove) {
-				const { data: jobs, error: fetchError } = await supabase
-					.from("saved_jobs")
-					.select("id, job_data")
-					.eq("user_id", user.id);
-
-				if (fetchError) {
-					setSupabaseError("Failed to remove job.");
-					return;
-				}
-
-				jobToRemove = jobs.find((j) => j.job_data.url === jobUrl);
-			}
-
-			if (!jobToRemove) {
-				setSupabaseError("Job not found.");
-				return;
-			}
-
-			const { error: delError } = await supabase
-				.from("saved_jobs")
-				.delete()
-				.eq("id", jobToRemove.id);
-
-			if (delError) {
-				setSupabaseError("Failed to remove job.");
+			if (!response.ok) {
+				setSupabaseError(result.error || "Failed to remove job.");
 			} else {
 				// Invalidate cache and refresh saved jobs
 				setSavedJobsCache(null);
 				fetchSavedJobs();
 			}
 		} catch (error) {
+			console.error('Error removing job:', error);
 			setSupabaseError("Failed to remove job.");
 		} finally {
 			setSupabaseLoading(false);
@@ -385,12 +361,13 @@ export default function JobSearchTab() {
 		: popularLocations;
 
 	return (
-		<div className="space-y-8">
-			{/* Animated background */}
-			<div className="fixed inset-0 overflow-hidden pointer-events-none">
-				<div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 rounded-full blur-3xl animate-pulse"></div>
-				<div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-500/10 to-pink-600/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-			</div>
+		<div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+			<div className="container mx-auto px-6 py-8 space-y-8 max-w-7xl">
+				{/* Animated background */}
+				<div className="fixed inset-0 overflow-hidden pointer-events-none">
+					<div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 rounded-full blur-3xl animate-pulse"></div>
+					<div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-500/10 to-pink-600/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+				</div>
 
 			{/* Header */}
 			<div className="relative z-10 bg-gray-800/40 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-8 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
@@ -544,66 +521,39 @@ export default function JobSearchTab() {
 								type="submit"
 								className="group px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
 								disabled={loading}
-								onClick={() => console.log("Search button clicked")}
 							>
 								{loading ? "Searching..." : "Search"}
 							</button>
 						</form>
 					</div>
 
-					<p className="text-sm text-gray-400 font-medium mb-6 relative z-10">
-						Popular locations: Worldwide, Anywhere, United States, Europe,
-						India, Remote, Mumbai, Bangalore, etc. (You can also enter a custom
-						location)
-					</p>
-					{/* Search History Chips */}
-					{searchHistory.length > 0 && (
-						<div className="flex flex-wrap gap-2 mb-4">
-							{searchHistory.map((h, idx) => (
-								<button
-									key={idx}
-									onClick={() => {
-										setQuery(h.query);
-										setLocation(h.location);
-										setSelectedCategories(h.categories || []);
-										setSelectedJobTypes(h.jobTypes || []);
-										handleSearch(
-											null,
-											true,
-											h.query,
-											h.location,
-											h.categories,
-											h.jobTypes
-										);
-									}}
-									className="px-3 py-1 bg-cyan-100 text-cyan-900 rounded-full text-xs hover:bg-cyan-200 border border-cyan-300"
-								>
-									{h.query || "Any"}
-									{h.location ? ` @ ${h.location}` : ""}
-									{h.categories && h.categories.length > 0
-										? ` | ${h.categories.join(",")}`
-										: ""}
-									{h.jobTypes && h.jobTypes.length > 0
-										? ` | ${h.jobTypes.join(",")}`
-										: ""}
-								</button>
-							))}
-						</div>
-					)}
-					{error && <div className="text-red-400 font-sans">{error}</div>}
-					{/* Debug info - remove after testing */}
-					<div className="text-xs text-gray-500 mb-2">
-						Debug: Query="{query}", Location="{location}", Results=
-						{results.length}, Loading={loading.toString()}
-					</div>
+
+					{error && <div className="text-red-400 font-sans mb-4">{error}</div>}
+					{supabaseError && <div className="text-red-400 font-sans mb-4">{supabaseError}</div>}
+					{supabaseSuccess && <div className="text-green-400 font-sans mb-4">{supabaseSuccess}</div>}
 					<div>
 						{loading && (
-							<div className="text-cyan-400 font-sans">Loading jobs...</div>
+							<motion.div 
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								className="flex items-center justify-center py-12"
+							>
+								<div className="flex flex-col items-center gap-4">
+									<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
+									<p className="text-cyan-400 font-medium">Searching for opportunities...</p>
+								</div>
+							</motion.div>
 						)}
 						{!loading && results.length === 0 && (
-							<div className="text-gray-400 font-sans">
-								No jobs found. Try searching above.
-							</div>
+							<motion.div 
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								className="text-center py-16"
+							>
+								<BriefcaseIcon className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+								<p className="text-gray-400 text-lg font-medium mb-2">No jobs found</p>
+								<p className="text-gray-500">Try adjusting your search terms or location</p>
+							</motion.div>
 						)}
 						{results.length > 0 && (
 							<>
@@ -611,46 +561,76 @@ export default function JobSearchTab() {
 									{results.map((job, idx) => (
 										<motion.li
 											key={idx}
-											initial={{ opacity: 0, y: 40 }}
-											whileInView={{ opacity: 1, y: 0 }}
-											viewport={{ once: true, amount: 0.3 }}
+											initial={{ opacity: 0, y: 20 }}
+											animate={{ opacity: 1, y: 0 }}
 											transition={{
-												duration: 0.6,
+												duration: 0.4,
+												delay: idx * 0.05,
 												type: "spring",
-												bounce: 0.2,
+												damping: 25,
+												stiffness: 120
 											}}
-											className="group bg-gray-800/40 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-6 hover:bg-gray-700/40 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 cursor-pointer"
+											className="group relative bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-xl border border-gray-600/40 rounded-2xl p-6 hover:border-cyan-400/30 hover:shadow-2xl hover:shadow-cyan-500/5 transition-all duration-500 cursor-pointer overflow-hidden"
 										>
-											<h3 className="text-lg font-semibold text-white">
-												{job.title}
-											</h3>
-											<p className="text-gray-300">
-												{job.company} - {job.location}{" "}
-												{job.job_type
-													? `| ${job.job_type.replace("_", " ")}`
-													: ""}
-											</p>
-											<p className="text-gray-400 text-sm mb-2">
-												{job.description}
-											</p>
-											<div className="flex gap-4">
-												<a
-													href="#"
-													onClick={(e) => {
-														e.preventDefault();
-														setSelectedJob(job);
-														setShowJobModal(true);
-													}}
-													className="text-cyan-400 hover:underline font-sans"
-												>
-													View & Apply
-												</a>
-												<button
-													onClick={() => handleSaveJob(job)}
-													className="ml-2 px-3 py-1 bg-cyan-700 text-white rounded hover:bg-cyan-600 text-xs font-sans"
-												>
-													Save
-												</button>
+											{/* Subtle background gradient on hover */}
+											<div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+											
+											<div className="relative z-10">
+												<div className="flex items-start justify-between mb-4">
+													<div className="flex-1">
+														<h3 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors duration-300">
+															{job.title}
+														</h3>
+														<div className="flex items-center gap-2 text-gray-400 mb-2">
+															<span className="font-semibold text-gray-300">{job.company}</span>
+															<span>•</span>
+															<span className="text-cyan-400">{job.location}</span>
+															{job.job_type && (
+																<>
+																	<span>•</span>
+																	<span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-medium">
+																		{job.job_type.replace("_", " ").toUpperCase()}
+																	</span>
+																</>
+															)}
+														</div>
+													</div>
+													
+													<button
+														onClick={(e) => {
+															e.stopPropagation();
+															handleSaveJob(job);
+														}}
+														disabled={supabaseLoading}
+														className="px-4 py-2 bg-gray-700/50 hover:bg-cyan-600/80 text-gray-300 hover:text-white rounded-lg transition-all duration-300 text-sm font-medium hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+													>
+														{supabaseLoading ? "Saving..." : "Save Job"}
+													</button>
+												</div>
+												
+												<p className="text-gray-300 text-sm leading-relaxed mb-4 line-clamp-3">
+													{job.description}
+												</p>
+												
+												<div className="flex items-center justify-between">
+													<button
+														onClick={(e) => {
+															e.preventDefault();
+															setSelectedJob(job);
+															setShowJobModal(true);
+														}}
+														className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
+													>
+														View Details & Apply
+													</button>
+													
+													{job.salary && (
+														<div className="text-right">
+															<span className="text-green-400 font-bold text-lg">{job.salary}</span>
+															<div className="text-xs text-gray-500">Salary</div>
+														</div>
+													)}
+												</div>
 											</div>
 										</motion.li>
 									))}
@@ -769,6 +749,7 @@ export default function JobSearchTab() {
 					</div>
 				</div>
 			)}
+			</div>
 		</div>
 	);
 }
