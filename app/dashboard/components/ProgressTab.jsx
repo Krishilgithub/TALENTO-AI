@@ -42,28 +42,28 @@ export default function ProgressTab() {
 			const { data: userData } = await supabase.auth.getUser();
 			if (!userData?.user) return;
 			setUserId(userData.user.id);
-			
+
 			// Fetch from simple assessment_results table
 			const { data: resultsData, error: resultsError } = await supabase
 				.from('assessment_results')
 				.select('*')
 				.eq('user_id', userData.user.id)
 				.order('completed_at', { ascending: true });
-			
+
 			// Also fetch progress data
 			const { data: progressData, error: progressError } = await supabase
 				.from('user_progress')
 				.select('*')
 				.eq('user_id', userData.user.id)
 				.order('updated_at', { ascending: true });
-			
+
 			// Debug logging
 			console.log('Progress Tab Data Fetch:');
 			console.log('Results Data:', resultsData);
 			console.log('Progress Data:', progressData);
 			console.log('Results Error:', resultsError);
 			console.log('Progress Error:', progressError);
-			
+
 			// Use results data with proper validation
 			let combinedData = [];
 			if (!resultsError && resultsData) {
@@ -77,13 +77,13 @@ export default function ProgressTab() {
 					correct_answers: item.correct_answers || 0
 				}));
 			}
-			
+
 			console.log('Progress Tab - Final combined data:', combinedData);
 			setAssessmentResults(combinedData);
 			setLoading(false);
 		}
 		fetchResults();
-		
+
 		// Set up real-time listener for new assessments
 		const supabase = createClientForBrowser();
 		const channel = supabase
@@ -113,11 +113,11 @@ export default function ProgressTab() {
 		const filtered = (assessmentResults || []).filter(r => r?.assessment_type === type);
 		const colorMap = {
 			aptitude: 'rgb(34, 197, 214)',
-			technical: 'rgb(168, 85, 247)', 
+			technical: 'rgb(168, 85, 247)',
 			personality: 'rgb(34, 197, 94)',
 			communication: 'rgb(251, 191, 36)'
 		};
-		
+
 		return {
 			labels: filtered.map((r, i) => {
 				const date = new Date(r.completed_at || r.created_at);
@@ -155,10 +155,10 @@ export default function ProgressTab() {
 	const calculateProgress = (type) => {
 		const filtered = (assessmentResults || []).filter(r => r?.assessment_type === type);
 		if (filtered.length === 0) return 0;
-		
+
 		const latestScore = filtered[filtered.length - 1]?.score || 0;
 		const score = typeof latestScore === 'number' ? latestScore : parseFloat(latestScore) || 0;
-		
+
 		// Scores are already stored as percentages (0-100) in the database
 		// Just clamp to 0-100 range to avoid any edge cases
 		return Math.min(Math.max(Math.round(score), 0), 100);
@@ -171,31 +171,33 @@ export default function ProgressTab() {
 			{ name: "Problem Solving", progress: calculateProgress('aptitude') },
 			{ name: "Technical Skills", progress: calculateProgress('technical') },
 			{ name: "Leadership", progress: calculateProgress('personality') },
-			{ name: "Overall Average", progress: Math.round((assessmentResults || []).reduce((acc, r) => {
-				const score = typeof r?.score === 'number' ? r.score : parseFloat(r?.score) || 0;
-				// Scores are already percentages, just add them up
-				return acc + Math.min(Math.max(score, 0), 100);
-			}, 0) / Math.max((assessmentResults || []).length, 1)) },
+			{
+				name: "Overall Average", progress: Math.round((assessmentResults || []).reduce((acc, r) => {
+					const score = typeof r?.score === 'number' ? r.score : parseFloat(r?.score) || 0;
+					// Scores are already percentages, just add them up
+					return acc + Math.min(Math.max(score, 0), 100);
+				}, 0) / Math.max((assessmentResults || []).length, 1))
+			},
 		],
 		goals: [
-			{ 
-				name: "Complete 10 assessments", 
-				completed: (assessmentResults || []).length, 
-				total: 10 
+			{
+				name: "Complete 10 assessments",
+				completed: (assessmentResults || []).length,
+				total: 10
 			},
-			{ 
-				name: "Achieve 80% average score", 
+			{
+				name: "Achieve 80% average score",
 				completed: Math.round((assessmentResults || []).reduce((acc, r) => {
 					const score = typeof r?.score === 'number' ? r.score : parseFloat(r?.score) || 0;
 					// Scores are already percentages
 					return acc + Math.min(Math.max(score, 0), 100);
-				}, 0) / Math.max((assessmentResults || []).length, 1)), 
-				total: 80 
+				}, 0) / Math.max((assessmentResults || []).length, 1)),
+				total: 80
 			},
-			{ 
-				name: "Try all assessment types", 
-				completed: [...new Set((assessmentResults || []).map(r => r?.assessment_type).filter(Boolean))].length, 
-				total: 4 
+			{
+				name: "Try all assessment types",
+				completed: [...new Set((assessmentResults || []).map(r => r?.assessment_type).filter(Boolean))].length,
+				total: 4
 			},
 		],
 	};
@@ -235,10 +237,10 @@ export default function ProgressTab() {
 		const technicalCount = (assessmentResults || []).filter(r => r?.assessment_type === 'technical').length;
 		const communicationCount = (assessmentResults || []).filter(r => r?.assessment_type === 'communication').length;
 		const personalityCount = (assessmentResults || []).filter(r => r?.assessment_type === 'personality').length;
-		
+
 		const total = aptitudeCount + technicalCount + communicationCount + personalityCount;
 		if (total === 0) return [0, 0, 0, 0];
-		
+
 		return [
 			Math.round((aptitudeCount / total) * 100),
 			Math.round((technicalCount / total) * 100),

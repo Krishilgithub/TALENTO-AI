@@ -34,7 +34,7 @@ export default function CommunicationAssessmentPage() {
 		setSubmitted(false);
 		setCurrentQuestion(0);
 		setQuestionStartTimes([]);
-		
+
 		// Initialize assessment session
 		await dataStoreRef.current.startSession('communication', null, difficulty);
 		try {
@@ -180,7 +180,7 @@ export default function CommunicationAssessmentPage() {
 
 	const handleChange = (idx, value) => {
 		if (submitted) return;
-		
+
 		// Update question start time if this is the first interaction with this question
 		setQuestionStartTimes(prev => {
 			const updated = [...prev];
@@ -189,7 +189,7 @@ export default function CommunicationAssessmentPage() {
 			}
 			return updated;
 		});
-		
+
 		setUserAnswers((prev) => {
 			const updated = [...prev];
 			updated[idx] = value;
@@ -208,7 +208,7 @@ export default function CommunicationAssessmentPage() {
 				const question = questions[idx];
 				const startTime = questionStartTimes[idx] || now;
 				const timeTaken = Math.floor((now - startTime) / 1000); // in seconds
-				
+
 				// Store question details for results page
 				questionDetails.push({
 					questionText: question.question,
@@ -218,7 +218,7 @@ export default function CommunicationAssessmentPage() {
 					isCorrect: true, // All responses considered correct for completion
 					timeTaken: timeTaken
 				});
-				
+
 				// Record the response in the enhanced data store
 				dataStoreRef.current.recordResponse({
 					questionNumber: idx + 1,

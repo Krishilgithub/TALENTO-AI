@@ -26,30 +26,30 @@ export default function HistoryTab() {
     // Enhanced text formatting function for better display (same as OverviewTab)
     const formatResultText = (text) => {
         if (!text || typeof text !== 'string') return null;
-        
+
         // Clean the text first - remove markdown symbols and extra formatting
         const cleanText = text
             .replace(/\*\*([^*]+)\*\*/g, '$1')  // Remove **bold** markers
             .replace(/\*([^*]+)\*/g, '$1')      // Remove *italic* markers
             .replace(/#+\s*/g, '')              // Remove ### markers
             .replace(/\n\s*\n\s*\n/g, '\n\n')  // Clean extra line breaks
-        
+
         // Split into logical sections using emojis and patterns
         const sections = cleanText.split(/(?=🔍|✅|⚠️|🚀|📈|🎯|PRIORITY \d+)/);
-        
+
         return sections.map((section, index) => {
             if (!section.trim()) return null;
-            
+
             const lines = section.trim().split('\n').filter(line => line.trim());
             if (lines.length === 0) return null;
-            
+
             const title = lines[0].trim();
             const content = lines.slice(1);
-            
+
             // Determine section type and styling
             let headerClass = "text-lg font-bold mb-3";
             let containerClass = "mb-6 p-4 rounded-lg border";
-            
+
             if (title.includes('🔍') || title.includes('EXTRACTED')) {
                 headerClass = "text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-3";
                 containerClass += " bg-blue-900/20 border-blue-500/30";
@@ -74,7 +74,7 @@ export default function HistoryTab() {
             } else {
                 containerClass += " bg-gray-800/30 border-gray-600/40";
             }
-            
+
             return (
                 <motion.div
                     key={index}
@@ -87,13 +87,13 @@ export default function HistoryTab() {
                     <h4 className={headerClass}>
                         {title}
                     </h4>
-                    
+
                     {/* Section Content */}
                     <div className="space-y-3">
                         {content.map((line, lineIndex) => {
                             const cleanLine = line.trim();
                             if (!cleanLine) return null;
-                            
+
                             // Format different types of content
                             if (cleanLine.startsWith('•') || cleanLine.match(/^\d+\./) || cleanLine.startsWith('-')) {
                                 // Bullet points and numbered lists

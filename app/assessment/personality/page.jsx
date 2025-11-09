@@ -44,7 +44,7 @@ export default function PersonalityAssessmentPage() {
 		setCurrentQuestion(0);
 		setPersonalityTraits({});
 		setQuestionStartTimes([]);
-		
+
 		// Initialize assessment session
 		await dataStoreRef.current.startSession('personality', jobRole, 'medium');
 
@@ -229,7 +229,7 @@ export default function PersonalityAssessmentPage() {
 
 	const handleSelect = (qIdx, oIdx) => {
 		if (submitted) return;
-		
+
 		// Update question start time if this is the first interaction with this question
 		setQuestionStartTimes(prev => {
 			const updated = [...prev];
@@ -238,7 +238,7 @@ export default function PersonalityAssessmentPage() {
 			}
 			return updated;
 		});
-		
+
 		setUserAnswers((prev) => {
 			const updated = [...prev];
 			updated[qIdx] = oIdx;
@@ -251,7 +251,7 @@ export default function PersonalityAssessmentPage() {
 		const traits = calculatePersonalityTraits();
 		setPersonalityTraits(traits);
 		setSubmitted(true);
-		
+
 		const now = Date.now();
 		const questionDetails = [];
 
@@ -261,7 +261,7 @@ export default function PersonalityAssessmentPage() {
 				const question = questions[idx];
 				const startTime = questionStartTimes[idx] || now;
 				const timeTaken = Math.floor((now - startTime) / 1000); // in seconds
-				
+
 				// Store question details for results page
 				questionDetails.push({
 					questionText: question.question,
@@ -271,7 +271,7 @@ export default function PersonalityAssessmentPage() {
 					isCorrect: true, // All responses considered valid for personality
 					timeTaken: timeTaken
 				});
-				
+
 				// Record the response in the enhanced data store
 				dataStoreRef.current.recordResponse({
 					questionNumber: idx + 1,
@@ -542,8 +542,8 @@ export default function PersonalityAssessmentPage() {
 										key={idx}
 										onClick={() => handleSelect(currentQuestion, idx)}
 										className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${userAnswers[currentQuestion] === idx
-												? "border-cyan-400 bg-cyan-900/20 text-white"
-												: "border-gray-600 text-gray-300 hover:bg-cyan-900/10 hover:border-cyan-400"
+											? "border-cyan-400 bg-cyan-900/20 text-white"
+											: "border-gray-600 text-gray-300 hover:bg-cyan-900/10 hover:border-cyan-400"
 											}`}
 									>
 										<span className="text-cyan-400 font-semibold mr-2">

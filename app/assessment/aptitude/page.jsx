@@ -38,10 +38,10 @@ export default function AptitudeAssessmentPage() {
 		setScore(0);
 		setCurrentQuestion(0);
 		setQuestionStartTimes([]);
-		
+
 		// Initialize assessment session
 		await dataStoreRef.current.startSession('aptitude', jobRole, difficulty);
-		
+
 		try {
 			console.log("Starting aptitude assessment...");
 			const formData = new FormData();
@@ -294,7 +294,7 @@ export default function AptitudeAssessmentPage() {
 
 	const handleSelect = (qIdx, oIdx) => {
 		if (submitted) return;
-		
+
 		// Update question start time if this is the first interaction with this question
 		setQuestionStartTimes(prev => {
 			const updated = [...prev];
@@ -303,7 +303,7 @@ export default function AptitudeAssessmentPage() {
 			}
 			return updated;
 		});
-		
+
 		setUserAnswers((prev) => {
 			const updated = [...prev];
 			updated[qIdx] = oIdx;
@@ -322,7 +322,7 @@ export default function AptitudeAssessmentPage() {
 				const question = questions[idx];
 				const startTime = questionStartTimes[idx] || now;
 				const timeTaken = Math.floor((now - startTime) / 1000); // in seconds
-				
+
 				const isCorrect =
 					selectedIdx !== null &&
 					// Use correct_answer_index if available (from AI parsing)
@@ -559,8 +559,8 @@ export default function AptitudeAssessmentPage() {
 										transition={{ delay: idx * 0.1 }}
 										onClick={() => handleSelect(currentQuestion, idx)}
 										className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${userAnswers[currentQuestion] === idx
-												? "border-cyan-400 bg-cyan-900/20"
-												: "border-gray-600 hover:border-cyan-400 hover:bg-cyan-900/10"
+											? "border-cyan-400 bg-cyan-900/20"
+											: "border-gray-600 hover:border-cyan-400 hover:bg-cyan-900/10"
 											}`}
 									>
 										<div className="flex items-center">

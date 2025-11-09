@@ -1,7 +1,7 @@
 // Enhanced Assessment Analytics and Visualization Components
 import { useState, useEffect } from 'react';
-import { 
-  getAssessmentStats 
+import {
+  getAssessmentStats
 } from '@/utils/assessmentDataStore';
 
 // Progress Charts Component
@@ -23,9 +23,9 @@ export function EnhancedProgressCharts({ userId }) {
           number_of_questions: session.number_of_questions || 5,
           correct_answers: session.correct_answers || 0
         }));
-        
+
         console.log('Enhanced Progress Charts - Cleaned Data:', cleanedResults);
-        
+
         setStats({
           sessions: cleanedResults,
           attempts: [], // We don't have attempts data in the simple schema
@@ -53,7 +53,7 @@ export function EnhancedProgressCharts({ userId }) {
   }
 
   const assessmentTypes = ['aptitude', 'technical', 'communication', 'personality'];
-  const filteredSessions = selectedFilter === 'all' 
+  const filteredSessions = selectedFilter === 'all'
     ? (stats?.sessions || [])
     : (stats?.sessions || []).filter(s => s?.assessment_type === selectedFilter);
 
@@ -91,11 +91,10 @@ export function EnhancedProgressCharts({ userId }) {
       <div className="flex flex-wrap gap-2 mb-6">
         <button
           onClick={() => setSelectedFilter('all')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            selectedFilter === 'all'
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedFilter === 'all'
               ? 'bg-cyan-600 text-white'
               : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
+            }`}
         >
           All Assessments
         </button>
@@ -103,11 +102,10 @@ export function EnhancedProgressCharts({ userId }) {
           <button
             key={type}
             onClick={() => setSelectedFilter(type)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
-              selectedFilter === type
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${selectedFilter === type
                 ? 'bg-cyan-600 text-white'
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
+              }`}
           >
             {type}
           </button>
@@ -136,10 +134,9 @@ export function EnhancedProgressCharts({ userId }) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={`font-bold text-lg ${
-                    session.score >= 80 ? 'text-green-400' : 
-                    session.score >= 60 ? 'text-yellow-400' : 'text-red-400'
-                  }`}>
+                  <p className={`font-bold text-lg ${session.score >= 80 ? 'text-green-400' :
+                      session.score >= 60 ? 'text-yellow-400' : 'text-red-400'
+                    }`}>
                     {Math.round(session.score)}%
                   </p>
                   <p className="text-gray-400 text-sm">{session.correct_answers || 0}/{session.number_of_questions || 0}</p>
@@ -160,7 +157,7 @@ export function EnhancedProgressCharts({ userId }) {
                 <div>
                   <p className="text-white font-medium">{role}</p>
                   <p className="text-gray-400 text-sm">
-                    {stats.count} assessment{stats.count !== 1 ? 's' : ''} • 
+                    {stats.count} assessment{stats.count !== 1 ? 's' : ''} •
                     {Array.from(stats.types).join(', ')}
                   </p>
                 </div>
@@ -187,15 +184,14 @@ export function EnhancedProgressCharts({ userId }) {
                   <h4 className="text-white font-medium capitalize">
                     {item.type} - {item.difficulty}
                   </h4>
-                  <span className={`text-sm font-bold ${
-                    accuracy >= 80 ? 'text-green-400' : 
-                    accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'
-                  }`}>
+                  <span className={`text-sm font-bold ${accuracy >= 80 ? 'text-green-400' :
+                      accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'
+                    }`}>
                     {Math.round(accuracy)}%
                   </span>
                 </div>
                 <div className="w-full bg-gray-600 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-gradient-to-r from-cyan-400 to-blue-500 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(accuracy, 100)}%` }}
                   />
