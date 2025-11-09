@@ -11,9 +11,9 @@ export default function LinkedInOptimizerTab() {
 
 	const handleGeneratePosts = async () => {
 		if (!prompt.trim()) return;
-		
+
 		setIsGenerating(true);
-		
+
 		// Simulate API call
 		setTimeout(() => {
 			const mockRecommendations = [
@@ -36,7 +36,7 @@ export default function LinkedInOptimizerTab() {
 					type: "learning"
 				}
 			];
-			
+
 			setRecommendations(mockRecommendations);
 			setIsGenerating(false);
 		}, 2000);
@@ -48,25 +48,35 @@ export default function LinkedInOptimizerTab() {
 	};
 
 	return (
-		<div className="space-y-6">
-			<div>
-				<h2 className="text-xl font-semibold text-white mb-2">
-					LinkedIn Post Optimizer
-				</h2>
-				<p className="text-gray-300">
-					Generate professional LinkedIn posts based on your prompts and experiences.
-				</p>
+		<div className="space-y-8">
+			{/* Animated background */}
+			<div className="fixed inset-0 overflow-hidden pointer-events-none">
+				<div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 rounded-full blur-3xl animate-pulse"></div>
+				<div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-500/10 to-pink-600/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+			</div>
+
+			{/* Header */}
+			<div className="relative z-10 bg-gray-800/40 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-8 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
+				<div className="flex items-center space-x-4">
+					<div className="p-3 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl">
+						<ChatBubbleLeftRightIcon className="h-8 w-8 text-white" />
+					</div>
+					<div>
+						<h2 className="text-3xl font-black bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent tracking-tight">LinkedIn Post Optimizer</h2>
+						<p className="text-gray-400 text-lg font-medium">Generate professional LinkedIn posts based on your prompts and experiences.</p>
+					</div>
+				</div>
 			</div>
 
 			{/* Input Section */}
-			<div className="bg-[#18191b] rounded-lg p-6 border border-gray-700">
-				<h3 className="text-lg font-semibold text-cyan-400 mb-4">
+			<div className="relative z-10 bg-gray-800/40 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-8 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
+				<h3 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-6">
 					Describe Your Content
 				</h3>
-				
-				<div className="space-y-4">
+
+				<div className="space-y-6">
 					<div>
-						<label className="block text-sm font-medium text-gray-300 mb-2">
+						<label className="block text-base font-medium text-gray-300 mb-3">
 							What would you like to post about?
 						</label>
 						<textarea
@@ -74,14 +84,14 @@ export default function LinkedInOptimizerTab() {
 							onChange={(e) => setPrompt(e.target.value)}
 							placeholder="Describe your achievement, insight, or experience you'd like to share..."
 							rows={4}
-							className="w-full px-3 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-gray-800 text-white placeholder-gray-400 resize-none"
+							className="w-full px-6 py-4 border border-gray-600/30 rounded-xl focus:ring-2 focus:ring-cyan-400/20 focus:border-cyan-400/50 bg-gray-700/30 backdrop-blur-sm text-white placeholder-gray-400 resize-none transition-all duration-300"
 						/>
 					</div>
 
 					<button
 						onClick={handleGeneratePosts}
 						disabled={!prompt.trim() || isGenerating}
-						className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:from-cyan-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+						className="group w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-4 px-6 rounded-xl font-bold hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3"
 					>
 						{isGenerating ? (
 							<>
@@ -100,19 +110,19 @@ export default function LinkedInOptimizerTab() {
 
 			{/* Recommendations Section */}
 			{recommendations.length > 0 && (
-				<div className="space-y-4">
-					<h3 className="text-lg font-semibold text-cyan-400">
+				<div className="relative z-10 space-y-6">
+					<h3 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
 						Generated Posts
 					</h3>
-					
-					<div className="grid grid-cols-1 gap-4">
+
+					<div className="grid grid-cols-1 gap-6">
 						{recommendations.map((post) => (
 							<motion.div
 								key={post.id}
 								initial={{ opacity: 0, y: 20 }}
 								animate={{ opacity: 1, y: 0 }}
 								transition={{ duration: 0.5 }}
-								className="bg-[#232323] rounded-lg p-6 border border-gray-700"
+								className="group bg-gray-800/40 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-6 hover:bg-gray-700/40 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300"
 							>
 								<div className="flex items-center justify-between mb-4">
 									<div className="flex items-center gap-2">
@@ -126,13 +136,13 @@ export default function LinkedInOptimizerTab() {
 										Copy
 									</button>
 								</div>
-								
-								<div className="bg-gray-800 rounded-lg p-4 border border-gray-600">
-									<pre className="text-gray-200 text-sm whitespace-pre-wrap font-sans">
+
+								<div className="bg-gray-900/50 rounded-lg p-4 border border-gray-600/30">
+									<pre className="text-gray-200 text-sm whitespace-pre-wrap">
 										{post.content}
 									</pre>
 								</div>
-								
+
 								<div className="mt-4 flex gap-2">
 									<span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-cyan-900 text-cyan-300">
 										{post.type}
@@ -148,7 +158,7 @@ export default function LinkedInOptimizerTab() {
 			)}
 
 			{/* Tips Section */}
-			<div className="bg-[#18191b] rounded-lg p-6 border border-gray-700">
+			<div className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-6">
 				<h3 className="text-lg font-semibold text-cyan-400 mb-4">
 					💡 Tips for Better LinkedIn Posts
 				</h3>

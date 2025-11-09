@@ -4,14 +4,12 @@ import { NextResponse } from 'next/server'
 const protectedRoutes = [
   '/dashboard',
   '/admin',
-  '/admin/settings',
   '/protected',
   '/profile',
   '/assessment',
   '/practice',
   '/career',
   '/onboarding',
-  // Add more protected routes as needed
 ];
 
 // Routes that should be skipped by middleware to avoid redirect loops
@@ -65,15 +63,14 @@ export const middleware = async request => {
         },
     )
 
-    const isProtectedRoute = protectedRoutes.includes(pathname)
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
     // Get user session
     const { data: { user }, error } = await supabase.auth.getUser()
 
     if (isProtectedRoute) {
         if (error || !user) {
-            // User is not authenticated, redirect to warning page
-            return NextResponse.redirect(new URL('/warning', request.url))
+            return NextResponse.redirect(new URL('/login', request.url))
         }
         
         // Check if user needs onboarding
@@ -82,10 +79,11 @@ export const middleware = async request => {
         }
     }
 
-    // If user is authenticated and trying to access public routes like homepage,
-    // redirect them to dashboard if they're already onboarded
-    if (user && user.user_metadata?.onboarded && pathname === '/') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+    // If user is authenticated and tries to visit public auth routes, redirect away
+    const publicAuthRoutes = ['/', '/login', '/signup', '/forgot-password', '/reset']
+    if (user && publicAuthRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
+        const target = user.user_metadata?.onboarded ? '/dashboard' : '/onboarding'
+        return NextResponse.redirect(new URL(target, request.url))
     }
 
     return supabaseResponse

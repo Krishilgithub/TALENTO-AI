@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import createClientForBrowser from "@/utils/supabase/client";
+import { useAuth } from "../context/AuthContext";
 import {
 	ChartBarIcon,
 	ChatBubbleLeftRightIcon,
@@ -18,20 +18,21 @@ import OverviewTab from "./components/OverviewTab";
 import InterviewPrepTab from "./components/InterviewPrepTab";
 import PracticeSessionsTab from "./components/PracticeSessionsTab";
 import JobSearchTab from "./components/JobSearchTab";
-import ProfilePage from "./components/ProfilePage";
 import SubscriptionTab from "./components/SubscriptionTab";
 import AssessmentTab from "./components/AssessmentTab";
+import ProgressTab from "./components/ProgressTab";
 import LinkedInOptimizerTab from "./components/LinkedInOptimizerTab";
 import LinkedInPostGeneratorTab from "./components/LinkedInPostGeneratorTab";
 import ReferralTab from "./components/ReferralTab";
-import ThemeToggle from "../components/ThemeToggle";
+import ProfileTab from "./components/ProfileTab";
+import HistoryTab from "./components/HistoryTab";
 
 export default function DashboardPage() {
+	const { user: authUser, loading: authLoading, signOut, supabase } = useAuth();
 	const [user, setUser] = useState(null);
 	const [activeTab, setActiveTab] = useState("overview");
 	const [isLoading, setIsLoading] = useState(true);
 	const [sidebarOpen, setSidebarOpen] = useState(true);
-	const [showProfile, setShowProfile] = useState(false);
 	const [onboardingData, setOnboardingData] = useState(null);
 	const [showOnboardingModal, setShowOnboardingModal] = useState(false);
 	const router = useRouter();
@@ -43,71 +44,65 @@ export default function DashboardPage() {
 		if (tabParam) {
 			setActiveTab(tabParam);
 		}
+	}, []);
 
-		const fetchUser = async () => {
-			const supabase = createClientForBrowser();
-			const { data, error } = await supabase.auth.getUser();
-			if (data?.user) {
-				const userObj = {
-					name:
-						data.user.user_metadata?.name ||
-						data.user.user_metadata?.firstName ||
-						data.user.email.split("@")[0],
-					email: data.user.email,
-					role: data.user.user_metadata?.role || "user",
-					avatar: data.user.user_metadata?.avatar_url || "/avatar1.jpg",
-				};
-				if (userObj.role === "admin") {
-					router.push("/admin");
-					return;
-				}
-				// OTP verification check
-				if (!data.user.email_confirmed_at) {
-					router.push(
-						`/verify-otp?email=${encodeURIComponent(data.user.email)}`
-					);
-					return;
-				}
-				// Onboarding check
-				if (!data.user.user_metadata?.onboarded) {
-					router.push("/onboarding");
-					return;
-				}
-				setUser(userObj);
-				setIsLoading(false);
-			} else {
-				router.push("/login");
-			}
+	useEffect(() => {
+		if (authLoading) return; // Wait for auth to load
+
+		if (!authUser) {
+			router.push("/login");
+			return;
+		}
+
+		const userObj = {
+			name:
+				authUser.user_metadata?.name ||
+				authUser.user_metadata?.firstName ||
+				authUser.email.split("@")[0],
+			email: authUser.email,
+			role: authUser.user_metadata?.role || "user",
+			avatar: authUser.user_metadata?.avatar_url || "/avatar1.jpg",
 		};
-		fetchUser();
-	}, [router]);
+
+		if (userObj.role === "admin") {
+			router.push("/admin");
+			return;
+		}
+
+		// OTP verification check
+		if (!authUser.email_confirmed_at) {
+			router.push(
+				`/verify-otp?email=${encodeURIComponent(authUser.email)}`
+			);
+			return;
+		}
+
+		// Onboarding check
+		if (!authUser.user_metadata?.onboarded) {
+			router.push("/onboarding");
+			return;
+		}
+
+		setUser(userObj);
+		setIsLoading(false);
+	}, [authUser, authLoading, router]);
 
 	const handleLogout = async () => {
-		const supabase = createClientForBrowser();
-		await supabase.auth.signOut();
+		await signOut();
 		router.push("/");
 	};
 
 	const handleProfileClick = () => {
-		setShowProfile(true);
-	};
-
-	const handleBackToDashboard = () => {
-		setShowProfile(false);
+		setActiveTab("profile");
 	};
 
 	// Add fetch onboarding logic
 	const fetchOnboardingData = async () => {
-		if (!user) return;
-		const supabase = createClientForBrowser();
-		// Get the current user's id
-		const { data: authData } = await supabase.auth.getUser();
-		const userId = authData?.user?.id;
-		if (!userId) return;
+		if (!authUser) return;
 		const { data, error } = await supabase
 			.from("user_onboarding")
 			.select("*")
-			.eq("user_id", userId)
+			.eq("user_id", authUser.id)
 			.single();
 		if (error) {
 			alert("Error fetching onboarding data: " + error.message);
@@ -120,7 +115,6 @@ export default function DashboardPage() {
 	// Replace setActiveTab with a handler that also closes the profile if open
 	const handleTabChange = (tabId) => {
 		setActiveTab(tabId);
-		setShowProfile(false);
 	};
 
 	if (isLoading) {
@@ -134,7 +128,7 @@ export default function DashboardPage() {
 	if (!user) return null;
 
 	return (
-		<div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 dark:from-[#101113] dark:via-[#18191b] dark:to-[#23272f] transition-colors duration-300">
+		<div className="min-h-screen flex bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#232425] transition-colors duration-300">
 			{/* Sidebar */}
 			<Sidebar
 				user={user}
@@ -153,26 +147,19 @@ export default function DashboardPage() {
 
 			{/* Main Content Area */}
 			<div
-				className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${
-					sidebarOpen ? "ml-72" : "ml-16"
-				}`}
+				className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${sidebarOpen ? "ml-72" : "ml-16"
+					}`}
 			>
-				{/* Theme Toggle */}
-				<div className="flex justify-end p-4">
-					<ThemeToggle />
-				</div>
-				
 				{/* Main Card Content */}
-				<div className="flex-1 flex flex-col items-center justify-start py-10 px-4 bg-gray-50 dark:bg-[#101113] w-full transition-colors duration-300">
+				<div className="flex-1 flex flex-col items-center justify-start py-10 px-4 bg-[#0f0f0f] w-full transition-colors duration-300">
 					<div
-						className={`w-full max-w-5xl bg-white dark:bg-[#18191b] rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-8 transition-all duration-300 ${
-							sidebarOpen ? "ml-0" : "mx-auto max-w-4xl"
-						}`}
+						className={`w-full max-w-5xl bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-lg p-8 transition-all duration-300 ${sidebarOpen ? "ml-0" : "mx-auto max-w-4xl"
+							}`}
 					>
 						{/* Onboarding Data Modal */}
 						{showOnboardingModal && onboardingData && (
 							<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-								<div className="bg-white dark:bg-[#18191b] p-8 rounded-2xl shadow-2xl max-w-lg w-full relative">
+								<div className="bg-[#1a1a1a] border border-gray-800 p-8 rounded-2xl shadow-2xl max-w-lg w-full relative">
 									<button
 										onClick={() => setShowOnboardingModal(false)}
 										className="absolute top-2 right-2 text-gray-400 hover:text-cyan-400 text-2xl font-bold"
@@ -182,7 +169,7 @@ export default function DashboardPage() {
 									<h2 className="text-2xl font-bold text-cyan-400 mb-4">
 										My Onboarding Details
 									</h2>
-									<div className="space-y-2 text-gray-700 dark:text-gray-200 max-h-96 overflow-y-auto">
+									<div className="space-y-2 text-white max-h-96 overflow-y-auto">
 										{Object.entries(onboardingData).map(([key, value]) => (
 											<div key={key} className="flex flex-col">
 												<span className="font-semibold text-cyan-300">
@@ -203,24 +190,22 @@ export default function DashboardPage() {
 							</div>
 						)}
 						{/* Dashboard Header */}
-						{showProfile ? (
-							<ProfilePage user={user} onBack={handleBackToDashboard} />
-						) : (
-							<>
-								{activeTab === "overview" && <OverviewTab user={user} />}
-								{activeTab === "assessment" && <AssessmentTab />}
-								{activeTab === "subscription" && <SubscriptionTab />}
-								{activeTab === "referral" && <ReferralTab />}
-								{/* {activeTab === "interviews" && <InterviewPrepTab />} */}
-								{/* {activeTab === "practice" && <PracticeSessionsTab />} */}
-								{/* Progress tab removed; progress is now inside Assessment tab */}
-								{activeTab === "jobsearch" && <JobSearchTab />}
-								{activeTab === "linkedin-optimizer" && <LinkedInOptimizerTab />}
-								{activeTab === "linkedin-post-generator" && (
-									<LinkedInPostGeneratorTab />
-								)}
-							</>
-						)}
+						<>
+							{activeTab === "overview" && <OverviewTab user={user} />}
+							{activeTab === "assessment" && <AssessmentTab />}
+							{activeTab === "progress" && <ProgressTab />}
+							{activeTab === "history" && <HistoryTab />}
+							{activeTab === "subscription" && <SubscriptionTab />}
+							{activeTab === "referral" && <ReferralTab />}
+							{activeTab === "profile" && <ProfileTab />}
+							{/* {activeTab === "interviews" && <InterviewPrepTab />} */}
+							{/* {activeTab === "practice" && <PracticeSessionsTab />} */}
+							{activeTab === "jobsearch" && <JobSearchTab />}
+							{activeTab === "linkedin-optimizer" && <LinkedInOptimizerTab />}
+							{activeTab === "linkedin-post-generator" && (
+								<LinkedInPostGeneratorTab />
+							)}
+						</>
 					</div>
 				</div>
 			</div>

@@ -2,23 +2,34 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import ThemeToggle from "./components/ThemeToggle";
-import { useTheme } from "./context/ThemeContext";
+import { withLoadingCursor } from "../utils/profileUtils";
 
 const navLinks = [
 	{ label: "Features", href: "#features" },
 	{ label: "Testimonials", href: "#testimonials" },
-	{ label: "Pricing", href: "#pricing" },
 	{ label: "FAQ", href: "#faq" },
 	{ label: "Contact", href: "#contact" },
 ];
 
 export default function Navbar() {
 	const [open, setOpen] = useState(false);
-	const { isDark } = useTheme();
-	
+
+	const handleNavigation = withLoadingCursor(async (href) => {
+		if (href.startsWith('#')) {
+			// For anchor links, scroll smoothly with a slight delay to show cursor loading
+			await new Promise(resolve => setTimeout(resolve, 500));
+			const element = document.querySelector(href);
+			if (element) {
+				element.scrollIntoView({ behavior: 'smooth' });
+			}
+		} else {
+			// For page navigation
+			window.location.href = href;
+		}
+	});
+
 	return (
-		<nav className={`floating-navbar bg-white/80 dark:bg-[#101113]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors duration-300 ${isDark ? 'dark' : 'light'}`}>
+		<nav className="floating-navbar bg-white/80 dark:bg-[#0f0f0f]/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
 			<div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3">
 				<div className="flex items-center gap-2">
 					<Link href="/">
@@ -33,30 +44,29 @@ export default function Navbar() {
 
 				<div className="hidden lg:flex gap-2 items-center text-base font-medium">
 					{navLinks.map((link) => (
-						<a
+						<button
 							key={link.label}
-							href={link.href}
-							className="px-4 py-2 rounded-full transition font-semibold text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-[#232323]"
+							onClick={() => handleNavigation(link.href)}
+							className="px-4 py-2 rounded-full transition font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white cursor-pointer"
 						>
 							{link.label}
-						</a>
+						</button>
 					))}
-					<ThemeToggle />
-					<Link
-						href="/login"
-						className="text-gray-700 dark:text-white px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#232323]"
+					<button
+						onClick={() => handleNavigation('/login')}
+						className="text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white cursor-pointer"
 					>
 						Login
-					</Link>
-					<Link
-						href="/signup"
-						className="ml-2 px-4 py-2 rounded-full bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition"
+					</button>
+					<button
+						onClick={() => handleNavigation('/signup')}
+						className="ml-2 px-4 py-2 rounded-full bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition cursor-pointer"
 					>
 						Sign Up
-					</Link>
+					</button>
 				</div>
 				<button
-					className="lg:hidden flex items-center text-gray-700 dark:text-white focus:outline-none"
+					className="lg:hidden flex items-center text-gray-700 dark:text-gray-300 focus:outline-none"
 					onClick={() => setOpen((o) => !o)}
 					aria-label="Open menu"
 				>
@@ -72,31 +82,37 @@ export default function Navbar() {
 			</div>
 			{/* Mobile menu */}
 			{open && (
-				<div className="lg:hidden bg-white dark:bg-[#101113] border-t border-gray-200 dark:border-gray-800 px-4 pb-4 flex flex-col gap-2 rounded-b-2xl">
+				<div className="lg:hidden bg-white dark:bg-[#1a1a1a] border-t border-gray-200 dark:border-gray-800 px-4 pb-4 flex flex-col gap-2 rounded-b-2xl">
 					{navLinks.map((link) => (
-						<a
+						<button
 							key={link.label}
-							href={link.href}
-							className="block px-4 py-2 rounded-full transition font-semibold text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-[#232323]"
-							onClick={() => setOpen(false)}
+							onClick={() => {
+								handleNavigation(link.href);
+								setOpen(false);
+							}}
+							className="block px-4 py-2 rounded-full transition font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white cursor-pointer text-left"
 						>
 							{link.label}
-						</a>
+						</button>
 					))}
-					<Link
-						href="/login"
-						className="text-gray-700 dark:text-white px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#232323]"
-						onClick={() => setOpen(false)}
+					<button
+						onClick={() => {
+							handleNavigation('/login');
+							setOpen(false);
+						}}
+						className="text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white cursor-pointer text-left"
 					>
 						Login
-					</Link>
-					<Link
-						href="/signup"
-						className="px-4 py-2 rounded-full bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition"
-						onClick={() => setOpen(false)}
+					</button>
+					<button
+						onClick={() => {
+							handleNavigation('/signup');
+							setOpen(false);
+						}}
+						className="px-4 py-2 rounded-full bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition cursor-pointer"
 					>
 						Sign Up
-					</Link>
+					</button>
 				</div>
 			)}
 		</nav>

@@ -39,30 +39,35 @@ export default function ScenariosSection() {
 	return (
 		<section
 			id="scenarios"
-			className="w-full max-w-7xl mx-auto py-20 px-4 reveal"
+			className="w-full bg-white dark:bg-[#0f0f0f] py-24 px-4"
 		>
-			<h2 className="text-3xl sm:text-4xl font-bold text-center mb-12">
-				Support All Scenarios
-			</h2>
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-				{scenarios.map((s, i) => (
-					<motion.div
-						key={i}
-						className="bg-[#18191b] rounded-xl overflow-hidden shadow hover:shadow-lg transition group cursor-pointer"
-						initial={{ opacity: 0, y: 40 }}
-						whileInView={{ opacity: 1, y: 0 }}
-						viewport={{ once: true, amount: 0.3 }}
-						transition={{ duration: 1, delay: i * 0.15, type: "spring", bounce: 0.2 }}
-					>
-						<div className="h-48 w-full relative">
-							<Image src={s.img} alt={s.title} fill className="object-cover" />
-						</div>
-						<div className="p-6">
-							<h3 className="text-lg font-bold mb-2">{s.title}</h3>
-							<p className="text-gray-400 text-sm">{s.desc}</p>
-						</div>
-					</motion.div>
-				))}
+			<div className="max-w-7xl mx-auto">
+				<h2 className="text-3xl sm:text-4xl font-bold text-center mb-4 text-gray-900 dark:text-white">
+					Support All Scenarios
+				</h2>
+				<p className="text-gray-600 dark:text-gray-400 text-center mb-16 text-lg max-w-2xl mx-auto">
+					From technical interviews to case studies, we've got you covered
+				</p>
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+					{scenarios.map((s, i) => (
+						<motion.div
+							key={i}
+							className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl hover:bg-gray-50 dark:hover:bg-[#232425] dark:hover:border-gray-700 transition group cursor-pointer"
+							initial={{ opacity: 0, y: 40 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							viewport={{ once: true, amount: 0.3 }}
+							transition={{ duration: 1, delay: i * 0.15, type: "spring", bounce: 0.2 }}
+						>
+							<div className="h-48 w-full relative">
+								<Image src={s.img} alt={s.title} fill className="object-cover" />
+							</div>
+							<div className="p-8">
+								<h3 className="text-lg font-bold mb-3 text-gray-900 dark:text-white">{s.title}</h3>
+								<p className="text-gray-600 dark:text-gray-400 text-base leading-relaxed">{s.desc}</p>
+							</div>
+						</motion.div>
+					))}
+				</div>
 			</div>
 		</section>
 	);

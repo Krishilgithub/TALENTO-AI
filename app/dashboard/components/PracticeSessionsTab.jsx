@@ -43,43 +43,45 @@ export default function PracticeSessionsTab() {
 	};
 
 	return (
-		<div className="space-y-6">
-			<div>
-				<h2 className="text-xl font-semibold text-white mb-2 font-sans">
-					Practice Sessions
-				</h2>
-				<p className="text-gray-300 font-sans">
-					Welcome! Choose a category below to begin practicing and improving your skills. Each session is tailored to help you grow and track your progress.
-				</p>
-			</div>
+		<div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+			<div className="container mx-auto px-4 py-8">
+				<div className="max-w-7xl mx-auto">
+					<div className="mb-8">
+						<h2 className="text-3xl font-bold text-white mb-4">
+							Practice Sessions
+						</h2>
+						<p className="text-gray-300 font-sans">
+							Welcome! Choose a category below to begin practicing and improving your skills. Each session is tailored to help you grow and track your progress.
+						</p>
+					</div>
 
-			{/* Practice Categories */}
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-				{PRACTICE_CATEGORIES.map((cat) => (
-					<motion.div
-						key={cat.key}
-						initial={{ opacity: 0, y: 40 }}
-						whileInView={{ opacity: 1, y: 0 }}
-						viewport={{ once: true, amount: 0.3 }}
-						transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
-						className="bg-[#18191b] rounded-xl shadow-md border border-cyan-900 p-6 flex flex-col items-start"
-					>
-						<h3 className="text-xl font-semibold mb-2 text-cyan-400">
-							{cat.name}
-						</h3>
-						<p className="text-gray-400 mb-4">{cat.description}</p>
-						<button
-							className="mt-auto bg-cyan-400 text-black px-4 py-2 rounded hover:bg-cyan-300 transition-colors duration-200"
-							disabled
-						>
-							Start Practice
-						</button>
-					</motion.div>
-				))}
-			</div>
+					{/* Practice Categories */}
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						{PRACTICE_CATEGORIES.map((cat) => (
+							<motion.div
+								key={cat.key}
+								initial={{ opacity: 0, y: 40 }}
+								whileInView={{ opacity: 1, y: 0 }}
+								viewport={{ once: true, amount: 0.3 }}
+								transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
+								className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-6 flex flex-col items-start hover:border-cyan-400/50 transition-all duration-200"
+							>
+								<h3 className="text-xl font-semibold mb-2 text-cyan-400">
+									{cat.name}
+								</h3>
+								<p className="text-gray-400 mb-4">{cat.description}</p>
+								<button
+									className="mt-auto bg-cyan-400 text-black px-4 py-2 rounded hover:bg-cyan-300 transition-colors duration-200"
+									disabled
+								>
+									Start Practice
+								</button>
+							</motion.div>
+						))}
+					</div>
 
-			{/* Coming Soon Notice */}
-			{/* <div className="mt-8 text-center">
+					{/* Coming Soon Notice */}
+					{/* <div className="mt-8 text-center">
 				<div className="bg-[#232323] rounded-lg p-6 border border-gray-700">
 					<p className="text-gray-500 text-sm">
 						(Practice session functionality coming soon!)
@@ -87,8 +89,8 @@ export default function PracticeSessionsTab() {
 				</div>
 			</div> */}
 
-			{/* Recent Sessions */}
-			{/* <div>
+					{/* Recent Sessions */}
+					{/* <div>
 				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
 					Recent Sessions
 				</h3>
@@ -142,6 +144,8 @@ export default function PracticeSessionsTab() {
 					))}
 				</div>
 			</div> */}
+				</div>
+			</div>
 		</div>
 	);
 } 

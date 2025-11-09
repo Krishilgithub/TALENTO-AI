@@ -16,6 +16,7 @@ import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import createClientForBrowser from '@/utils/supabase/client';
+import { EnhancedProgressCharts } from './EnhancedProgressCharts';
 
 ChartJS.register(
 	CategoryScale,
@@ -33,6 +34,7 @@ export default function ProgressTab() {
 	const [assessmentResults, setAssessmentResults] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [userId, setUserId] = useState(null);
+	const [refreshKey, setRefreshKey] = useState(0);
 
 	useEffect(() => {
 		async function fetchResults() {
@@ -40,109 +42,178 @@ export default function ProgressTab() {
 			const { data: userData } = await supabase.auth.getUser();
 			if (!userData?.user) return;
 			setUserId(userData.user.id);
-			const { data, error } = await supabase
+			
+			// Fetch from simple assessment_results table
+			const { data: resultsData, error: resultsError } = await supabase
 				.from('assessment_results')
 				.select('*')
 				.eq('user_id', userData.user.id)
 				.order('completed_at', { ascending: true });
-			if (!error && data) setAssessmentResults(data);
+			
+			// Also fetch progress data
+			const { data: progressData, error: progressError } = await supabase
+				.from('user_progress')
+				.select('*')
+				.eq('user_id', userData.user.id)
+				.order('updated_at', { ascending: true });
+			
+			// Debug logging
+			console.log('Progress Tab Data Fetch:');
+			console.log('Results Data:', resultsData);
+			console.log('Progress Data:', progressData);
+			console.log('Results Error:', resultsError);
+			console.log('Progress Error:', progressError);
+			
+			// Use results data with proper validation
+			let combinedData = [];
+			if (!resultsError && resultsData) {
+				console.log('Raw assessment results data:', resultsData);
+				combinedData = resultsData.map(item => ({
+					...item,
+					// Ensure scores are clamped to 0-100 range
+					score: Math.min(Math.max(item.score || 0, 0), 100),
+					// Use actual question counts, default to 5 for new assessments
+					number_of_questions: item.number_of_questions || 5,
+					correct_answers: item.correct_answers || 0
+				}));
+			}
+			
+			console.log('Progress Tab - Final combined data:', combinedData);
+			setAssessmentResults(combinedData);
 			setLoading(false);
 		}
 		fetchResults();
+		
+		// Set up real-time listener for new assessments
+		const supabase = createClientForBrowser();
+		const channel = supabase
+			.channel('assessment_updates')
+			.on(
+				'postgres_changes',
+				{
+					event: 'INSERT',
+					schema: 'public',
+					table: 'assessment_results'
+				},
+				(payload) => {
+					console.log('New assessment completed:', payload);
+					setRefreshKey(prev => prev + 1);
+					setTimeout(() => fetchResults(), 1000); // Refresh data when new assessment is completed
+				}
+			)
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(channel);
+		};
 	}, []);
 
 	// Group and transform data for charts
 	const getChartData = (type) => {
-		const filtered = assessmentResults.filter(r => r.assessment_type === type);
+		const filtered = (assessmentResults || []).filter(r => r?.assessment_type === type);
+		const colorMap = {
+			aptitude: 'rgb(34, 197, 214)',
+			technical: 'rgb(168, 85, 247)', 
+			personality: 'rgb(34, 197, 94)',
+			communication: 'rgb(251, 191, 36)'
+		};
+		
 		return {
-			labels: filtered.map((r, i) => `Attempt ${i + 1}`),
+			labels: filtered.map((r, i) => {
+				const date = new Date(r.completed_at || r.created_at);
+				return `${date.getMonth() + 1}/${date.getDate()}`;
+			}),
 			datasets: [
 				{
 					label: `${type.charAt(0).toUpperCase() + type.slice(1)} Scores`,
-					data: filtered.map(r => r.score),
-					borderColor: 'rgb(34, 197, 214)',
-					backgroundColor: 'rgba(34, 197, 214, 0.2)',
+					data: filtered.map(r => {
+						// Score is already percentage in assessment_results table
+						const score = typeof r.score === 'number' ? r.score : parseFloat(r.score) || 0;
+						// Clamp to 0-100 range for proper display
+						return Math.min(Math.max(score, 0), 100);
+					}),
+					borderColor: colorMap[type] || 'rgb(34, 197, 214)',
+					backgroundColor: (colorMap[type] || 'rgb(34, 197, 214)').replace('rgb', 'rgba').replace(')', ', 0.2)'),
 					tension: 0.1,
+					fill: true,
+					pointBackgroundColor: colorMap[type] || 'rgb(34, 197, 214)',
+					pointBorderColor: '#fff',
+					pointBorderWidth: 2,
+					pointRadius: 5,
 				},
 			],
 		};
 	};
 
+	// Real assessment data from database
+	const generalAptitudeData = getChartData('aptitude');
+	const technicalAssessmentData = getChartData('technical');
+	const personalityAssessmentData = getChartData('personality');
+	const communicationSkillData = getChartData('communication');
+
+	// Calculate real progress statistics
+	const calculateProgress = (type) => {
+		const filtered = (assessmentResults || []).filter(r => r?.assessment_type === type);
+		if (filtered.length === 0) return 0;
+		
+		const latestScore = filtered[filtered.length - 1]?.score || 0;
+		const score = typeof latestScore === 'number' ? latestScore : parseFloat(latestScore) || 0;
+		
+		// Scores are already stored as percentages (0-100) in the database
+		// Just clamp to 0-100 range to avoid any edge cases
+		return Math.min(Math.max(Math.round(score), 0), 100);
+	};
+
+	// Update progress data with real statistics
 	const progressData = {
 		skills: [
-			{ name: "Communication", progress: 85 },
-			{ name: "Problem Solving", progress: 78 },
-			{ name: "Technical Skills", progress: 92 },
-			{ name: "Leadership", progress: 65 },
-			{ name: "Teamwork", progress: 88 },
+			{ name: "Communication", progress: calculateProgress('communication') },
+			{ name: "Problem Solving", progress: calculateProgress('aptitude') },
+			{ name: "Technical Skills", progress: calculateProgress('technical') },
+			{ name: "Leadership", progress: calculateProgress('personality') },
+			{ name: "Overall Average", progress: Math.round((assessmentResults || []).reduce((acc, r) => {
+				const score = typeof r?.score === 'number' ? r.score : parseFloat(r?.score) || 0;
+				// Scores are already percentages, just add them up
+				return acc + Math.min(Math.max(score, 0), 100);
+			}, 0) / Math.max((assessmentResults || []).length, 1)) },
 		],
 		goals: [
-			{ name: "Complete 20 practice sessions", completed: 12, total: 20 },
-			{ name: "Improve communication score to 90%", completed: 85, total: 90 },
-			{ name: "Master 3 interview types", completed: 2, total: 3 },
-		],
-	};
-
-	// TODO: Replace with actual assessment score data from Supabase
-	const generalAptitudeData = {
-		labels: ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5', 'Test 6'],
-		datasets: [
-			{
-				label: 'General Aptitude Scores',
-				data: [68, 75, 82, 79, 86, 90],
-				borderColor: 'rgb(34, 197, 214)',
-				backgroundColor: 'rgba(34, 197, 214, 0.2)',
-				tension: 0.1,
+			{ 
+				name: "Complete 10 assessments", 
+				completed: (assessmentResults || []).length, 
+				total: 10 
+			},
+			{ 
+				name: "Achieve 80% average score", 
+				completed: Math.round((assessmentResults || []).reduce((acc, r) => {
+					const score = typeof r?.score === 'number' ? r.score : parseFloat(r?.score) || 0;
+					// Scores are already percentages
+					return acc + Math.min(Math.max(score, 0), 100);
+				}, 0) / Math.max((assessmentResults || []).length, 1)), 
+				total: 80 
+			},
+			{ 
+				name: "Try all assessment types", 
+				completed: [...new Set((assessmentResults || []).map(r => r?.assessment_type).filter(Boolean))].length, 
+				total: 4 
 			},
 		],
 	};
 
-	const technicalAssessmentData = {
-		labels: ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5', 'Test 6'],
-		datasets: [
-			{
-				label: 'Technical Assessment Scores',
-				data: [70, 78, 85, 88, 92, 95],
-				borderColor: 'rgb(168, 85, 247)',
-				backgroundColor: 'rgba(168, 85, 247, 0.2)',
-				tension: 0.1,
-			},
-		],
+	// Real difficulty data from assessments
+	const getDifficultyStats = () => {
+		const easy = (assessmentResults || []).filter(r => r?.difficulty_level === 'easy').length;
+		const medium = (assessmentResults || []).filter(r => r?.difficulty_level === 'medium' || r?.difficulty_level === 'moderate' || !r?.difficulty_level).length;
+		const hard = (assessmentResults || []).filter(r => r?.difficulty_level === 'hard').length;
+		return [easy, medium, hard];
 	};
 
-	const personalityAssessmentData = {
-		labels: ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5', 'Test 6'],
-		datasets: [
-			{
-				label: 'Personality Assessment Scores',
-				data: [72, 74, 76, 80, 83, 87],
-				borderColor: 'rgb(34, 197, 94)',
-				backgroundColor: 'rgba(34, 197, 94, 0.2)',
-				tension: 0.1,
-			},
-		],
-	};
-
-	const communicationSkillData = {
-		labels: ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5', 'Test 6'],
-		datasets: [
-			{
-				label: 'Communication Skill Scores',
-				data: [65, 71, 77, 81, 84, 89],
-				borderColor: 'rgb(251, 191, 36)',
-				backgroundColor: 'rgba(251, 191, 36, 0.2)',
-				tension: 0.1,
-			},
-		],
-	};
-
-	// TODO: Replace with actual difficulty data from Supabase
 	const difficultyData = {
 		labels: ['Easy', 'Medium', 'Hard'],
 		datasets: [
 			{
-				label: 'Problems Solved',
-				data: [45, 28, 12],
+				label: 'Assessments Completed',
+				data: getDifficultyStats(),
 				backgroundColor: [
 					'rgba(34, 197, 94, 0.8)',
 					'rgba(251, 191, 36, 0.8)',
@@ -158,18 +229,34 @@ export default function ProgressTab() {
 		],
 	};
 
-	// TODO: Replace with actual skills data from Supabase
+	// Real skills data from assessments
+	const getSkillsDistribution = () => {
+		const aptitudeCount = (assessmentResults || []).filter(r => r?.assessment_type === 'aptitude').length;
+		const technicalCount = (assessmentResults || []).filter(r => r?.assessment_type === 'technical').length;
+		const communicationCount = (assessmentResults || []).filter(r => r?.assessment_type === 'communication').length;
+		const personalityCount = (assessmentResults || []).filter(r => r?.assessment_type === 'personality').length;
+		
+		const total = aptitudeCount + technicalCount + communicationCount + personalityCount;
+		if (total === 0) return [0, 0, 0, 0];
+		
+		return [
+			Math.round((aptitudeCount / total) * 100),
+			Math.round((technicalCount / total) * 100),
+			Math.round((communicationCount / total) * 100),
+			Math.round((personalityCount / total) * 100)
+		];
+	};
+
 	const skillsDistributionData = {
-		labels: ['Frontend', 'Backend', 'Database', 'DevOps', 'Testing', 'UI/UX'],
+		labels: ['Aptitude', 'Technical', 'Communication', 'Personality'],
 		datasets: [
 			{
-				data: [25, 20, 15, 18, 12, 10], // Random values that add up to 100
+				data: getSkillsDistribution(),
 				backgroundColor: [
 					'rgba(34, 197, 214, 0.8)',
 					'rgba(168, 85, 247, 0.8)',
 					'rgba(251, 191, 36, 0.8)',
 					'rgba(34, 197, 94, 0.8)',
-					'rgba(239, 68, 68, 0.8)',
 					'rgba(249, 115, 22, 0.8)',
 				],
 				borderColor: [
@@ -221,32 +308,32 @@ export default function ProgressTab() {
 		afterDatasetsDraw(chart, args, pluginOptions) {
 			const { ctx, data } = chart;
 			ctx.save();
-			
+
 			const dataset = data.datasets[0];
-			const total = dataset.data.reduce((a, b) => a + b, 0);
-			
+			const total = (dataset?.data || []).reduce((a, b) => (a || 0) + (b || 0), 0);
+
 			chart.getDatasetMeta(0).data.forEach((datapoint, index) => {
 				const { x, y } = datapoint.getCenterPoint();
 				const percentage = ((dataset.data[index] / total) * 100).toFixed(1);
-				
+
 				// Create text with outline for better visibility
 				ctx.font = 'bold 14px Arial';
 				ctx.textAlign = 'center';
 				ctx.textBaseline = 'middle';
-				
+
 				// Only show percentage if slice is large enough
 				if (dataset.data[index] / total > 0.05) { // 5% threshold
 					// Draw text outline/shadow for better visibility
 					ctx.strokeStyle = 'black';
 					ctx.lineWidth = 3;
 					ctx.strokeText(`${percentage}%`, x, y);
-					
+
 					// Draw white text on top
 					ctx.fillStyle = 'white';
 					ctx.fillText(`${percentage}%`, x, y);
 				}
 			});
-			
+
 			ctx.restore();
 		}
 	};
@@ -254,136 +341,138 @@ export default function ProgressTab() {
 	if (loading) return <div className="text-white">Loading progress...</div>;
 
 	return (
-		<div className="space-y-6">
-			<div>
-				<h2 className="text-xl font-semibold text-white mb-2 font-sans">
-					Your Progress
-				</h2>
-				<p className="text-gray-300 font-sans">
-					Track your improvement across different skills and goals.
-				</p>
-			</div>
+		<div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+			<div className="container mx-auto px-4 py-8">
+				<div className="max-w-7xl mx-auto space-y-8">
+					<div className="mb-8">
+						<h2 className="text-3xl font-bold text-white mb-4">
+							Your Progress
+						</h2>
+						<p className="text-gray-300 text-lg">
+							Track your improvement across different skills and goals.
+						</p>
+					</div>
 
-			{/* General Aptitude Test Progression */}
-			<div className="bg-[#232323] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
-					General Aptitude Test Progression
-				</h3>
-				<div className="h-64">
-					<Line data={getChartData('aptitude')} options={chartOptions} />
-				</div>
-			</div>
+					{/* General Aptitude Test Progression */}
+					<div className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-6">
+						<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+							General Aptitude Test Progression
+						</h3>
+						<div className="h-64">
+							<Line data={getChartData('aptitude')} options={chartOptions} />
+						</div>
+					</div>
 
-			{/* Technical Assessment Progression */}
-			<div className="bg-[#232323] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
-					Technical Assessment Progression
-				</h3>
-				<div className="h-64">
-					<Line data={getChartData('technical')} options={chartOptions} />
-				</div>
-			</div>
+					{/* Technical Assessment Progression */}
+					<div className="bg-[#232323] rounded-lg p-6">
+						<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+							Technical Assessment Progression
+						</h3>
+						<div className="h-64">
+							<Line data={getChartData('technical')} options={chartOptions} />
+						</div>
+					</div>
 
-			{/* Personality Assessment Progression */}
-			<div className="bg-[#232323] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
-					Personality Assessment Progression
-				</h3>
-				<div className="h-64">
-					<Line data={getChartData('personality')} options={chartOptions} />
-				</div>
-			</div>
+					{/* Personality Assessment Progression */}
+					<div className="bg-[#232323] rounded-lg p-6">
+						<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+							Personality Assessment Progression
+						</h3>
+						<div className="h-64">
+							<Line data={getChartData('personality')} options={chartOptions} />
+						</div>
+					</div>
 
-			{/* Communication Skill Test Progression */}
-			<div className="bg-[#232323] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
-					Communication Skill Test Progression
-				</h3>
-				<div className="h-64">
-					<Line data={getChartData('communication')} options={chartOptions} />
-				</div>
-			</div>
+					{/* Communication Skill Test Progression */}
+					<div className="bg-[#232323] rounded-lg p-6">
+						<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+							Communication Skill Test Progression
+						</h3>
+						<div className="h-64">
+							<Line data={getChartData('communication')} options={chartOptions} />
+						</div>
+					</div>
 
-			{/* Difficulty Level Statistics */}
-			<div className="bg-[#232323] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
-					Problems Solved by Difficulty
-				</h3>
-				<div className="h-64">
-					<Bar data={difficultyData} options={chartOptions} />
-				</div>
-			</div>
+					{/* Difficulty Level Statistics */}
+					<div className="bg-[#232323] rounded-lg p-6">
+						<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+							Problems Solved by Difficulty
+						</h3>
+						<div className="h-64">
+							<Bar data={difficultyData} options={chartOptions} />
+						</div>
+					</div>
 
-			{/* Skills Distribution Chart */}
-			<div className="bg-[#232323] rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
-					Skills Distribution
-				</h3>
-				<div className="h-64 flex justify-center">
-					<Doughnut 
-						data={skillsDistributionData} 
-						plugins={[doughnutLabelPlugin]}
-						options={{
-							responsive: true,
-							maintainAspectRatio: false,
-							interaction: {
-								intersect: false,
-							},
-							onHover: (event, activeElements) => {
-								event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
-							},
-							onClick: () => {}, // Disable click functionality
-							plugins: {
-								legend: {
-									position: 'bottom',
-									onClick: () => {}, // Disable legend click
-									labels: {
-										color: 'white',
-										padding: 15,
-										font: {
-											size: 11,
-											family: 'Arial',
+					{/* Skills Distribution Chart */}
+					<div className="bg-[#232323] rounded-lg p-6">
+						<h3 className="text-lg font-semibold text-white mb-4 font-sans">
+							Skills Distribution
+						</h3>
+						<div className="h-64 flex justify-center">
+							<Doughnut
+								data={skillsDistributionData}
+								plugins={[doughnutLabelPlugin]}
+								options={{
+									responsive: true,
+									maintainAspectRatio: false,
+									interaction: {
+										intersect: false,
+									},
+									onHover: (event, activeElements) => {
+										event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+									},
+									onClick: () => { }, // Disable click functionality
+									plugins: {
+										legend: {
+											position: 'bottom',
+											onClick: () => { }, // Disable legend click
+											labels: {
+												color: 'white',
+												padding: 15,
+												font: {
+													size: 11,
+													family: 'Arial',
+												},
+												usePointStyle: true,
+												generateLabels: function (chart) {
+													const data = chart.data;
+													const dataset = data.datasets[0];
+													const total = (dataset?.data || []).reduce((a, b) => (a || 0) + (b || 0), 0);
+
+													return data.labels.map((label, index) => {
+														const percentage = ((dataset.data[index] / total) * 100).toFixed(1);
+														return {
+															text: `${label} (${percentage}%)`,
+															fillStyle: dataset.backgroundColor[index],
+															strokeStyle: dataset.borderColor[index],
+															lineWidth: dataset.borderWidth,
+															hidden: false,
+															index: index,
+															fontColor: 'white' // Explicitly set font color to white
+														};
+													});
+												}
+											},
 										},
-										usePointStyle: true,
-										generateLabels: function(chart) {
-											const data = chart.data;
-											const dataset = data.datasets[0];
-											const total = dataset.data.reduce((a, b) => a + b, 0);
-											
-											return data.labels.map((label, index) => {
-												const percentage = ((dataset.data[index] / total) * 100).toFixed(1);
-												return {
-													text: `${label} (${percentage}%)`,
-													fillStyle: dataset.backgroundColor[index],
-													strokeStyle: dataset.borderColor[index],
-													lineWidth: dataset.borderWidth,
-													hidden: false,
-													index: index,
-													fontColor: 'white' // Explicitly set font color to white
-												};
-											});
+										tooltip: {
+											callbacks: {
+												label: function (context) {
+													const label = context.label || '';
+													const value = context.parsed;
+													const total = (context.dataset?.data || []).reduce((a, b) => (a || 0) + (b || 0), 0);
+													const percentage = ((value / total) * 100).toFixed(1);
+													return `${label}: ${value} (${percentage}%)`;
+												}
+											}
 										}
 									},
-								},
-								tooltip: {
-									callbacks: {
-										label: function(context) {
-											const label = context.label || '';
-											const value = context.parsed;
-											const total = context.dataset.data.reduce((a, b) => a + b, 0);
-											const percentage = ((value / total) * 100).toFixed(1);
-											return `${label}: ${value} (${percentage}%)`;
-										}
-									}
-								}
-							},
-						}} 
-					/>
-				</div>
-			</div>
+								}}
+							/>
+						</div>
+					</div>
 
-			{/* Skills Progress */}
-			{/* <div>
+					{/* Skills Progress */}
+					{/* <div>
 				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
 					Skills Development
 				</h3>
@@ -415,8 +504,8 @@ export default function ProgressTab() {
 				</div>
 			</div> */}
 
-			{/* Goals Progress */}
-			{/* <div>
+					{/* Goals Progress */}
+					{/* <div>
 				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
 					Goals Progress
 				</h3>
@@ -449,8 +538,8 @@ export default function ProgressTab() {
 				</div>
 			</div> */}
 
-			{/* Achievements */}
-			{/* <div>
+					{/* Achievements */}
+					{/* <div>
 				<h3 className="text-lg font-semibold text-white mb-4 font-sans">
 					Recent Achievements
 				</h3>
@@ -487,6 +576,27 @@ export default function ProgressTab() {
 					))}
 				</div>
 			</div> */}
+
+					{/* Enhanced Progress Analytics */}
+					{userId && (
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.3 }}
+						>
+							<div className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-6">
+								<h3 className="text-2xl font-bold text-white mb-6">
+									📊 Enhanced Analytics & Insights
+								</h3>
+								<p className="text-gray-300 mb-6">
+									Detailed tracking of your assessment performance, job role progress, and skill development over time.
+								</p>
+								<EnhancedProgressCharts userId={userId} />
+							</div>
+						</motion.div>
+					)}
+				</div>
+			</div>
 		</div>
 	);
 } 

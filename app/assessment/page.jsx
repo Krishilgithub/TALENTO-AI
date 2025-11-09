@@ -9,6 +9,7 @@ import {
 	UserIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import AssessmentLayout from "../components/AssessmentLayout";
 
 export default function AssessmentPage() {
 	const assessments = [
@@ -53,8 +54,8 @@ export default function AssessmentPage() {
 	];
 
 	return (
-		<div className="min-h-screen bg-[#101113] py-12 px-4">
-			<div className="max-w-6xl mx-auto">
+		<AssessmentLayout>
+			<div className="container mx-auto max-w-6xl">
 				{/* Header */}
 				<motion.div
 					initial={{ opacity: 0, y: -20 }}
@@ -81,7 +82,7 @@ export default function AssessmentPage() {
 						>
 							<Link href={assessment.href}>
 								<div
-									className={`p-6 rounded-lg border transition-all duration-300 hover:scale-105 cursor-pointer ${assessment.bgColor} ${assessment.borderColor} hover:border-opacity-40`}
+									className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-6 hover:border-cyan-400/50 hover:scale-105 transition-all duration-300 cursor-pointer"
 								>
 									<div className="flex items-start space-x-4">
 										<div
@@ -156,6 +157,6 @@ export default function AssessmentPage() {
 					</div>
 				</motion.div>
 			</div>
-		</div>
+		</AssessmentLayout>
 	);
 }

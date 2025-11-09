@@ -97,7 +97,7 @@ export default function CareerPage() {
 	};
 
 	return (
-		<div className="min-h-screen flex flex-col items-center justify-center bg-[#101113] py-12 px-4">
+		<div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black py-12 px-4">
 			{/* Loading Spinner Overlay */}
 			{loading && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
@@ -138,7 +138,7 @@ export default function CareerPage() {
 				{CAREER_STEPS.map((step) => (
 					<div
 						key={step.step}
-						className="bg-[#18191b] rounded-xl shadow-md border border-cyan-900 p-6 mb-6 flex flex-col md:flex-row items-start md:items-center"
+						className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-xl shadow-md p-6 mb-6 flex flex-col md:flex-row items-start md:items-center"
 					>
 						<div className="flex-shrink-0 w-10 h-10 rounded-full bg-cyan-900 flex items-center justify-center text-lg font-bold text-cyan-300 mr-4 mb-2 md:mb-0">
 							{step.step}
@@ -196,28 +196,26 @@ export default function CareerPage() {
 				<div className="flex gap-4 mb-6">
 					<button
 						onClick={() => setActiveTool("ats")}
-						className={`px-4 py-2 rounded font-semibold transition-colors duration-200 ${
-							activeTool === "ats"
+						className={`px-4 py-2 rounded font-semibold transition-colors duration-200 ${activeTool === "ats"
 								? "bg-cyan-400 text-black"
-								: "bg-[#18191b] text-cyan-300 border border-cyan-700"
-						}`}
+								: "bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm text-cyan-300 hover:border-cyan-400/50"
+							}`}
 					>
 						ATS Score
 					</button>
 					<button
 						onClick={() => setActiveTool("optimizer")}
-						className={`px-4 py-2 rounded font-semibold transition-colors duration-200 ${
-							activeTool === "optimizer"
+						className={`px-4 py-2 rounded font-semibold transition-colors duration-200 ${activeTool === "optimizer"
 								? "bg-cyan-400 text-black"
-								: "bg-[#18191b] text-cyan-300 border border-cyan-700"
-						}`}
+								: "bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm text-cyan-300 hover:border-cyan-400/50"
+							}`}
 					>
 						Resume Optimizer
 					</button>
 				</div>
 				<form
 					onSubmit={handleSubmit}
-					className="bg-[#18191b] rounded-xl p-6 border border-cyan-900 flex flex-col gap-4"
+					className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-xl p-6 flex flex-col gap-4"
 				>
 					<label className="text-gray-300 font-medium">
 						Upload Resume (PDF or DOCX):
@@ -234,7 +232,7 @@ export default function CareerPage() {
 							type="text"
 							value={jobRole}
 							onChange={handleJobRoleChange}
-							className="ml-2 px-2 py-1 rounded bg-[#101113] border border-cyan-700 text-cyan-200"
+							className="ml-2 px-2 py-1 rounded bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm text-white"
 						/>
 					</label>
 					<button
@@ -245,8 +243,8 @@ export default function CareerPage() {
 						{loading
 							? "Processing..."
 							: activeTool === "ats"
-							? "Get ATS Score"
-							: "Optimize Resume"}
+								? "Get ATS Score"
+								: "Optimize Resume"}
 					</button>
 					{error && (
 						<div className="text-red-400 font-medium mt-2">{error}</div>
@@ -270,7 +268,7 @@ export default function CareerPage() {
 											</span>
 											<ul className="list-disc list-inside ml-4">
 												{result.feedback.strengths &&
-												result.feedback.strengths.length > 0 ? (
+													result.feedback.strengths.length > 0 ? (
 													result.feedback.strengths.map((s, i) => (
 														<li key={i}>{s}</li>
 													))
@@ -285,7 +283,7 @@ export default function CareerPage() {
 											</span>
 											<ul className="list-disc list-inside ml-4">
 												{result.feedback.weaknesses &&
-												result.feedback.weaknesses.length > 0 ? (
+													result.feedback.weaknesses.length > 0 ? (
 													result.feedback.weaknesses.map((w, i) => (
 														<li key={i}>{w}</li>
 													))
@@ -298,7 +296,7 @@ export default function CareerPage() {
 											<span className="font-semibold text-cyan-300">Tips:</span>
 											<ul className="list-disc list-inside ml-4">
 												{result.feedback.tips &&
-												result.feedback.tips.length > 0 ? (
+													result.feedback.tips.length > 0 ? (
 													result.feedback.tips.map((t, i) => (
 														<li key={i}>{t}</li>
 													))

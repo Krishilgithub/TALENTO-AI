@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
 	UserIcon,
@@ -11,6 +11,8 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import createClientForBrowser from "@/utils/supabase/client";
+import AssessmentLayout from "../../components/AssessmentLayout";
+import { AssessmentDataStore } from "@/utils/assessmentDataStore";
 
 export default function PersonalityAssessmentPage() {
 	const router = useRouter();
@@ -24,6 +26,8 @@ export default function PersonalityAssessmentPage() {
 	const [error, setError] = useState("");
 	const [submitted, setSubmitted] = useState(false);
 	const [personalityTraits, setPersonalityTraits] = useState({});
+	const [questionStartTimes, setQuestionStartTimes] = useState([]);
+	const dataStoreRef = useRef(new AssessmentDataStore());
 
 	const assessmentFocuses = [
 		"Work Style",
@@ -39,6 +43,10 @@ export default function PersonalityAssessmentPage() {
 		setSubmitted(false);
 		setCurrentQuestion(0);
 		setPersonalityTraits({});
+		setQuestionStartTimes([]);
+		
+		// Initialize assessment session
+		await dataStoreRef.current.startSession('personality', jobRole, 'medium');
 
 		try {
 			console.log("Starting personality assessment...");
@@ -102,6 +110,7 @@ export default function PersonalityAssessmentPage() {
 			if (questionsArr.length > 0) {
 				setQuestions(questionsArr);
 				setUserAnswers(Array(questionsArr.length).fill(null));
+				setQuestionStartTimes(Array(questionsArr.length).fill(Date.now()));
 			} else {
 				setError(data.error || "No questions generated.");
 			}
@@ -220,6 +229,16 @@ export default function PersonalityAssessmentPage() {
 
 	const handleSelect = (qIdx, oIdx) => {
 		if (submitted) return;
+		
+		// Update question start time if this is the first interaction with this question
+		setQuestionStartTimes(prev => {
+			const updated = [...prev];
+			if (!updated[qIdx]) {
+				updated[qIdx] = Date.now();
+			}
+			return updated;
+		});
+		
 		setUserAnswers((prev) => {
 			const updated = [...prev];
 			updated[qIdx] = oIdx;
@@ -232,29 +251,67 @@ export default function PersonalityAssessmentPage() {
 		const traits = calculatePersonalityTraits();
 		setPersonalityTraits(traits);
 		setSubmitted(true);
+		
+		const now = Date.now();
+		const questionDetails = [];
+
+		// Process each question and record the response
+		userAnswers.forEach((selectedIdx, idx) => {
+			if (questions[idx]) {
+				const question = questions[idx];
+				const startTime = questionStartTimes[idx] || now;
+				const timeTaken = Math.floor((now - startTime) / 1000); // in seconds
+				
+				// Store question details for results page
+				questionDetails.push({
+					questionText: question.question,
+					questionOptions: question.options,
+					userAnswer: selectedIdx !== null ? question.options[selectedIdx] : "No answer",
+					correctAnswer: "N/A", // No correct answer for personality questions
+					isCorrect: true, // All responses considered valid for personality
+					timeTaken: timeTaken
+				});
+				
+				// Record the response in the enhanced data store
+				dataStoreRef.current.recordResponse({
+					questionNumber: idx + 1,
+					questionText: question.question,
+					questionOptions: question.options,
+					userAnswer: selectedIdx !== null ? question.options[selectedIdx] : "No answer",
+					correctAnswer: "N/A", // No correct answer for personality questions
+					isCorrect: true, // All responses considered valid for personality
+					timeTaken: timeTaken,
+					category: 'personality'
+				});
+			}
+		});
+
 		try {
 			const supabase = createClientForBrowser();
 			const { data: userData } = await supabase.auth.getUser();
 			if (userData?.user) {
-				// derive a simple normalized score: highest trait count / total * 100
-				const focusTraits = traits[assessmentFocus.includes("Leadership") ? "Leadership" : (assessmentFocus.includes("Communication") ? "Communication" : "Work Style")] || {};
-				const values = Object.values(focusTraits);
-				const maxVal = values.length ? Math.max(...values) : 0;
-				const percentage = Math.round(((maxVal || 0) / (questions.length || 1)) * 100);
-				await supabase.from("assessment_results").insert([
-					{
-						user_id: userData.user.id,
-						assessment_type: "personality",
-						score: percentage,
-						level: assessmentFocus,
-						number_of_questions: questions.length,
-						completed_at: new Date().toISOString(),
-					},
-				]);
+				// Save using enhanced data store
+				const result = await dataStoreRef.current.completeSession(userData.user.id);
+				console.log('Personality assessment completed and saved:', result);
 			}
 		} catch (e) {
 			console.error("Failed to store personality result:", e);
 		}
+
+		// Prepare results data for the results page
+		const resultsData = {
+			assessmentType: 'personality',
+			jobRole: jobRole,
+			score: questionDetails.length, // All responses count as complete
+			totalQuestions: questions.length,
+			totalTime: questionDetails.reduce((total, q) => total + (q.timeTaken || 0), 0) + 's',
+			questions: questionDetails,
+			personalityTraits: traits
+		};
+
+		// Navigate to results page with data
+		const resultsParam = encodeURIComponent(JSON.stringify(resultsData));
+		router.push(`/assessment/results?data=${resultsParam}`);
 	};
 
 	const calculatePersonalityTraits = () => {
@@ -284,7 +341,7 @@ export default function PersonalityAssessmentPage() {
 			if (answer !== null && questions[index]) {
 				// Simple scoring based on answer choice
 				const answerWeight = answer + 1; // A=1, B=2, C=3, D=4
-				
+
 				if (assessmentFocus === "Work Style") {
 					if (answerWeight === 1) traits["Work Style"]["Structured"] += 1;
 					else if (answerWeight === 2) traits["Work Style"]["Adaptive"] += 1;
@@ -327,8 +384,8 @@ export default function PersonalityAssessmentPage() {
 	};
 
 	return (
-		<div className="min-h-screen bg-[#101113] py-12 px-4">
-			<div className="max-w-4xl mx-auto">
+		<AssessmentLayout>
+			<div className="container mx-auto max-w-4xl">
 				{/* Back Button */}
 				<motion.div
 					initial={{ opacity: 0, y: -20 }}
@@ -337,10 +394,10 @@ export default function PersonalityAssessmentPage() {
 				>
 					<Link
 						href="/dashboard?tab=assessment"
-						className="inline-flex items-center text-purple-400 hover:text-purple-300 transition-colors bg-purple-900/20 px-4 py-2 rounded-lg border border-purple-400 hover:bg-purple-900/30"
+						className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors bg-cyan-600/20 px-4 py-2 rounded-lg border border-cyan-400/50 hover:border-cyan-400"
 					>
 						<ArrowLeftIcon className="w-5 h-5 mr-2" />
-						Back
+						Back to Assessment Tab
 					</Link>
 				</motion.div>
 
@@ -351,8 +408,8 @@ export default function PersonalityAssessmentPage() {
 					className="text-center mb-8"
 				>
 					<div className="flex items-center justify-center mb-4">
-						<UserIcon className="h-8 w-8 text-purple-400 mr-3" />
-						<h1 className="text-3xl font-bold text-white">
+						<UserIcon className="h-8 w-8 text-cyan-400 mr-3" />
+						<h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
 							Personality Assessment
 						</h1>
 					</div>
@@ -367,14 +424,14 @@ export default function PersonalityAssessmentPage() {
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
-						className="bg-[#1a1b1c] rounded-lg p-6 mb-8"
+						className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-6 mb-8"
 					>
 						<h2 className="text-xl font-semibold text-white mb-4">
 							Assessment Configuration
 						</h2>
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-300 mb-2">
+								<label className="block text-white font-semibold mb-2">
 									Job Role
 								</label>
 								<input
@@ -382,17 +439,17 @@ export default function PersonalityAssessmentPage() {
 									value={jobRole}
 									onChange={(e) => setJobRole(e.target.value)}
 									placeholder="e.g., Software Engineer"
-									className="w-full px-3 py-2 bg-[#2a2b2c] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+									className="w-full px-3 py-2 rounded bg-gray-800/50 text-white border border-gray-600/50 focus:outline-none focus:border-cyan-400 transition-colors placeholder-gray-400"
 								/>
 							</div>
 							<div>
-								<label className="block text-sm font-medium text-gray-300 mb-2">
+								<label className="block text-white font-semibold mb-2">
 									Assessment Focus
 								</label>
 								<select
 									value={assessmentFocus}
 									onChange={(e) => setAssessmentFocus(e.target.value)}
-									className="w-full px-3 py-2 bg-[#2a2b2c] border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+									className="w-full px-3 py-2 rounded bg-gray-800/50 text-white border border-gray-600/50 focus:outline-none focus:border-cyan-400 transition-colors"
 								>
 									{assessmentFocuses.map((focus) => (
 										<option key={focus} value={focus}>
@@ -402,7 +459,7 @@ export default function PersonalityAssessmentPage() {
 								</select>
 							</div>
 							<div>
-								<label className="block text-sm font-medium text-gray-300 mb-2">
+								<label className="block text-white font-semibold mb-2">
 									Number of Questions
 								</label>
 								<input
@@ -411,14 +468,14 @@ export default function PersonalityAssessmentPage() {
 									onChange={(e) => setNumQuestions(parseInt(e.target.value))}
 									min="5"
 									max="20"
-									className="w-full px-3 py-2 bg-[#2a2b2c] border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+									className="w-full px-3 py-2 rounded bg-gray-800/50 text-white border border-gray-600/50 focus:outline-none focus:border-cyan-400 transition-colors"
 								/>
 							</div>
 						</div>
 						<button
 							onClick={handleStart}
 							disabled={loading}
-							className="mt-6 w-full md:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white font-medium rounded-lg flex items-center justify-center space-x-2 transition-colors"
+							className="mt-6 w-full md:w-auto px-6 py-3 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white font-medium rounded-lg flex items-center justify-center space-x-2 transition-colors"
 						>
 							{loading ? (
 								<>
@@ -451,12 +508,12 @@ export default function PersonalityAssessmentPage() {
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
-						className="bg-[#1a1b1c] rounded-lg p-6"
+						className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-6"
 					>
 						{/* Progress Bar */}
 						<div className="mb-6">
 							<div className="flex justify-between items-center mb-2">
-								<span className="text-sm text-gray-400">
+								<span className="text-cyan-400 font-semibold">
 									Question {currentQuestion + 1} of {questions.length}
 								</span>
 								<span className="text-gray-400">
@@ -465,11 +522,10 @@ export default function PersonalityAssessmentPage() {
 							</div>
 							<div className="w-full bg-gray-700 rounded-full h-2">
 								<div
-									className="bg-purple-400 h-2 rounded-full transition-all duration-300"
+									className="bg-gradient-to-r from-cyan-400 to-blue-500 h-2 rounded-full transition-all duration-300"
 									style={{
-										width: `${
-											((currentQuestion + 1) / questions.length) * 100
-										}%`,
+										width: `${((currentQuestion + 1) / questions.length) * 100
+											}%`,
 									}}
 								></div>
 							</div>
@@ -485,13 +541,12 @@ export default function PersonalityAssessmentPage() {
 									<button
 										key={idx}
 										onClick={() => handleSelect(currentQuestion, idx)}
-										className={`w-full p-4 text-left rounded-lg border transition-all duration-200 ${
-											userAnswers[currentQuestion] === idx
-												? "bg-purple-600 border-purple-400 text-white"
-												: "bg-[#2a2b2c] border-gray-600 text-gray-300 hover:bg-[#3a3b3c] hover:border-purple-500"
-										}`}
+										className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${userAnswers[currentQuestion] === idx
+												? "border-cyan-400 bg-cyan-900/20 text-white"
+												: "border-gray-600 text-gray-300 hover:bg-cyan-900/10 hover:border-cyan-400"
+											}`}
 									>
-										<span className="font-medium mr-2">
+										<span className="text-cyan-400 font-semibold mr-2">
 											{String.fromCharCode(65 + idx)})
 										</span>
 										{option}
@@ -519,7 +574,7 @@ export default function PersonalityAssessmentPage() {
 										)
 									}
 									disabled={userAnswers[currentQuestion] === null}
-									className="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+									className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
 								>
 									Next
 								</button>
@@ -527,7 +582,7 @@ export default function PersonalityAssessmentPage() {
 								<button
 									onClick={handleSubmit}
 									disabled={userAnswers.some((ans) => ans === null)}
-									className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+									className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
 								>
 									Submit Assessment
 								</button>
@@ -536,80 +591,8 @@ export default function PersonalityAssessmentPage() {
 					</motion.div>
 				)}
 
-				{/* Results */}
-				{submitted && (
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						className="bg-[#1a1b1c] rounded-lg p-6"
-					>
-						<div className="text-center mb-6">
-							<CheckCircleIcon className="h-12 w-12 text-green-400 mx-auto mb-4" />
-							<h2 className="text-2xl font-bold text-white mb-2">
-								Assessment Complete!
-							</h2>
-							<p className="text-gray-400">
-								Here's your personality profile based on your responses.
-							</p>
-						</div>
 
-						{/* Personality Traits */}
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							{Object.entries(personalityTraits[assessmentFocus] || {}).map(
-								([trait, score]) => (
-									<div
-										key={trait}
-										className="bg-[#2a2b2c] rounded-lg p-4 border border-gray-600"
-									>
-										<div className="flex justify-between items-center mb-2">
-											<h3 className="text-lg font-semibold text-white">
-												{trait}
-											</h3>
-											<span className="text-purple-400 font-bold">
-												{score}/{questions.length}
-											</span>
-										</div>
-										<div className="w-full bg-gray-700 rounded-full h-2 mb-3">
-											<div
-												className="bg-purple-400 h-2 rounded-full transition-all duration-300"
-												style={{
-													width: `${(score / questions.length) * 100}%`,
-												}}
-											></div>
-										</div>
-										<p className="text-sm text-gray-300">
-											{getTraitDescription(trait, score)}
-										</p>
-									</div>
-								)
-							)}
-						</div>
-
-						{/* Action Buttons */}
-						<div className="flex justify-center space-x-4 mt-8">
-							<button
-								onClick={() => {
-									setQuestions([]);
-									setUserAnswers([]);
-									setSubmitted(false);
-									setCurrentQuestion(0);
-									setPersonalityTraits({});
-								}}
-								className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-							>
-								Take Assessment Again
-							</button>
-							<button
-								onClick={() => router.push("/dashboard?tab=assessment")}
-								className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
-							>
-								<ArrowLeftIcon className="h-4 w-4" />
-								<span>Back to Dashboard</span>
-							</button>
-						</div>
-					</motion.div>
-				)}
 			</div>
-		</div>
+		</AssessmentLayout>
 	);
 } 
