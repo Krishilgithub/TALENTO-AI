@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
@@ -56,9 +58,6 @@ html {
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -82,4 +81,40 @@ body {
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* Cursor Loader */
+.cursor-loading {
+  cursor: wait !important;
+}
+
+.cursor-loading * {
+  cursor: wait !important;
+}
+
+@keyframes cursor-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.custom-cursor {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/></svg>') 12 12, wait !important;
+}
+
+/* Hide scrollbar utility class */
+.scrollbar-hide {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Internet Explorer and Edge */
+  -ms-overflow-style: none;
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari) */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

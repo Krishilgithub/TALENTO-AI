@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
 	ChatBubbleLeftRightIcon,
@@ -8,9 +8,13 @@ import {
 	ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import createClientForBrowser from "@/utils/supabase/client";
+import AssessmentLayout from "../../components/AssessmentLayout";
+import { AssessmentDataStore } from "@/utils/assessmentDataStore";
 
 export default function CommunicationAssessmentPage() {
+	const router = useRouter();
 	const [numQuestions, setNumQuestions] = useState(10);
 	const [difficulty, setDifficulty] = useState("moderate");
 	const [questions, setQuestions] = useState([]);
@@ -19,6 +23,8 @@ export default function CommunicationAssessmentPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [currentQuestion, setCurrentQuestion] = useState(0);
+	const [questionStartTimes, setQuestionStartTimes] = useState([]);
+	const dataStoreRef = useRef(new AssessmentDataStore());
 
 	const handleStart = async () => {
 		setLoading(true);
@@ -27,6 +33,10 @@ export default function CommunicationAssessmentPage() {
 		setUserAnswers([]);
 		setSubmitted(false);
 		setCurrentQuestion(0);
+		setQuestionStartTimes([]);
+		
+		// Initialize assessment session
+		await dataStoreRef.current.startSession('communication', null, difficulty);
 		try {
 			console.log("Starting communication assessment...");
 			const formData = new FormData();
@@ -82,6 +92,7 @@ export default function CommunicationAssessmentPage() {
 			if (questionsArr.length > 0) {
 				setQuestions(questionsArr);
 				setUserAnswers(Array(questionsArr.length).fill(""));
+				setQuestionStartTimes(Array(questionsArr.length).fill(Date.now()));
 			} else {
 				setError(data.error || "No questions generated.");
 			}
@@ -169,6 +180,16 @@ export default function CommunicationAssessmentPage() {
 
 	const handleChange = (idx, value) => {
 		if (submitted) return;
+		
+		// Update question start time if this is the first interaction with this question
+		setQuestionStartTimes(prev => {
+			const updated = [...prev];
+			if (!updated[idx]) {
+				updated[idx] = Date.now();
+			}
+			return updated;
+		});
+		
 		setUserAnswers((prev) => {
 			const updated = [...prev];
 			updated[idx] = value;
@@ -178,29 +199,70 @@ export default function CommunicationAssessmentPage() {
 
 	const handleSubmit = async () => {
 		setSubmitted(true);
+		const now = Date.now();
+		const questionDetails = [];
+
+		// Process each question and record the response
+		userAnswers.forEach((userAnswer, idx) => {
+			if (questions[idx]) {
+				const question = questions[idx];
+				const startTime = questionStartTimes[idx] || now;
+				const timeTaken = Math.floor((now - startTime) / 1000); // in seconds
+				
+				// Store question details for results page
+				questionDetails.push({
+					questionText: question.question,
+					questionOptions: [],
+					userAnswer: userAnswer || "No response",
+					correctAnswer: "N/A", // No correct answer for open-ended questions
+					isCorrect: true, // All responses considered correct for completion
+					timeTaken: timeTaken
+				});
+				
+				// Record the response in the enhanced data store
+				dataStoreRef.current.recordResponse({
+					questionNumber: idx + 1,
+					questionText: question.question,
+					questionOptions: [],
+					userAnswer: userAnswer || "No response",
+					correctAnswer: "N/A", // No correct answer for open-ended questions
+					isCorrect: true, // All responses considered correct for completion
+					timeTaken: timeTaken,
+					category: 'communication'
+				});
+			}
+		});
+
 		try {
 			const supabase = createClientForBrowser();
 			const { data: userData } = await supabase.auth.getUser();
 			if (userData?.user) {
-				await supabase.from("assessment_results").insert([
-					{
-						user_id: userData.user.id,
-						assessment_type: "communication",
-						score: 100, // completion-based scoring for free-form responses
-						level: difficulty,
-						number_of_questions: questions.length,
-						completed_at: new Date().toISOString(),
-					},
-				]);
+				// Save using enhanced data store
+				const result = await dataStoreRef.current.completeSession(userData.user.id);
+				console.log('Communication assessment completed and saved:', result);
 			}
 		} catch (e) {
 			console.error("Failed to store communication result:", e);
 		}
+
+		// Prepare results data for the results page
+		const resultsData = {
+			assessmentType: 'communication',
+			jobRole: 'General', // Communication doesn't have job role selection
+			score: questionDetails.length, // All responses count as correct
+			totalQuestions: questions.length,
+			totalTime: questionDetails.reduce((total, q) => total + (q.timeTaken || 0), 0) + 's',
+			questions: questionDetails
+		};
+
+		// Navigate to results page with data
+		const resultsParam = encodeURIComponent(JSON.stringify(resultsData));
+		router.push(`/assessment/results?data=${resultsParam}`);
 	};
 
 	return (
-		<div className="min-h-screen bg-[#101113] py-12 px-4">
-			<div className="max-w-4xl mx-auto">
+		<AssessmentLayout>
+			<div className="container mx-auto max-w-4xl">
 				{/* Back Button */}
 				<motion.div
 					initial={{ opacity: 0, x: -20 }}
@@ -209,10 +271,10 @@ export default function CommunicationAssessmentPage() {
 				>
 					<Link
 						href="/dashboard?tab=assessment"
-						className="inline-flex items-center text-green-400 hover:text-green-300 transition-colors bg-green-900/20 px-4 py-2 rounded-lg border border-green-400 hover:bg-green-900/30"
+						className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors bg-cyan-600/20 px-4 py-2 rounded-lg border border-cyan-400/50 hover:border-cyan-400"
 					>
 						<ArrowLeftIcon className="w-5 h-5 mr-2" />
-						Back
+						Back to Assessment Tab
 					</Link>
 				</motion.div>
 
@@ -223,8 +285,8 @@ export default function CommunicationAssessmentPage() {
 					className="text-center mb-8"
 				>
 					<div className="flex items-center justify-center mb-4">
-						<ChatBubbleLeftRightIcon className="h-8 w-8 text-green-400 mr-3" />
-						<h1 className="text-3xl font-bold text-white">
+						<ChatBubbleLeftRightIcon className="h-8 w-8 text-cyan-400 mr-3" />
+						<h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
 							Communication Skills Test
 						</h1>
 					</div>
@@ -239,11 +301,11 @@ export default function CommunicationAssessmentPage() {
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
-						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mb-8"
+						className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-8 mb-8"
 					>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 							<div>
-								<label className="block text-green-400 font-semibold mb-2">
+								<label className="block text-white font-semibold mb-2">
 									Number of Questions
 								</label>
 								<input
@@ -252,17 +314,17 @@ export default function CommunicationAssessmentPage() {
 									max="15"
 									value={numQuestions}
 									onChange={(e) => setNumQuestions(Number(e.target.value))}
-									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+									className="w-full px-3 py-2 rounded bg-gray-800/50 text-white border border-gray-600/50 focus:outline-none focus:border-cyan-400 transition-colors"
 								/>
 							</div>
 							<div>
-								<label className="block text-green-400 font-semibold mb-2">
+								<label className="block text-white font-semibold mb-2">
 									Difficulty Level
 								</label>
 								<select
 									value={difficulty}
 									onChange={(e) => setDifficulty(e.target.value)}
-									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+									className="w-full px-3 py-2 rounded bg-gray-800/50 text-white border border-gray-600/50 focus:outline-none focus:border-cyan-400 transition-colors"
 								>
 									<option value="easy">Easy</option>
 									<option value="moderate">Moderate</option>
@@ -272,7 +334,7 @@ export default function CommunicationAssessmentPage() {
 						</div>
 						<button
 							onClick={handleStart}
-							className="mt-6 bg-green-400 text-black px-8 py-3 rounded-lg hover:bg-green-300 transition-colors duration-200 w-full font-semibold text-lg"
+							className="mt-6 bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 rounded-lg transition-colors duration-200 w-full font-semibold text-lg disabled:opacity-50"
 							disabled={loading}
 						>
 							{loading ? (
@@ -301,12 +363,12 @@ export default function CommunicationAssessmentPage() {
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
-						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8"
+						className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-8"
 					>
 						{/* Progress Bar */}
 						<div className="mb-6">
 							<div className="flex justify-between items-center mb-2">
-								<span className="text-green-400 font-semibold">
+								<span className="text-cyan-400 font-semibold">
 									Question {currentQuestion + 1} of {questions.length}
 								</span>
 								<span className="text-gray-400">
@@ -316,11 +378,10 @@ export default function CommunicationAssessmentPage() {
 							</div>
 							<div className="w-full bg-gray-700 rounded-full h-2">
 								<div
-									className="bg-green-400 h-2 rounded-full transition-all duration-300"
+									className="bg-gradient-to-r from-cyan-400 to-blue-500 h-2 rounded-full transition-all duration-300"
 									style={{
-										width: `${
-											((currentQuestion + 1) / questions.length) * 100
-										}%`,
+										width: `${((currentQuestion + 1) / questions.length) * 100
+											}%`,
 									}}
 								></div>
 							</div>
@@ -329,7 +390,7 @@ export default function CommunicationAssessmentPage() {
 						{/* Question */}
 						<div className="mb-8">
 							<div className="mb-4">
-								<span className="inline-block bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-sm font-medium">
+								<span className="inline-block bg-cyan-900/30 text-cyan-400 px-3 py-1 rounded-full text-sm font-medium">
 									{questions[currentQuestion]?.skill || "Communication Skill"}
 								</span>
 							</div>
@@ -338,7 +399,7 @@ export default function CommunicationAssessmentPage() {
 							</h3>
 							<div className="space-y-4">
 								<textarea
-									className="w-full px-4 py-3 rounded-lg bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
+									className="w-full px-4 py-3 rounded-lg bg-gray-800/50 text-white border border-gray-600/50 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 resize-none transition-colors"
 									rows={6}
 									value={userAnswers[currentQuestion]}
 									onChange={(e) =>
@@ -368,7 +429,7 @@ export default function CommunicationAssessmentPage() {
 								<button
 									onClick={() => setCurrentQuestion(currentQuestion + 1)}
 									disabled={!userAnswers[currentQuestion]?.trim()}
-									className="px-6 py-2 bg-green-400 text-black rounded hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+									className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
 								>
 									Next
 								</button>
@@ -376,7 +437,7 @@ export default function CommunicationAssessmentPage() {
 								<button
 									onClick={handleSubmit}
 									disabled={userAnswers.some((ans) => !ans?.trim())}
-									className="px-6 py-2 bg-green-400 text-black rounded hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+									className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
 								>
 									Submit Test
 								</button>
@@ -385,78 +446,8 @@ export default function CommunicationAssessmentPage() {
 					</motion.div>
 				)}
 
-				{/* Results Section */}
-				{submitted && (
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mt-8"
-					>
-						<div className="text-center">
-							<h2 className="text-2xl font-bold text-white mb-4">
-								Test Completed!
-							</h2>
-							<div className="text-lg text-gray-300 mb-6">
-								Great job! You've completed the communication skills assessment.
-								Review your responses below.
-							</div>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-								<div className="bg-green-900/20 p-4 rounded">
-									<h3 className="text-green-400 font-semibold mb-2">
-										Questions Answered
-									</h3>
-									<div className="text-2xl font-bold text-green-400">
-										{questions.length}
-									</div>
-								</div>
-								<div className="bg-blue-900/20 p-4 rounded">
-									<h3 className="text-blue-400 font-semibold mb-2">
-										Total Responses
-									</h3>
-									<div className="text-2xl font-bold text-blue-400">
-										{userAnswers.filter((ans) => ans?.trim()).length}
-									</div>
-								</div>
-							</div>
-						</div>
 
-						{/* Review Answers */}
-						<div className="mt-8">
-							<h3 className="text-xl font-semibold text-white mb-4">
-								Your Responses
-							</h3>
-							<div className="space-y-6">
-								{questions.map((q, idx) => (
-									<motion.div
-										key={idx}
-										initial={{ opacity: 0, y: 10 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ delay: idx * 0.1 }}
-										className="bg-[#232425] rounded-lg p-4"
-									>
-										<div className="flex items-center mb-2">
-											<span className="inline-block bg-green-900/30 text-green-400 px-2 py-1 rounded text-xs font-medium mr-3">
-												{q.skill || "Communication"}
-											</span>
-											<span className="text-gray-400 text-sm">
-												Question {idx + 1}
-											</span>
-										</div>
-										<h4 className="text-white font-medium mb-3">
-											{q.question}
-										</h4>
-										<div className="bg-[#1a1b1c] rounded p-3">
-											<p className="text-gray-300 text-sm">
-												{userAnswers[idx] || "No response provided"}
-											</p>
-										</div>
-									</motion.div>
-								))}
-							</div>
-						</div>
-					</motion.div>
-				)}
 			</div>
-		</div>
+		</AssessmentLayout>
 	);
 }

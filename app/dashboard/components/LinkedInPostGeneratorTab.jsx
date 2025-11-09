@@ -145,18 +145,23 @@ export default function LinkedInPostGeneratorTab() {
 	];
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-8">
+			{/* Animated background */}
+			<div className="fixed inset-0 overflow-hidden pointer-events-none">
+				<div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 rounded-full blur-3xl animate-pulse"></div>
+				<div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-500/10 to-pink-600/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+			</div>
+
 			{/* Header */}
-			<div className="flex items-center space-x-3">
-				<GlobeAltIcon className="h-8 w-8 text-cyan-400" />
-				<div>
-					<h2 className="text-2xl font-bold text-white">
-						LinkedIn Post Generator
-					</h2>
-					<p className="text-gray-300">
-						Generate and post professional content directly to your LinkedIn
-						profile
-					</p>
+			<div className="relative z-10 bg-gray-800/40 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-8 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
+				<div className="flex items-center space-x-4">
+					<div className="p-3 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl">
+						<GlobeAltIcon className="h-8 w-8 text-white" />
+					</div>
+					<div>
+						<h2 className="text-3xl font-black bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent tracking-tight">LinkedIn Post Generator</h2>
+						<p className="text-gray-400 text-lg font-medium">Generate and post professional content directly to your LinkedIn profile</p>
+					</div>
 				</div>
 			</div>
 
@@ -164,7 +169,7 @@ export default function LinkedInPostGeneratorTab() {
 			<motion.div
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
-				className="bg-gradient-to-r from-cyan-900 to-blue-900 border border-cyan-700 rounded-xl p-4"
+				className="relative z-10 bg-gray-800/40 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-6 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300"
 			>
 				<div className="flex items-center justify-between">
 					<div className="flex items-center space-x-3">
@@ -181,11 +186,10 @@ export default function LinkedInPostGeneratorTab() {
 					<button
 						onClick={handleConnectLinkedIn}
 						disabled={isConnected}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-							isConnected
+						className={`px-4 py-2 rounded-lg font-medium transition-colors ${isConnected
 								? "bg-green-900 text-green-300 cursor-not-allowed"
 								: "bg-cyan-600 text-white hover:bg-cyan-500"
-						}`}
+							}`}
 					>
 						{isConnected ? "Connected" : "Connect LinkedIn"}
 					</button>
@@ -196,21 +200,21 @@ export default function LinkedInPostGeneratorTab() {
 			<motion.div
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
-				className="bg-[#18191b] rounded-xl border border-gray-700 p-6"
+				className="relative z-10 bg-gray-800/40 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-8 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300"
 			>
-				<h3 className="text-lg font-semibold text-white mb-4">
+				<h3 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-6">
 					Post Configuration
 				</h3>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 					<div>
-						<label className="block text-sm font-medium text-gray-300 mb-2">
+						<label className="block text-base font-medium text-gray-300 mb-3">
 							Post Type
 						</label>
 						<select
 							value={postType}
 							onChange={(e) => setPostType(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-[#23272f] text-white"
+							className="w-full px-6 py-4 border border-gray-600/30 rounded-xl focus:ring-2 focus:ring-cyan-400/20 focus:border-cyan-400/50 bg-gray-700/30 backdrop-blur-sm text-white transition-all duration-300"
 						>
 							{postTypes.map((type) => (
 								<option key={type} value={type}>
@@ -229,7 +233,7 @@ export default function LinkedInPostGeneratorTab() {
 							value={topic}
 							onChange={(e) => setTopic(e.target.value)}
 							placeholder="e.g., Career Development"
-							className="w-full px-3 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-[#23272f] text-white"
+							className="w-full px-3 py-2 border border-gray-600/50 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-gray-800/30 backdrop-blur-sm text-white"
 						/>
 					</div>
 				</div>
@@ -243,7 +247,7 @@ export default function LinkedInPostGeneratorTab() {
 						onChange={(e) => setPostDescription(e.target.value)}
 						placeholder="Describe what you want to post about..."
 						rows={4}
-						className="w-full px-3 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-[#23272f] text-white"
+						className="w-full px-3 py-2 border border-gray-600/50 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-gray-800/30 backdrop-blur-sm text-white"
 					/>
 				</div>
 
@@ -283,7 +287,7 @@ export default function LinkedInPostGeneratorTab() {
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
-					className="bg-[#18191b] rounded-xl border border-gray-700 p-6"
+					className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-xl p-6"
 				>
 					<div className="flex items-center justify-between mb-4">
 						<h3 className="text-lg font-semibold text-white">Generated Post</h3>
@@ -295,7 +299,7 @@ export default function LinkedInPostGeneratorTab() {
 							<span>Copy</span>
 						</button>
 					</div>
-					<div className="bg-[#23272f] rounded-lg p-4 whitespace-pre-wrap text-gray-200">
+					<div className="bg-gray-900/50 rounded-lg p-4 whitespace-pre-wrap text-gray-200">
 						{generatedPost}
 					</div>
 				</motion.div>

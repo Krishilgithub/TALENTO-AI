@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
 	CpuChipIcon,
@@ -9,9 +9,13 @@ import {
 	ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import createClientForBrowser from "@/utils/supabase/client";
+import AssessmentLayout from "../../components/AssessmentLayout";
+import { AssessmentDataStore } from "@/utils/assessmentDataStore";
 
 export default function AptitudeAssessmentPage() {
+	const router = useRouter();
 	const [jobRole, setJobRole] = useState("Software Engineer");
 	const [numQuestions, setNumQuestions] = useState(10);
 	const [difficulty, setDifficulty] = useState("moderate");
@@ -22,6 +26,8 @@ export default function AptitudeAssessmentPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [currentQuestion, setCurrentQuestion] = useState(0);
+	const [questionStartTimes, setQuestionStartTimes] = useState([]);
+	const dataStoreRef = useRef(new AssessmentDataStore());
 
 	const handleStart = async () => {
 		setLoading(true);
@@ -31,6 +37,11 @@ export default function AptitudeAssessmentPage() {
 		setSubmitted(false);
 		setScore(0);
 		setCurrentQuestion(0);
+		setQuestionStartTimes([]);
+		
+		// Initialize assessment session
+		await dataStoreRef.current.startSession('aptitude', jobRole, difficulty);
+		
 		try {
 			console.log("Starting aptitude assessment...");
 			const formData = new FormData();
@@ -103,6 +114,7 @@ export default function AptitudeAssessmentPage() {
 			if (questionsArr.length > 0) {
 				setQuestions(questionsArr);
 				setUserAnswers(Array(questionsArr.length).fill(null));
+				setQuestionStartTimes(Array(questionsArr.length).fill(Date.now()));
 			} else {
 				setError(data.error || "No questions generated.");
 			}
@@ -282,6 +294,16 @@ export default function AptitudeAssessmentPage() {
 
 	const handleSelect = (qIdx, oIdx) => {
 		if (submitted) return;
+		
+		// Update question start time if this is the first interaction with this question
+		setQuestionStartTimes(prev => {
+			const updated = [...prev];
+			if (!updated[qIdx]) {
+				updated[qIdx] = Date.now();
+			}
+			return updated;
+		});
+		
 		setUserAnswers((prev) => {
 			const updated = [...prev];
 			updated[qIdx] = oIdx;
@@ -291,11 +313,16 @@ export default function AptitudeAssessmentPage() {
 
 	const handleSubmit = async () => {
 		let correct = 0;
-		const resultDetails = [];
+		const now = Date.now();
+		const questionDetails = [];
 
+		// Process each question and record the response
 		userAnswers.forEach((selectedIdx, idx) => {
 			if (questions[idx]) {
 				const question = questions[idx];
+				const startTime = questionStartTimes[idx] || now;
+				const timeTaken = Math.floor((now - startTime) / 1000); // in seconds
+				
 				const isCorrect =
 					selectedIdx !== null &&
 					// Use correct_answer_index if available (from AI parsing)
@@ -305,43 +332,64 @@ export default function AptitudeAssessmentPage() {
 						(selectedIdx !== null &&
 							question.options[selectedIdx] &&
 							question.options[selectedIdx].toString().trim().toLowerCase() ===
-								question.correct_answer.toString().trim().toLowerCase()));
+							question.correct_answer.toString().trim().toLowerCase()));
 
 				if (isCorrect) {
 					correct++;
 				}
 
-				resultDetails.push({
-					question: question.question,
-					userAnswer:
-						selectedIdx !== null ? question.options[selectedIdx] : "No answer",
+				// Store question details for results page
+				questionDetails.push({
+					questionText: question.question,
+					questionOptions: question.options,
+					userAnswer: selectedIdx !== null ? question.options[selectedIdx] : "No answer",
 					correctAnswer: question.correct_answer,
 					isCorrect: isCorrect,
-					explanation: question.explanation || "No explanation available",
+					timeTaken: timeTaken
+				});
+
+				// Record the response in the enhanced data store
+				dataStoreRef.current.recordResponse({
+					questionNumber: idx + 1,
+					questionText: question.question,
+					questionOptions: question.options,
+					userAnswer: selectedIdx !== null ? question.options[selectedIdx] : "No answer",
+					correctAnswer: question.correct_answer,
+					isCorrect: isCorrect,
+					timeTaken: timeTaken,
+					category: 'general_aptitude'
 				});
 			}
 		});
-		const percentage = Math.round((correct / (questions.length || 1)) * 100);
+
 		setScore(correct);
 		setSubmitted(true);
+
 		try {
 			const supabase = createClientForBrowser();
 			const { data: userData } = await supabase.auth.getUser();
 			if (userData?.user) {
-				await supabase.from("assessment_results").insert([
-					{
-						user_id: userData.user.id,
-						assessment_type: "aptitude",
-						score: percentage,
-						level: difficulty,
-						number_of_questions: questions.length,
-						completed_at: new Date().toISOString(),
-					},
-				]);
+				// Save using enhanced data store
+				const result = await dataStoreRef.current.completeSession(userData.user.id);
+				console.log('Assessment completed and saved:', result);
 			}
 		} catch (e) {
 			console.error("Failed to store aptitude result:", e);
 		}
+
+		// Prepare results data for the results page
+		const resultsData = {
+			assessmentType: 'aptitude',
+			jobRole: jobRole,
+			score: correct,
+			totalQuestions: questions.length,
+			totalTime: questionDetails.reduce((total, q) => total + (q.timeTaken || 0), 0) + 's',
+			questions: questionDetails
+		};
+
+		// Navigate to results page with data
+		const resultsParam = encodeURIComponent(JSON.stringify(resultsData));
+		router.push(`/assessment/results?data=${resultsParam}`);
 	};
 
 	const getScoreColor = () => {
@@ -359,8 +407,8 @@ export default function AptitudeAssessmentPage() {
 	};
 
 	return (
-		<div className="min-h-screen bg-[#101113] py-12 px-4">
-			<div className="max-w-4xl mx-auto">
+		<AssessmentLayout>
+			<div className="container mx-auto max-w-4xl">
 				{/* Back Button */}
 				<motion.div
 					initial={{ opacity: 0, x: -20 }}
@@ -369,10 +417,10 @@ export default function AptitudeAssessmentPage() {
 				>
 					<Link
 						href="/dashboard?tab=assessment"
-						className="inline-flex items-center text-green-400 hover:text-green-300 transition-colors bg-green-900/20 px-4 py-2 rounded-lg border border-green-400 hover:bg-green-900/30"
+						className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors bg-cyan-600/20 px-4 py-2 rounded-lg border border-cyan-400/50 hover:border-cyan-400"
 					>
 						<ArrowLeftIcon className="w-5 h-5 mr-2" />
-						Back
+						Back to Assessment Tab
 					</Link>
 				</motion.div>
 
@@ -383,8 +431,8 @@ export default function AptitudeAssessmentPage() {
 					className="text-center mb-8"
 				>
 					<div className="flex items-center justify-center mb-4">
-						<CpuChipIcon className="h-8 w-8 text-green-400 mr-3" />
-						<h1 className="text-3xl font-bold text-white">
+						<CpuChipIcon className="h-8 w-8 text-cyan-400 mr-3" />
+						<h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
 							General Aptitude Test
 						</h1>
 					</div>
@@ -399,23 +447,23 @@ export default function AptitudeAssessmentPage() {
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
-						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mb-8"
+						className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-8 mb-8"
 					>
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 							<div>
-								<label className="block text-green-400 font-semibold mb-2">
+								<label className="block text-white font-semibold mb-2">
 									Job Role
 								</label>
 								<input
 									type="text"
 									value={jobRole}
 									onChange={(e) => setJobRole(e.target.value)}
-									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+									className="w-full px-3 py-2 rounded bg-gray-800/50 text-white border border-gray-600/50 focus:outline-none focus:border-cyan-400 transition-colors"
 									placeholder="e.g., Software Engineer"
 								/>
 							</div>
 							<div>
-								<label className="block text-green-400 font-semibold mb-2">
+								<label className="block text-white font-semibold mb-2">
 									Number of Questions
 								</label>
 								<input
@@ -424,17 +472,17 @@ export default function AptitudeAssessmentPage() {
 									max="20"
 									value={numQuestions}
 									onChange={(e) => setNumQuestions(Number(e.target.value))}
-									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+									className="w-full px-3 py-2 rounded bg-gray-800/50 text-white border border-gray-600/50 focus:outline-none focus:border-cyan-400 transition-colors"
 								/>
 							</div>
 							<div>
-								<label className="block text-green-400 font-semibold mb-2">
+								<label className="block text-white font-semibold mb-2">
 									Difficulty Level
 								</label>
 								<select
 									value={difficulty}
 									onChange={(e) => setDifficulty(e.target.value)}
-									className="w-full px-3 py-2 rounded bg-[#232425] text-white border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400"
+									className="w-full px-3 py-2 rounded bg-gray-800/50 text-white border border-gray-600/50 focus:outline-none focus:border-cyan-400 transition-colors"
 								>
 									<option value="easy">Easy</option>
 									<option value="moderate">Moderate</option>
@@ -444,7 +492,7 @@ export default function AptitudeAssessmentPage() {
 						</div>
 						<button
 							onClick={handleStart}
-							className="mt-6 bg-green-400 text-black px-8 py-3 rounded-lg hover:bg-green-300 transition-colors duration-200 w-full font-semibold text-lg"
+							className="mt-6 bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 rounded-lg transition-colors duration-200 w-full font-semibold text-lg disabled:opacity-50"
 							disabled={loading}
 						>
 							{loading ? (
@@ -473,12 +521,12 @@ export default function AptitudeAssessmentPage() {
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
-						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8"
+						className="bg-gray-800/30 border border-gray-600/50 backdrop-blur-sm rounded-lg p-8"
 					>
 						{/* Progress Bar */}
 						<div className="mb-6">
 							<div className="flex justify-between items-center mb-2">
-								<span className="text-green-400 font-semibold">
+								<span className="text-cyan-400 font-semibold">
 									Question {currentQuestion + 1} of {questions.length}
 								</span>
 								<span className="text-gray-400">
@@ -488,11 +536,10 @@ export default function AptitudeAssessmentPage() {
 							</div>
 							<div className="w-full bg-gray-700 rounded-full h-2">
 								<div
-									className="bg-green-400 h-2 rounded-full transition-all duration-300"
+									className="bg-gradient-to-r from-cyan-400 to-blue-500 h-2 rounded-full transition-all duration-300"
 									style={{
-										width: `${
-											((currentQuestion + 1) / questions.length) * 100
-										}%`,
+										width: `${((currentQuestion + 1) / questions.length) * 100
+											}%`,
 									}}
 								></div>
 							</div>
@@ -511,14 +558,13 @@ export default function AptitudeAssessmentPage() {
 										animate={{ opacity: 1, x: 0 }}
 										transition={{ delay: idx * 0.1 }}
 										onClick={() => handleSelect(currentQuestion, idx)}
-										className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
-											userAnswers[currentQuestion] === idx
-												? "border-green-400 bg-green-900/20"
-												: "border-gray-600 hover:border-green-400 hover:bg-green-900/10"
-										}`}
+										className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${userAnswers[currentQuestion] === idx
+												? "border-cyan-400 bg-cyan-900/20"
+												: "border-gray-600 hover:border-cyan-400 hover:bg-cyan-900/10"
+											}`}
 									>
 										<div className="flex items-center">
-											<span className="text-green-400 font-semibold mr-3">
+											<span className="text-cyan-400 font-semibold mr-3">
 												{String.fromCharCode(65 + idx)}.
 											</span>
 											<span className="text-white">{option}</span>
@@ -543,7 +589,7 @@ export default function AptitudeAssessmentPage() {
 								<button
 									onClick={() => setCurrentQuestion(currentQuestion + 1)}
 									disabled={userAnswers[currentQuestion] === null}
-									className="px-6 py-2 bg-green-400 text-black rounded hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+									className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
 								>
 									Next
 								</button>
@@ -551,7 +597,7 @@ export default function AptitudeAssessmentPage() {
 								<button
 									onClick={handleSubmit}
 									disabled={userAnswers.some((ans) => ans === null)}
-									className="px-6 py-2 bg-green-400 text-black rounded hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+									className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
 								>
 									Submit Test
 								</button>
@@ -560,155 +606,8 @@ export default function AptitudeAssessmentPage() {
 					</motion.div>
 				)}
 
-				{/* Results Section */}
-				{submitted && (
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						className="bg-[#18191b] rounded-xl shadow-md border border-green-900 p-8 mt-8"
-					>
-						<div className="text-center">
-							<h2 className="text-2xl font-bold text-white mb-4">
-								Test Results
-							</h2>
-							<div className={`text-4xl font-bold mb-2 ${getScoreColor()}`}>
-								{score} / {questions.length}
-							</div>
-							<div className="text-lg text-gray-300 mb-6">
-								{getScoreMessage()}
-							</div>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-								<div className="bg-green-900/20 p-4 rounded">
-									<h3 className="text-green-400 font-semibold mb-2">
-										Correct Answers
-									</h3>
-									<div className="text-2xl font-bold text-green-400">
-										{score}
-									</div>
-								</div>
-								<div className="bg-red-900/20 p-4 rounded">
-									<h3 className="text-red-400 font-semibold mb-2">
-										Incorrect Answers
-									</h3>
-									<div className="text-2xl font-bold text-red-400">
-										{questions.length - score}
-									</div>
-								</div>
-							</div>
-							<div className="mt-8">
-								<h3 className="text-xl font-bold text-white mb-4 text-left">
-									Question Review
-								</h3>
-								<div className="space-y-6">
-									{questions.map((q, idx) => {
-										const userIdx = userAnswers[idx];
-										const userAnswer =
-											userIdx !== null && q.options && q.options[userIdx]
-												? q.options[userIdx]
-												: null;
-										const correctAnswer = q.correct_answer;
-										const correctIdx =
-											q.correct_answer_index !== undefined
-												? q.correct_answer_index
-												: q.options.findIndex(
-														(opt) =>
-															opt.toString().trim().toLowerCase() ===
-															correctAnswer?.toString().trim().toLowerCase()
-												  );
 
-										const isCorrect =
-											userIdx !== null &&
-											((q.correct_answer_index !== undefined &&
-												userIdx === q.correct_answer_index) ||
-												(userAnswer &&
-													correctAnswer &&
-													userAnswer.toString().trim().toLowerCase() ===
-														correctAnswer.toString().trim().toLowerCase()));
-
-										return (
-											<div
-												key={idx}
-												className={`p-4 rounded border text-left ${
-													isCorrect
-														? "border-green-600 bg-green-900/10"
-														: "border-red-600 bg-red-900/10"
-												}`}
-											>
-												<div className="text-white font-semibold mb-3">
-													<span className="text-gray-400 mr-2">
-														Question {idx + 1}:
-													</span>
-													{q.question}
-												</div>
-
-												<div className="grid gap-2">
-													{q.options.map((option, optionIdx) => {
-														const isUserChoice = userIdx === optionIdx;
-														const isCorrectChoice = correctIdx === optionIdx;
-
-														return (
-															<div
-																key={optionIdx}
-																className={`p-2 rounded ${
-																	isUserChoice && isCorrect
-																		? "bg-green-900/20 border border-green-500" // User chose correct
-																		: isUserChoice && !isCorrect
-																		? "bg-red-900/20 border border-red-500" // User chose wrong
-																		: isCorrectChoice
-																		? "bg-green-900/20 border border-green-500" // Show correct answer
-																		: "bg-gray-800/20" // Normal option
-																}`}
-															>
-																<span className="text-gray-400 mr-2">
-																	{String.fromCharCode(65 + optionIdx)}.
-																</span>
-																<span
-																	className={`${
-																		isUserChoice && isCorrect
-																			? "text-green-400" // User chose correct
-																			: isUserChoice && !isCorrect
-																			? "text-red-400" // User chose wrong
-																			: isCorrectChoice
-																			? "text-green-400" // Correct answer
-																			: "text-gray-300" // Normal text
-																	}`}
-																>
-																	{option}
-																</span>
-																{isUserChoice && (
-																	<span className="ml-2 text-sm">
-																		{isCorrect
-																			? "✅ Your Answer"
-																			: "❌ Your Answer"}
-																	</span>
-																)}
-																{isCorrectChoice && !isUserChoice && (
-																	<span className="ml-2 text-sm text-green-400">
-																		✓ Correct Answer
-																	</span>
-																)}
-															</div>
-														);
-													})}
-												</div>
-
-												{q.explanation && (
-													<div className="mt-3 text-gray-400 text-sm border-t border-gray-700 pt-2">
-														<span className="font-medium text-gray-300">
-															💡 Explanation:{" "}
-														</span>
-														{q.explanation}
-													</div>
-												)}
-											</div>
-										);
-									})}
-								</div>
-							</div>
-						</div>
-					</motion.div>
-				)}
 			</div>
-		</div>
+		</AssessmentLayout>
 	);
 }

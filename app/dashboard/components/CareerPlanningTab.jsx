@@ -53,18 +53,20 @@ export default function CareerPlanningTab() {
 	const [activeStep, setActiveStep] = useState(1);
 
 	return (
-		<div className="w-full">
-			<div className="text-center mb-8">
-				<h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">Career Planning</h2>
-				<p className="text-gray-300 text-lg">
-					Plan your career with confidence! Follow the steps below to discover
-					your strengths, explore opportunities, set goals, and track your
-					progress.
-				</p>
-			</div>
+		<div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+			<div className="container mx-auto px-4 py-8">
+				<div className="max-w-7xl mx-auto">
+					<div className="text-center mb-8">
+						<h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">Career Planning</h2>
+						<p className="text-gray-300 text-lg">
+							Plan your career with confidence! Follow the steps below to discover
+							your strengths, explore opportunities, set goals, and track your
+							progress.
+						</p>
+					</div>
 
-			{/* Career Steps */}
-			{/* <div className="max-w-4xl mx-auto mb-12">
+					{/* Career Steps */}
+					{/* <div className="max-w-4xl mx-auto mb-12">
 				{CAREER_STEPS.map((step, index) => (
 					<motion.div
 						key={step.step}
@@ -96,89 +98,89 @@ export default function CareerPlanningTab() {
 				))}
 			</div> */}
 
-			{/* Popular Career Paths */}
-			<div className="max-w-4xl mx-auto mb-12">
-				<motion.div
-					initial={{ opacity: 0, y: 40 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true, amount: 0.3 }}
-					transition={{ duration: 0.6, type: 'spring', bounce: 0.2 }}
-				>
-					<h3 className="text-2xl font-semibold text-cyan-400 mb-6 text-center">
-						Popular Career Paths
-					</h3>
-					<div className="bg-[#18191b] rounded-xl p-6 border border-gray-700">
-						<div className="flex flex-wrap gap-3 justify-center">
-							{CAREER_PATHS.map((path, index) => (
-								<motion.span
-									key={path}
-									initial={{ opacity: 0, scale: 0.8 }}
-									whileInView={{ opacity: 1, scale: 1 }}
-									viewport={{ once: true, amount: 0.3 }}
-									transition={{ duration: 0.6, type: 'spring', bounce: 0.2 }}
-									className="bg-gradient-to-r from-cyan-900 to-blue-900 text-cyan-200 px-4 py-2 rounded-full text-sm font-medium border border-cyan-700 hover:scale-105 transition-all duration-200 cursor-pointer"
-								>
-									{path}
-								</motion.span>
-							))}
-						</div>
+					{/* Popular Career Paths */}
+					<div className="max-w-4xl mx-auto mb-12">
+						<motion.div
+							initial={{ opacity: 0, y: 40 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							viewport={{ once: true, amount: 0.3 }}
+							transition={{ duration: 0.6, type: 'spring', bounce: 0.2 }}
+						>
+							<h3 className="text-2xl font-semibold text-cyan-400 mb-6 text-center">
+								Popular Career Paths
+							</h3>
+							<div className="bg-[#18191b] rounded-xl p-6 border border-gray-700">
+								<div className="flex flex-wrap gap-3 justify-center">
+									{CAREER_PATHS.map((path, index) => (
+										<motion.span
+											key={path}
+											initial={{ opacity: 0, scale: 0.8 }}
+											whileInView={{ opacity: 1, scale: 1 }}
+											viewport={{ once: true, amount: 0.3 }}
+											transition={{ duration: 0.6, type: 'spring', bounce: 0.2 }}
+											className="bg-gradient-to-r from-cyan-900 to-blue-900 text-cyan-200 px-4 py-2 rounded-full text-sm font-medium border border-cyan-700 hover:scale-105 transition-all duration-200 cursor-pointer"
+										>
+											{path}
+										</motion.span>
+									))}
+								</div>
+							</div>
+						</motion.div>
 					</div>
-				</motion.div>
-			</div>
 
-			{/* Resources & Next Steps */}
-			<div className="max-w-4xl mx-auto mb-12">
-				<motion.div
-					initial={{ opacity: 0, y: 40 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true, amount: 0.3 }}
-					transition={{ duration: 0.6, type: 'spring', bounce: 0.2 }}
-					className="bg-[#18191b] rounded-xl p-6 border border-gray-700"
-				>
-					<h3 className="text-xl font-semibold text-cyan-400 mb-4">
-						Resources & Next Steps
-					</h3>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<div>
-							<h4 className="text-lg font-semibold text-white mb-3">Getting Started</h4>
-							<ul className="space-y-2 text-gray-300">
-								<li className="flex items-start">
-									<span className="text-cyan-400 mr-2 mt-1">✓</span>
-									Take relevant assessments to identify your strengths
-								</li>
-								<li className="flex items-start">
-									<span className="text-cyan-400 mr-2 mt-1">✓</span>
-									Research roles and industries that interest you
-								</li>
-								<li className="flex items-start">
-									<span className="text-cyan-400 mr-2 mt-1">✓</span>
-									Set clear, achievable career goals
-								</li>
-							</ul>
-						</div>
-						<div>
-							<h4 className="text-lg font-semibold text-white mb-3">Ongoing Development</h4>
-							<ul className="space-y-2 text-gray-300">
-								<li className="flex items-start">
-									<span className="text-cyan-400 mr-2 mt-1">✓</span>
-									Track your progress and celebrate milestones
-								</li>
-								<li className="flex items-start">
-									<span className="text-cyan-400 mr-2 mt-1">✓</span>
-									Update your goals regularly
-								</li>
-								<li className="flex items-start">
-									<span className="text-cyan-400 mr-2 mt-1">✓</span>
-									Seek mentorship and networking opportunities
-								</li>
-							</ul>
-						</div>
+					{/* Resources & Next Steps */}
+					<div className="max-w-4xl mx-auto mb-12">
+						<motion.div
+							initial={{ opacity: 0, y: 40 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							viewport={{ once: true, amount: 0.3 }}
+							transition={{ duration: 0.6, type: 'spring', bounce: 0.2 }}
+							className="bg-[#18191b] rounded-xl p-6 border border-gray-700"
+						>
+							<h3 className="text-xl font-semibold text-cyan-400 mb-4">
+								Resources & Next Steps
+							</h3>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								<div>
+									<h4 className="text-lg font-semibold text-white mb-3">Getting Started</h4>
+									<ul className="space-y-2 text-gray-300">
+										<li className="flex items-start">
+											<span className="text-cyan-400 mr-2 mt-1">✓</span>
+											Take relevant assessments to identify your strengths
+										</li>
+										<li className="flex items-start">
+											<span className="text-cyan-400 mr-2 mt-1">✓</span>
+											Research roles and industries that interest you
+										</li>
+										<li className="flex items-start">
+											<span className="text-cyan-400 mr-2 mt-1">✓</span>
+											Set clear, achievable career goals
+										</li>
+									</ul>
+								</div>
+								<div>
+									<h4 className="text-lg font-semibold text-white mb-3">Ongoing Development</h4>
+									<ul className="space-y-2 text-gray-300">
+										<li className="flex items-start">
+											<span className="text-cyan-400 mr-2 mt-1">✓</span>
+											Track your progress and celebrate milestones
+										</li>
+										<li className="flex items-start">
+											<span className="text-cyan-400 mr-2 mt-1">✓</span>
+											Update your goals regularly
+										</li>
+										<li className="flex items-start">
+											<span className="text-cyan-400 mr-2 mt-1">✓</span>
+											Seek mentorship and networking opportunities
+										</li>
+									</ul>
+								</div>
+							</div>
+						</motion.div>
 					</div>
-				</motion.div>
-			</div>
 
-			{/* Career Tools Section */}
-			{/* <div className="max-w-4xl mx-auto">
+					{/* Career Tools Section */}
+					{/* <div className="max-w-4xl mx-auto">
 				<motion.div
 					initial={{ opacity: 0, y: 40 }}
 					whileInView={{ opacity: 1, y: 0 }}
@@ -221,6 +223,8 @@ export default function CareerPlanningTab() {
 					</div>
 				</motion.div>
 			</div> */}
+				</div>
+			</div>
 		</div>
 	);
 } 
