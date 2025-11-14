@@ -204,51 +204,69 @@ export default function HistoryTab() {
 
     const handleViewResume = async (resume) => {
         try {
-            if (resume.file_path) {
-                // Get the file from storage
-                const { data, error } = await supabase.storage
-                    .from('resumes')
-                    .download(resume.file_path);
-
-                if (error) throw error;
-
-                const blob = new Blob([data], { type: resume.file_type });
-                const url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
-            } else {
-                console.error('No file path found for resume');
+            // Check for file path in both possible field names
+            const filePath = resume.file_path || resume.filename;
+            
+            if (!filePath) {
+                const errorMsg = 'No file path found for resume. Please re-upload the resume.';
+                console.error(errorMsg);
+                setError(errorMsg);
+                setTimeout(() => setError(''), 5000);
+                return;
             }
+
+            // Get the file from storage
+            const { data, error } = await supabase.storage
+                .from('resumes')
+                .download(filePath);
+
+            if (error) throw error;
+
+            const blob = new Blob([data], { type: resume.file_type });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
         } catch (error) {
             console.error('Error viewing resume:', error);
+            setError(`Failed to view resume: ${error.message}`);
+            setTimeout(() => setError(''), 5000);
         }
     };
 
     const handleDownloadResume = async (resume) => {
         try {
-            if (resume.file_path) {
-                // Get the file from storage
-                const { data, error } = await supabase.storage
-                    .from('resumes')
-                    .download(resume.file_path);
-
-                if (error) throw error;
-
-                const blob = new Blob([data], { type: resume.file_type });
-                const url = URL.createObjectURL(blob);
-
-                // Create a temporary link to download
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = resume.original_name;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            } else {
-                console.error('No file path found for resume');
+            // Check for file path in both possible field names
+            const filePath = resume.file_path || resume.filename;
+            
+            if (!filePath) {
+                const errorMsg = 'No file path found for resume. Please re-upload the resume.';
+                console.error(errorMsg);
+                setError(errorMsg);
+                setTimeout(() => setError(''), 5000);
+                return;
             }
+
+            // Get the file from storage
+            const { data, error } = await supabase.storage
+                .from('resumes')
+                .download(filePath);
+
+            if (error) throw error;
+
+            const blob = new Blob([data], { type: resume.file_type });
+            const url = URL.createObjectURL(blob);
+
+            // Create a temporary link to download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = resume.original_name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Error downloading resume:', error);
+            setError(`Failed to download resume: ${error.message}`);
+            setTimeout(() => setError(''), 5000);
         }
     };
 

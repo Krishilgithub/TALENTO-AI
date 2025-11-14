@@ -176,10 +176,11 @@ export function EnhancedProgressCharts({ userId }) {
       <div className="bg-gray-800 rounded-lg p-6">
         <h3 className="text-xl font-bold text-white mb-4">Category Breakdown</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Object.values(difficultyProgress).map((item, index) => {
+          {Object.values(difficultyProgress).map((item) => {
             const accuracy = item.total > 0 ? (item.correct / item.total * 100) : 0;
+            const uniqueKey = `${item.type}-${item.difficulty}`;
             return (
-              <div key={index} className="p-4 bg-gray-700 rounded">
+              <div key={uniqueKey} className="p-4 bg-gray-700 rounded">
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="text-white font-medium capitalize">
                     {item.type} - {item.difficulty}
